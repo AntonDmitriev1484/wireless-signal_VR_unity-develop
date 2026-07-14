@@ -865,6 +865,51 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         Debug.Log($"Marked {markedPositions.Count} unique end points with RxObj instances.");
     }
 
+    // Upload every single (Rx, reflection point) -> final power to the mesh,
+    // Reflection areas will now also be highlighted by the power of their final arrival path.
+    void MakeReflectionHeatmapPrototype()
+    {
+
+        // Dictionary to track unique end positions to avoid duplicate RxObj instances
+        Dictionary<Vector3, float> position_to_power = new Dictionary<Vector3, float>();
+
+        // Iterate through each path store its position to its RX power
+        foreach (RayPathSet_v2 rayPath in loadedRaysPath)
+        {
+            if (rayPath.PathPositions.Count > 0)
+            {
+                foreach (Vector3 v in rayPath.PathPositions)
+                {
+                    if (position_to_power.ContainsKey(v))
+                        continue;
+                    position_to_power[v] = rayPath.TotalPowerNum; // Mark any point in the path with the final power at the receiver.
+                }
+
+            }
+        }
+
+        Dictionary<Vector3, Color> position_to_color = new Dictionary<Vector3, Color>();
+        foreach (KeyValuePair<Vector3, float> kvp in position_to_power)
+        {
+            Vector3 pos = kvp.Key;
+
+            float power = kvp.Value;
+            int rxColorIdx = GetColorIndexFromRx_dBm(power, 0);
+            Color rxColor = colorHelper.GetPaletteColor(rxColorIdx);
+            rxColor.a = 0.6f;
+            position_to_color[pos] = rxColor;
+        }
+
+        // TODO: Apply your heatmap material here.
+        Material heatmapMaterial = mat_heatmap;
+        HeatmapUpdater heatmapUpdater = new HeatmapUpdater();
+        heatmapUpdater.material = heatmapMaterial;
+        heatmapUpdater.points = position_to_color;
+        // Should scale to how many rows there are. Or essentially to cover the distance between two adjacent Rx.
+
+        heatmapUpdater.Upload();
+    }
+
     // Represents end Rx power with a single heatmap material applied to a slab
     void MakeHeatmap_Rx()
     {
@@ -1040,6 +1085,8 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         }
     }
 
+
+    List<GameObject> pathObjects = new();
     // Draw lines with multiple LineRenderers from loadedRaysPath
     void MarkPathLine_MultiPaths()
     {
@@ -1067,7 +1114,28 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
 
             // Set the positions for the LineRenderer
             lineRenderer.SetPositions(rayPath.PathPositions.ToArray());
+
+            pathObjects.Add(pathObject);
         }
+    }
+
+    void MarkPathLine_Clear()
+    {
+        Debug.Log("Count " + pathObjects.Count);
+        if (pathObjects.Count != 0)
+        {
+            foreach (GameObject pathObject in pathObjects) {
+                if (pathObject.GetComponent<LineRenderer>())
+                {
+                    Debug.Log("Got linerenderer component");
+                    pathObject.GetComponent<LineRenderer>().positionCount = 0;
+                    pathObject.GetComponent<LineRenderer>().SetPositions(new Vector3[0]);
+                }
+            }
+
+        }
+        pathObjects = new List<GameObject>();
+
     }
 
     // Check if a file exists in the Resources directory
@@ -1375,7 +1443,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
             ShowAllIntersectionMarks();
         }
         ToggleLiveMarksVisibility();
-        MarkPathLine_MultiPaths();
+/*        MarkPathLine_MultiPaths();*/
 
         //MarkPathPositions_obj();
     }
@@ -1701,9 +1769,12 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         MarkStartPoint_Tx();
         //MarkEndPoints_Rx();
         MakeHeatmap_Rx();
+        MakeReflectionHeatmapPrototype();
+
         //HideAllEndPoints_Rx(); // make Rx markers invisible initially
 
-        //MarkPathLine_MultiPaths();
+        MarkPathLine_Clear(); // Clear old rays
+        MarkPathLine_MultiPaths(); // init new rays
         //MarkViaLines_DEBUG();
 
         // Initialize particle system
@@ -1985,17 +2056,17 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
 
     public void ShowObjects_T1()
     {
-        T1obj1.GetComponent<MeshRenderer>().material = mat_obj1;
+/*        T1obj1.GetComponent<MeshRenderer>().material = mat_obj1;
         T1obj2.GetComponent<MeshRenderer>().material = mat_obj2;
         T1obj3.GetComponent<MeshRenderer>().material = mat_obj3;
-        T1obj4.GetComponent<MeshRenderer>().material = mat_obj4;
+        T1obj4.GetComponent<MeshRenderer>().material = mat_obj4;*/
     }
     public void HideObjects_T1()
     {
-        T1obj1.GetComponent<MeshRenderer>().material = mat_objNeutral;
+/*        T1obj1.GetComponent<MeshRenderer>().material = mat_objNeutral;
         T1obj2.GetComponent<MeshRenderer>().material = mat_objNeutral;
         T1obj3.GetComponent<MeshRenderer>().material = mat_objNeutral;
-        T1obj4.GetComponent<MeshRenderer>().material = mat_objNeutral;
+        T1obj4.GetComponent<MeshRenderer>().material = mat_objNeutral;*/
     }
 
     public void ShowObjects_T3()
