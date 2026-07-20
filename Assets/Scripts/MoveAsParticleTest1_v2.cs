@@ -99,6 +99,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
     [SerializeField] private GameObject case1button;
     [SerializeField] private GameObject case2button;
 
+    [SerializeField] private GameObject trackObjectRx;
 
     //output string and text box
     private string answerLog = "Log: ";
@@ -1119,6 +1120,35 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         }
     }
 
+    void MarkPathLine_SinglePaths()
+    {
+            RayPathSet_v2 rayPath = loadedRaysPath[currentRayPathIndex];
+            // Create a new GameObject for each pathLine
+            GameObject pathObject = new GameObject("PathLine_" + rayPath.RxNum);
+            LineRenderer lineRenderer = pathObject.AddComponent<LineRenderer>();
+
+            // Set the LineRenderer properties
+            lineRenderer.startWidth = 0.003f;
+            lineRenderer.endWidth = 0.003f;
+            lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
+            lineRenderer.startColor = Color.red;
+            lineRenderer.endColor = Color.red;
+            lineRenderer.positionCount = 0; // Initialize with zero positions
+            lineRenderer.useWorldSpace = true; // Use world space for the positions
+            lineRenderer.numCapVertices = 3; // Set the number of cap vertices for smoother ends
+            lineRenderer.numCornerVertices = 3; // Set the number of corner vertices for smoother corners
+
+
+            // Set the number of positions for the LineRenderer
+            lineRenderer.positionCount = rayPath.PathPositions.Count;
+
+            // Set the positions for the LineRenderer
+            lineRenderer.SetPositions(rayPath.PathPositions.ToArray());
+
+            pathObjects.Add(pathObject);
+    
+    }
+
     void MarkPathLine_Clear()
     {
         Debug.Log("Count " + pathObjects.Count);
@@ -1446,12 +1476,14 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
 /*        MarkPathLine_MultiPaths();*/
 
         //MarkPathPositions_obj();
+
     }
 
     // Update is called once per frame
     void Update()
     {
         UpdateParticles();
+        UpdateRxRealTime();
     }
 
     // toggle play/pause state of entire rays movement
@@ -1760,6 +1792,108 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         }
     }
 
+    int prevRayPathIndex = -1;
+    int currentRayPathIndex = -1;
+
+    void PollClosestRx()
+    {
+        // Save the previous closest path index
+        prevRayPathIndex = currentRayPathIndex;
+
+        float closest_d = float.MaxValue;
+        currentRayPathIndex = -1;
+
+        for (int i = 0; i < loadedRaysPath.Count; i++)
+        {
+            RayPathSet_v2 rayPath = loadedRaysPath[i];
+
+            if (rayPath.PathPositions.Count == 0)
+                continue;
+
+            // Get the last position in the path (the end point)
+            Vector3 endPosition = rayPath.PathPositions[rayPath.PathPositions.Count - 1];
+            float d = Vector3.Distance(endPosition, trackObjectRx.transform.position);
+
+            if (d < closest_d)
+            {
+                closest_d = d;
+                currentRayPathIndex = i;
+            }
+        }
+    }
+
+    // Marks the end points of all ray paths with RxObj instances
+    void MarkEndPoint_Rx()
+    {
+        // Mark a single end point!
+
+        // Check if RxObj is assigned
+        if (RxObj == null)
+        {
+            Debug.LogError("RxObj is not assigned in the Inspector! Cannot mark end points.");
+            return;
+        }
+
+        // Check if there are any paths loaded
+        if (loadedRaysPath.Count <= 0)
+        {
+            Debug.LogWarning("No ray paths available to mark end points.");
+            return;
+        }
+
+        // Create parent group for all Rx objects if it doesn't exist
+        if (RxObjGrp == null)
+        {
+            RxObjGrp = new GameObject("Rx_Objects_Group");
+        }
+        else
+        {
+            // Clear any existing children
+            foreach (Transform child in RxObjGrp.transform)
+            {
+                Destroy(child.gameObject);
+            }
+        }
+
+        RayPathSet_v2 current_raypath = loadedRaysPath[currentRayPathIndex];
+                // Get the last position in the path (the end point)
+                Vector3 endPosition =current_raypath.PathPositions[current_raypath.PathPositions.Count - 1];
+
+
+                // Instantiate the RxObj at the end position as a child of RxObjGrp
+                GameObject endMarker = Instantiate(RxObj, endPosition, Quaternion.identity, RxObjGrp.transform);
+
+                // Ed - Set color of recievers based on power
+                MeshRenderer endMarkRend = endMarker.GetComponent<MeshRenderer>();
+                int rxColorIdx = GetColorIndexFromRx_dBm(current_raypath.TotalPowerNum, 0);
+                Color rxColor = colorHelper.GetPaletteColor(rxColorIdx);
+                rxColor.a = 0.6f;
+                endMarkRend.material.SetColor("_BaseColor", rxColor);
+                endMarkRend.material.SetColor("_EmissionColor", rxColor);
+
+                // Name the marker for easy identification
+                endMarker.name = $"Rx_Obj_{current_raypath.RxNum}";
+
+
+    }
+
+    void UpdateRxRealTime()
+    {
+        // Assuming GetData has already been called
+        PollClosestRx();
+        //Debug.Log(current_raypath.RxNum);
+
+        if (currentRayPathIndex != prevRayPathIndex) // This check is not working
+        {
+            Debug.Log("Updating");
+            MarkPathLine_Clear();
+            MarkEndPoint_Rx();
+            MarkPathLine_SinglePaths();
+            currentRayPathIndex = prevRayPathIndex;
+        }
+
+    }
+
     // Ed - switch current dataset
     void SetCurrentDataSet(string fileName)
     {
@@ -1767,14 +1901,14 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         GetData(fileName);
 
         MarkStartPoint_Tx();
-        //MarkEndPoints_Rx();
+/*        MarkEndPoints_Rx();
         MakeHeatmap_Rx();
-        MakeReflectionHeatmapPrototype();
+        MakeReflectionHeatmapPrototype();*/
 
         //HideAllEndPoints_Rx(); // make Rx markers invisible initially
 
         MarkPathLine_Clear(); // Clear old rays
-        MarkPathLine_MultiPaths(); // init new rays
+        //MarkPathLine_MultiPaths(); // init new rays
         //MarkViaLines_DEBUG();
 
         // Initialize particle system
