@@ -2343,6 +2343,11 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 511712549}
   m_CullTransparentMesh: 1
+--- !u!1 &529863105 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1670256624, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+  m_PrefabInstance: {fileID: 441087506}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &549005407
 GameObject:
   m_ObjectHideFlags: 0
@@ -20921,6 +20926,7 @@ GameObject:
   - component: {fileID: 1590460117}
   - component: {fileID: 1590460119}
   - component: {fileID: 1590460118}
+  - component: {fileID: 1590460120}
   m_Layer: 0
   m_Name: RayParticles
   m_TagString: Untagged
@@ -21003,6 +21009,7 @@ MonoBehaviour:
   mat_heatmap: {fileID: 2100000, guid: bd35fa17620d0ac469203ef011918a20, type: 2}
   case1button: {fileID: 236234065}
   case2button: {fileID: 2041006697}
+  trackObjectRx: {fileID: 529863105}
   outputTextObj: {fileID: 853662665}
   TxObj: {fileID: 5834349935354454025, guid: 83713672a27bbb44dbc1e440d8c5c95b, type: 3}
   RxObj: {fileID: 1322866641868832272, guid: 4ea3dfe91773b5b42b8a0eeff3f0321c, type: 3}
@@ -21030,6 +21037,21 @@ MonoBehaviour:
   PathPositions: []
   PathPositionsIdx: 0
   TotalPowerNum: 0
+--- !u!114 &1590460120
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1590460116}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 485f4dd07d61d374f9debeb568a0ced3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  TxObj: {fileID: 5834349935354454025, guid: 83713672a27bbb44dbc1e440d8c5c95b, type: 3}
+  RxObj: {fileID: 1322866641868832272, guid: 4ea3dfe91773b5b42b8a0eeff3f0321c, type: 3}
+  trackObjectRx: {fileID: 529863105}
 --- !u!1 &1594133806
 GameObject:
   m_ObjectHideFlags: 0

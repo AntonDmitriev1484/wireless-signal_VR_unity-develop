@@ -1482,8 +1482,8 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        UpdateParticles();
-        UpdateRxRealTime();
+/*        UpdateParticles();
+        UpdateRxRealTime();*/
     }
 
     // toggle play/pause state of entire rays movement
@@ -1899,6 +1899,8 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
     {
 
         GetData(fileName);
+
+        Debug.Log("Set current data: " + fileName);
 
         MarkStartPoint_Tx();
 /*        MarkEndPoints_Rx();
