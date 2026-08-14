@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -317,8 +318,12 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
 
     // sets the initial positions for each particle of ParticleSystem1
 
+
+    private GameObject[] particle_message_objs;
+
     private void InitializeParticlePositions()
     {
+        particle_message_objs = new GameObject[this.numRays];
         // Loop through each particle
         for (int i = 0; i < this.numRays; i++)
         {
@@ -351,11 +356,39 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
 
             // Update the particle in the system
             this.particles[i] = particle;
+            GameObject textObject =
+                    new GameObject($"ParticleMessage_{i}");
+
+            textObject.transform.position =
+                particle.position;
+
+            TextMeshPro text =
+                textObject.AddComponent<TextMeshPro>();
+
+            text.text = "Test";
+            text.fontSize = 10f;
+            text.alignment =
+                TextAlignmentOptions.Center;
+
+            // Optional: make it face the camera
+            if (Camera.main != null)
+            {
+                textObject.transform.rotation =
+                    Quaternion.LookRotation(
+                        textObject.transform.position -
+                        Camera.main.transform.position
+                    );
+            }
+
+            particle_message_objs[i] = textObject;
         }
 
         // Set the updated particles back to the ParticleSystem
         this.particleSystem1.SetParticles(this.particles, this.numRays);
     }
+
+
+
 
 
     // = Color Control ======================================================== BEGIN
@@ -384,6 +417,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
             //Debug.Log($"Ray {i}: Total path length = {totalLength}, Min power = {loadedRaysPath[i].PowerNum}");
         }
     }
+
 
     private void InitializeColorPalette()
     {
@@ -797,10 +831,13 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
 
 
 
-
+    private GameObject[] path_idx_to_rx_obj;
     // Marks the end points of all ray paths with RxObj instances
     void MarkEndPoints_Rx()
     {
+
+        path_idx_to_rx_obj = new GameObject[loadedRaysPath.Count()]; // Later used for displaying message above Rx as particles arrive.
+
         // Check if RxObj is assigned
         if (RxObj == null)
         {
@@ -830,11 +867,13 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         }
 
         // Dictionary to track unique end positions to avoid duplicate RxObj instances
-        Dictionary<Vector3, bool> markedPositions = new Dictionary<Vector3, bool>();
+        Dictionary<Vector3, GameObject> markedPositions = new Dictionary<Vector3, GameObject>();
+
 
         // Iterate through each path to mark its end point
-        foreach (RayPathSet_v2 rayPath in loadedRaysPath)
+        for (int i = 0; i < loadedRaysPath.Count; i++)
         {
+            RayPathSet_v2 rayPath = loadedRaysPath[i];
             if (rayPath.PathPositions.Count > 0)
             {
                 // Get the last position in the path (the end point)
@@ -842,7 +881,10 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
 
                 // Skip if we've already marked this position (avoid duplicates)
                 if (markedPositions.ContainsKey(endPosition))
+                {
+                    path_idx_to_rx_obj[i] = markedPositions[endPosition];
                     continue;
+                }
 
                 // Instantiate the RxObj at the end position as a child of RxObjGrp
                 GameObject endMarker = Instantiate(RxObj, endPosition, Quaternion.identity, RxObjGrp.transform);
@@ -859,7 +901,8 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
                 endMarker.name = $"Rx_Obj_{rayPath.RxNum}";
 
                 // Mark this position as processed
-                markedPositions[endPosition] = true;
+                markedPositions[endPosition] = endMarker;
+                path_idx_to_rx_obj[i] = endMarker;
             }
         }
         Debug.Log($"Marked {markedPositions.Count} unique end points with RxObj instances.");
@@ -1392,6 +1435,10 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         // Toggle the pause state
         isRayMovementPaused = !isRayMovementPaused;
 
+
+        Debug.Log("loadedRaysPath " + loadedRaysPath.Count);
+        Debug.Log("particles " + particles.Length);
+
         // If pausing, store the current segment progress time for each particle
         if (isRayMovementPaused)
         {
@@ -1508,12 +1555,133 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         //particleSystem1.Play();  // don't need now, but may need later to turn on an particle system's effect if needed
 
         Debug.Log("Rays reset to initial positions");
+
+        // Clear completed particles
+        completed_particles = new bool[particles.Length];
+        // clear all receiver text
+        for (int i = 0; i < particles.Length; i++)
+        {
+            if (path_idx_to_rx_obj[i] == null)
+                continue;
+
+            TextMeshProUGUI[] texts =
+                path_idx_to_rx_obj[i].GetComponentsInChildren<TextMeshProUGUI>();
+
+            foreach (TextMeshProUGUI text in texts)
+            {
+                Destroy(text.gameObject);
+            }
+        }
     }
 
 
+    private void addMessageToRx(string message, GameObject rx)
+    {
+        Transform messageDisplay =
+            rx.transform.Find("MessageDisplay");
+
+        if (messageDisplay == null)
+        {
+            Debug.LogWarning(
+                "Could not find MessageDisplay on " + rx.name
+            );
+            return;
+        }
+
+        Canvas canvas =
+            messageDisplay.GetComponent<Canvas>();
+
+        if (canvas == null)
+        {
+            Debug.LogWarning(
+                "MessageDisplay does not have a Canvas component."
+            );
+            return;
+        }
+
+        // ------------------------------------------------------------
+        // Look for an existing message
+        // ------------------------------------------------------------
+
+        TextMeshProUGUI[] existingTexts =
+            canvas.GetComponentsInChildren<TextMeshProUGUI>();
+
+        foreach (TextMeshProUGUI existingText in existingTexts)
+        {
+            if (existingText.text == message)
+            {
+                Color color = existingText.color;
+
+                float oldAlpha = color.a;
+                float newAlpha = Mathf.Min(oldAlpha + 0.05f, 1.0f);
+
+                color.a = newAlpha;
+                existingText.color = color;
+
+                return;
+            }
+        }
+
+
+        // ------------------------------------------------------------
+        // Message doesn't exist - create it
+        // ------------------------------------------------------------
+
+        GameObject textObject =
+            new GameObject("MessageText");
+
+        textObject.transform.SetParent(
+            canvas.transform,
+            false
+        );
+
+        TextMeshProUGUI text =
+            textObject.AddComponent<TextMeshProUGUI>();
+
+        text.text = message;
+
+        text.alignment =
+            TextAlignmentOptions.Center;
+
+        text.fontSize = 0.5f;
+
+        // Initial opacity
+        Color textColor = Color.white;
+        textColor.a = 0.01f;
+        text.color = textColor;
+
+
+        // ------------------------------------------------------------
+        // Position
+        // ------------------------------------------------------------
+
+        RectTransform rect =
+            textObject.GetComponent<RectTransform>();
+
+        rect.anchorMin =
+            new Vector2(0.5f, 0.5f);
+
+        rect.anchorMax =
+            new Vector2(0.5f, 0.5f);
+
+        rect.pivot =
+            new Vector2(0.5f, 0.5f);
+
+        rect.anchoredPosition =
+            Vector2.zero;
+
+        rect.sizeDelta =
+            new Vector2(10f, 10f);
+
+
+        Debug.Log(
+            $"Created message '{message}' with opacity {text.color.a}"
+        );
+    }
 
     // ray moves first two positions but after that it just continue to next positions until the last position, and remove self - OK
     // ray's color changes based on its power value toward its minimum power value as moving along the path
+
     private void UpdateParticles()
     {
         // if rays move paused, don't update ray positions
@@ -1560,8 +1728,20 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
                 //----- position interpolate ----
                 // Calculate the particle's position using Lerp for the current segment
                 Vector3 newPos = Vector3.Lerp(currentSegmentStart, currentSegmentEnd, segment_t);
+
                 // Update the particle's position
                 particle.position = newPos;
+
+                // ------------------------------------------------------------
+                // Update the text object to follow the particle
+                // ------------------------------------------------------------
+                if (particle_message_objs != null &&
+                    i < particle_message_objs.Length &&
+                    particle_message_objs[i] != null)
+                {
+                    particle_message_objs[i].transform.position =
+                        particle.position;
+                }
 
                 //== Ray Color ===================================== START
                 // Update distance traveled
@@ -1593,7 +1773,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
                 Color rayColor = Color.white;
                 if (colorHelper != null)
                 {
-                    // Get color from palette using ColorHelper
+                    // Get color from ColorHelper using ColorHelper
                     rayColor = colorHelper.GetPaletteColor(colorIdx);
 
                     // Apply color to the particle
@@ -1610,8 +1790,17 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
                     // Snap the particle exactly to the end position to ensure accuracy at segment boundaries.
                     particle.position = currentSegmentEnd;
 
+                    // Update the text object to the exact segment endpoint
+                    if (particle_message_objs != null &&
+                        i < particle_message_objs.Length &&
+                        particle_message_objs[i] != null)
+                    {
+                        particle_message_objs[i].transform.position =
+                            particle.position;
+                    }
+
                     // Mark intersection points if enabled. (except the first and last points)
-                    if (isShowIntersectionMarksOnPass && ( rayPath.PathPositionsIdx >= 0 && rayPath.PathPositionsIdx < pathPositions.Count - 2) )
+                    if (isShowIntersectionMarksOnPass && (rayPath.PathPositionsIdx >= 0 && rayPath.PathPositionsIdx < pathPositions.Count - 2))
                     {
                         // because using currentSegmentEnd position, should start from rayPath.PathPositionsIdx == 0 to include the 1st intersection position
                         AddIntersectionMarkOnPass(currentSegmentEnd, rayColor);
@@ -1641,12 +1830,41 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
                 particleReachedEnd = true;
             }
 
+            // ------------------------------------------------------------
+            // Keep text object synchronized with final particle position
+            // ------------------------------------------------------------
+            if (!particleReachedEnd &&
+                particle_message_objs != null &&
+                i < particle_message_objs.Length &&
+                particle_message_objs[i] != null)
+            {
+                particle_message_objs[i].transform.position =
+                    particle.position;
+            }
+
             // Handle particles that have reached their end position
             if (particleReachedEnd)
             {
                 // Make particle invisible after some time or right away if desired
                 particle.startSize = 0f;
                 particle.remainingLifetime = 0f;
+
+                if (!completed_particles[i])
+                {
+                    string message = "test";
+                    addMessageToRx(message, path_idx_to_rx_obj[i]);
+                }
+
+                completed_particles[i] = true;
+
+                // Clear the particle's text object once it reaches the end
+                if (particle_message_objs != null &&
+                    i < particle_message_objs.Length &&
+                    particle_message_objs[i] != null)
+                {
+                    Destroy(particle_message_objs[i]);
+                    particle_message_objs[i] = null;
+                }
             }
 
             // Update the particle in the system array
@@ -1668,6 +1886,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
             }
         }
     }
+
 
     // get moving position between two points in the same speed no matter the distance
     private Vector3 MoveAtConstantSpeed(Vector3 pos1, Vector3 pos2, float speed, float elapsedTime)
@@ -1693,14 +1912,15 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
     }
 
     // Ed - switch current dataset
+    bool[] completed_particles;
     void SetCurrentDataSet(string fileName)
     {
 
         GetData(fileName);
 
         MarkStartPoint_Tx();
-        //MarkEndPoints_Rx();
-        MakeHeatmap_Rx();
+        MarkEndPoints_Rx();
+        //MakeHeatmap_Rx();
         //HideAllEndPoints_Rx(); // make Rx markers invisible initially
 
         //MarkPathLine_MultiPaths();
@@ -1715,6 +1935,8 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
 
         // Initialize path distances for power calculations
         InitializePathDistances();
+
+        completed_particles = new bool[particles.Length]; // All false by default
 
     }
 

@@ -328,8 +328,6 @@ public class MenuManager : MonoBehaviour
 
         foreach (RaycastResult result in results)
         {
-            Debug.Log(result);
-
             Button button =
                 result.gameObject.GetComponent<Button>();
 
@@ -393,13 +391,6 @@ public class MenuManager : MonoBehaviour
 
         if (!hoveredButton.interactable)
             return;
-
-
-        Debug.Log(
-            "Selected button: " +
-            hoveredButton.name
-        );
-
 
         // Trigger the button's normal Unity onClick events
         hoveredButton.onClick.Invoke();
