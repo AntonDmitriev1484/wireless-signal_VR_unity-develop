@@ -1,142 +1,407 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 public class MenuManager : MonoBehaviour
 {
+    [Header("Menu")]
     [SerializeField]
-    // Reference to the menuMain object
     private GameObject menuMain;
 
+    [Header("Camera")]
     [SerializeField]
-    private GameObject menuCredit;
+    private Camera playerCamera;
 
-
-    //[Header("VR Control")]
+    [Header("UI Raycast")]
     [SerializeField]
-    // Reference to the Input Action Asset for the XR controller
-    private InputActionProperty rController_A;
+    private GraphicRaycaster graphicRaycaster;
 
     [SerializeField]
-    // Reference to Ray Interactor
-    private GameObject rayInteractor;
+    private EventSystem eventSystem;
 
-    // make menuMain appear in front of VR camera
+    [Header("Input")]
     [SerializeField]
-    private Transform vrCamera;
+    private InputActionReference openMenuClick;
 
-    private float mainMenuDistanceFromCamera = 2;
-    private float creditMenuDistanceFromCamera = 3;
+    [SerializeField]
+    private InputActionReference selectItem;
 
-    // make a menu appear in front of the VR camera
-    public void SetMenuInFrontOfCamera(GameObject menu, float distanceFromCamera)
+    [Header("Raycast")]
+    [SerializeField]
+    private float raycastDistance = 100f;
+
+    private float mainMenuDistanceFromCamera = 2f;
+
+    // Currently hovered button
+    private Button hoveredButton;
+
+
+    // ========================================================================
+    // START
+    // ========================================================================
+
+    private void Start()
     {
-        // Set the position of the menu in front of the VR camera
-        // Add a y-offset to position the menu lower than the camera's eye level
-        float yOffset = -0.3f; // Negative value moves menu down
-        Vector3 menuPosition = vrCamera.position + vrCamera.forward * distanceFromCamera;
-        menuPosition.y += yOffset; // Apply the vertical offset
-        menu.transform.position = menuPosition;
-
-        // Create a rotation that faces the camera but keeps the menu upright
-        Vector3 directionToCamera = vrCamera.position - menu.transform.position;
-        directionToCamera.y = 0; // Zero out the y component to prevent tilting
-
-        // If directly above/below the camera, set the rotation
-        if (directionToCamera.magnitude > 0.001f)
-        {
-            menu.transform.rotation = Quaternion.LookRotation(-directionToCamera, Vector3.up);
-        }
-        else
-        {
-            // If directly above/below, just use camera's forward direction but keep upright
-            Vector3 forward = vrCamera.forward;
-            forward.y = 0;
-            if (forward.magnitude < 0.001f)
-                forward = vrCamera.right; // Fallback if looking straight up/down
-
-            menu.transform.rotation = Quaternion.LookRotation(forward, Vector3.up);
-        }
-    }
-
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        // Ensure the menuMain and rayInteractor are initially deactivated - R-Controller A button will activate them
         Remove_Menu_Ray();
 
-        // disable menuCredit at the start
-        menuCredit.SetActive(false);
+        if (openMenuClick != null)
+        {
+            openMenuClick.action.Enable();
+        }
+
+        if (selectItem != null)
+        {
+            selectItem.action.Enable();
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+
+    // ========================================================================
+    // UPDATE
+    // ========================================================================
+
+    private void Update()
     {
-        MainMenuToggleByControllerButton();
+        MainMenuToggleByMouseClick();
 
+        if (menuMain.activeSelf)
+        {
+            CheckButtonUnderCenterOfView();
+            SelectHoveredButton();
+        }
     }
+
+
+    // ========================================================================
+    // CLEANUP
+    // ========================================================================
+
+    private void OnDestroy()
+    {
+        if (openMenuClick != null)
+        {
+            openMenuClick.action.Disable();
+        }
+
+        if (selectItem != null)
+        {
+            selectItem.action.Disable();
+        }
+    }
+
+
+    // ========================================================================
+    // MENU
+    // ========================================================================
 
     public void Remove_Menu_Ray()
     {
-        // off menuMain and oof rayInteractor
-        menuMain.SetActive(false);
-        rayInteractor.SetActive(false);
+        if (menuMain != null)
+        {
+            menuMain.SetActive(false);
+        }
+
+        hoveredButton = null;
     }
+
 
     public void Show_Menu_Ray()
     {
-        // off menuMain and oof rayInteractor
+        if (menuMain == null)
+            return;
+
         menuMain.SetActive(true);
-        rayInteractor.SetActive(true);
+
+        SetMenuInFrontOfCamera(
+            menuMain,
+            mainMenuDistanceFromCamera
+        );
     }
 
 
+    // ========================================================================
+    // POSITION MENU IN FRONT OF CAMERA
+    // ========================================================================
 
-    private void MainMenuToggleByControllerButton()
-    {   //---------------------------------------------------------------------------------
-        // toggle the menuMain on and off when A button is pressed of oculus R-controller with XR toolkit
-        if (rController_A.action.WasPressedThisFrame())
+    public void SetMenuInFrontOfCamera(
+        GameObject menu,
+        float distanceFromCamera)
+    {
+        if (playerCamera == null || menu == null)
+            return;
+
+        float yOffset = -0.3f;
+
+        Vector3 menuPosition =
+            playerCamera.transform.position +
+            playerCamera.transform.forward *
+            distanceFromCamera;
+
+        menuPosition.y += yOffset;
+
+        menu.transform.position = menuPosition;
+
+
+        // Make the menu face the camera
+        Vector3 directionToCamera =
+            playerCamera.transform.position -
+            menu.transform.position;
+
+        // Keep menu upright
+        directionToCamera.y = 0f;
+
+        if (directionToCamera.magnitude > 0.001f)
         {
-            // toggle the menuMain on and off
+            menu.transform.rotation =
+                Quaternion.LookRotation(
+                    -directionToCamera,
+                    Vector3.up
+                );
+        }
+        else
+        {
+            Vector3 forward =
+                playerCamera.transform.forward;
+
+            forward.y = 0f;
+
+            if (forward.magnitude < 0.001f)
+            {
+                forward = playerCamera.transform.right;
+            }
+
+            menu.transform.rotation =
+                Quaternion.LookRotation(
+                    forward,
+                    Vector3.up
+                );
+        }
+    }
+
+
+    // ========================================================================
+    // OPEN / CLOSE MENU
+    // ========================================================================
+
+    private void MainMenuToggleByMouseClick()
+    {
+        if (openMenuClick == null)
+            return;
+
+        if (openMenuClick.action.WasPressedThisFrame())
+        {
             menuMain.SetActive(!menuMain.activeSelf);
 
-            // display menuMain.activeSelf in the console
-            //Debug.Log("Menu Main Active: " + menuMain.activeSelf);
-
-            // activate the ray interactor only when the menuMain is active
             if (menuMain.activeSelf)
             {
-                // Set the ray interactor to be active
-                rayInteractor.SetActive(true);
-
-                // set the menuMain postion in front of the camera
-                SetMenuInFrontOfCamera(menuMain, mainMenuDistanceFromCamera);
+                SetMenuInFrontOfCamera(
+                    menuMain,
+                    mainMenuDistanceFromCamera
+                );
             }
             else
             {
-                // Set the ray interactor to be inactive
-                rayInteractor.SetActive(false);
+                hoveredButton = null;
             }
         }
     }
 
-    //  show the menuCredit in front of camera 
-    public void ButtonPressed_ShowCredit()
+
+    // ========================================================================
+    // FIND UI ELEMENT AT CENTER OF CAMERA
+    // ========================================================================
+
+    private void CheckButtonUnderCenterOfView()
     {
-        // currently menuMain is on, so off the menuMain after selecting a button
-        menuMain.SetActive(false);
+        if (playerCamera == null)
+            return;
 
-        // Set the menuCredit to be active
-        menuCredit.SetActive(true);
-        // Set the menuCredit position in front of the camera
-        SetMenuInFrontOfCamera(menuCredit, creditMenuDistanceFromCamera);
+        if (graphicRaycaster == null)
+            return;
 
-        rayInteractor.SetActive(true);
+        if (eventSystem == null)
+            return;
+
+        // ------------------------------------------------------------
+        // Create a ray from the center of the camera's FOV
+        // ------------------------------------------------------------
+
+        Vector2 viewportCenter = new Vector2(0.5f, 0.5f);
+
+        Ray cameraRay =
+            playerCamera.ViewportPointToRay(viewportCenter);
+
+
+        // ------------------------------------------------------------
+        // Find the Canvas
+        // ------------------------------------------------------------
+
+        Canvas canvas =
+            graphicRaycaster.GetComponent<Canvas>();
+
+        if (canvas == null)
+            return;
+
+
+        RectTransform canvasRect =
+            canvas.GetComponent<RectTransform>();
+
+
+        // ------------------------------------------------------------
+        // Find where the camera ray intersects the Canvas
+        // ------------------------------------------------------------
+
+        Plane canvasPlane =
+            new Plane(
+                canvasRect.forward,
+                canvasRect.position
+            );
+
+        if (!canvasPlane.Raycast(
+            cameraRay,
+            out float distance))
+        {
+            hoveredButton = null;
+            return;
+        }
+
+
+        // Don't interact with the Canvas if it is behind us
+        if (distance < 0 || distance > raycastDistance)
+        {
+            hoveredButton = null;
+            return;
+        }
+
+
+        // ------------------------------------------------------------
+        // Get the actual world position on the Canvas
+        // ------------------------------------------------------------
+
+        Vector3 worldHit =
+            cameraRay.GetPoint(distance);
+
+
+        // ------------------------------------------------------------
+        // Convert that point into screen coordinates
+        // ------------------------------------------------------------
+
+        Vector3 screenPoint =
+            playerCamera.WorldToScreenPoint(worldHit);
+
+        Vector2 screenPosition =
+            new Vector2(
+                screenPoint.x,
+                screenPoint.y
+            );
+
+
+        // ------------------------------------------------------------
+        // Create PointerEventData
+        // ------------------------------------------------------------
+
+        PointerEventData pointerData =
+            new PointerEventData(eventSystem);
+
+        pointerData.position = screenPosition;
+
+
+        // ------------------------------------------------------------
+        // Graphic Raycast
+        // ------------------------------------------------------------
+
+        List<RaycastResult> results =
+            new List<RaycastResult>();
+
+        graphicRaycaster.Raycast(
+            pointerData,
+            results
+        );
+
+        // ------------------------------------------------------------
+        // Find a Button
+        // ------------------------------------------------------------
+
+        Button newHoveredButton = null;
+
+        foreach (RaycastResult result in results)
+        {
+            Debug.Log(result);
+
+            Button button =
+                result.gameObject.GetComponent<Button>();
+
+            if (button == null)
+            {
+                button =
+                    result.gameObject.GetComponentInParent<Button>();
+            }
+
+            if (button != null && button.interactable)
+            {
+                newHoveredButton = button;
+                break;
+            }
+        }
+
+
+        // ------------------------------------------------------------
+        // The hovered button changed
+        // ------------------------------------------------------------
+
+        if (newHoveredButton != hoveredButton)
+        {
+            // Remove highlight from previous button
+            if (hoveredButton != null)
+            {
+                hoveredButton.OnPointerExit(
+                    new PointerEventData(eventSystem)
+                );
+            }
+
+            // Store new button
+            hoveredButton = newHoveredButton;
+
+            // Highlight new button
+            if (hoveredButton != null)
+            {
+                hoveredButton.OnPointerEnter(
+                    new PointerEventData(eventSystem)
+                );
+            }
+        }
+
 
     }
 
-    public void ButtonPressed_HideCredit()
+    // ========================================================================
+    // SELECT BUTTON
+    // ========================================================================
+
+    private void SelectHoveredButton()
     {
-        menuCredit.SetActive(false);
+        if (selectItem == null)
+            return;
+
+        if (!selectItem.action.WasPressedThisFrame())
+            return;
+
+        if (hoveredButton == null)
+            return;
+
+        if (!hoveredButton.interactable)
+            return;
+
+
+        Debug.Log(
+            "Selected button: " +
+            hoveredButton.name
+        );
+
+
+        // Trigger the button's normal Unity onClick events
+        hoveredButton.onClick.Invoke();
     }
 }

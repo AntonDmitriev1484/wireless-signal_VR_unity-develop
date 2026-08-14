@@ -58,10 +58,15 @@ MonoBehaviour:
   m_autoColorSubmissionMode: 1
   m_colorSubmissionModes:
     m_List: 00000000
+  m_eyeTrackingPermissionsToRequest:
+  - com.oculus.permission.EYE_TRACKING
+  - android.permission.EYE_TRACKING
+  - android.permission.EYE_TRACKING_FINE
   m_depthSubmissionMode: 0
   m_optimizeBufferDiscards: 0
   m_symmetricProjection: 0
   m_foveatedRenderingApi: 0
+  versionChanged: 0
 --- !u!114 &-5311418557368314572
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -162,10 +167,15 @@ MonoBehaviour:
   m_autoColorSubmissionMode: 1
   m_colorSubmissionModes:
     m_List: 00000000
+  m_eyeTrackingPermissionsToRequest:
+  - com.oculus.permission.EYE_TRACKING
+  - android.permission.EYE_TRACKING
+  - android.permission.EYE_TRACKING_FINE
   m_depthSubmissionMode: 0
   m_optimizeBufferDiscards: 0
   m_symmetricProjection: 0
   m_foveatedRenderingApi: 0
+  versionChanged: 0
 --- !u!114 &-2097352140344030225
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -323,10 +333,15 @@ MonoBehaviour:
   m_autoColorSubmissionMode: 1
   m_colorSubmissionModes:
     m_List: 00000000
+  m_eyeTrackingPermissionsToRequest:
+  - com.oculus.permission.EYE_TRACKING
+  - android.permission.EYE_TRACKING
+  - android.permission.EYE_TRACKING_FINE
   m_depthSubmissionMode: 0
   m_optimizeBufferDiscards: 0
   m_symmetricProjection: 0
   m_foveatedRenderingApi: 0
+  versionChanged: 0
 --- !u!114 &-5901582635306253
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -522,10 +537,15 @@ MonoBehaviour:
   m_autoColorSubmissionMode: 1
   m_colorSubmissionModes:
     m_List: 00000000
+  m_eyeTrackingPermissionsToRequest:
+  - com.oculus.permission.EYE_TRACKING
+  - android.permission.EYE_TRACKING
+  - android.permission.EYE_TRACKING_FINE
   m_depthSubmissionMode: 0
   m_optimizeBufferDiscards: 0
   m_symmetricProjection: 0
   m_foveatedRenderingApi: 0
+  versionChanged: 0
 --- !u!114 &3150671951373486854
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -919,10 +939,15 @@ MonoBehaviour:
   m_autoColorSubmissionMode: 1
   m_colorSubmissionModes:
     m_List: 00000000
+  m_eyeTrackingPermissionsToRequest:
+  - com.oculus.permission.EYE_TRACKING
+  - android.permission.EYE_TRACKING
+  - android.permission.EYE_TRACKING_FINE
   m_depthSubmissionMode: 0
   m_optimizeBufferDiscards: 0
   m_symmetricProjection: 0
   m_foveatedRenderingApi: 0
+  versionChanged: 0
 --- !u!114 &8759366741247560425
 MonoBehaviour:
   m_ObjectHideFlags: 0
