@@ -10,13 +10,26 @@ public class MenuManager : MonoBehaviour
     [SerializeField]
     private GameObject menuMain;
 
+    [SerializeField]
+    private GameObject menuQA;
+
+    [Header("Panel Positions")]
+    [SerializeField]
+    private float mainMenuDistanceFromCamera = 2f;
+
+    [SerializeField]
+    private float qaPanelDistanceFromMain = 0.6f;
+
     [Header("Camera")]
     [SerializeField]
     private Camera playerCamera;
 
     [Header("UI Raycast")]
     [SerializeField]
-    private GraphicRaycaster graphicRaycaster;
+    private GraphicRaycaster mainGraphicRaycaster;
+
+    [SerializeField]
+    private GraphicRaycaster qaGraphicRaycaster;
 
     [SerializeField]
     private EventSystem eventSystem;
@@ -31,8 +44,6 @@ public class MenuManager : MonoBehaviour
     [Header("Raycast")]
     [SerializeField]
     private float raycastDistance = 100f;
-
-    private float mainMenuDistanceFromCamera = 2f;
 
     // Currently hovered button
     private Button hoveredButton;
@@ -66,7 +77,7 @@ public class MenuManager : MonoBehaviour
     {
         MainMenuToggleByMouseClick();
 
-        if (menuMain.activeSelf)
+        if (menuMain != null && menuMain.activeSelf)
         {
             CheckButtonUnderCenterOfView();
             SelectHoveredButton();
@@ -103,6 +114,11 @@ public class MenuManager : MonoBehaviour
             menuMain.SetActive(false);
         }
 
+        if (menuQA != null)
+        {
+            menuQA.SetActive(false);
+        }
+
         hoveredButton = null;
     }
 
@@ -112,17 +128,38 @@ public class MenuManager : MonoBehaviour
         if (menuMain == null)
             return;
 
+        // ------------------------------------------------------------
+        // Show both panels
+        // ------------------------------------------------------------
+
         menuMain.SetActive(true);
+
+        if (menuQA != null)
+        {
+            menuQA.SetActive(true);
+        }
+
+
+        // ------------------------------------------------------------
+        // Position PanelMain in front of camera
+        // ------------------------------------------------------------
 
         SetMenuInFrontOfCamera(
             menuMain,
             mainMenuDistanceFromCamera
         );
+
+
+        // ------------------------------------------------------------
+        // Position PanelQA to the left of PanelMain
+        // ------------------------------------------------------------
+
+        PositionQAPanel();
     }
 
 
     // ========================================================================
-    // POSITION MENU IN FRONT OF CAMERA
+    // POSITION MAIN MENU IN FRONT OF CAMERA
     // ========================================================================
 
     public void SetMenuInFrontOfCamera(
@@ -144,7 +181,10 @@ public class MenuManager : MonoBehaviour
         menu.transform.position = menuPosition;
 
 
-        // Make the menu face the camera
+        // ------------------------------------------------------------
+        // Make menu face the camera
+        // ------------------------------------------------------------
+
         Vector3 directionToCamera =
             playerCamera.transform.position -
             menu.transform.position;
@@ -182,6 +222,39 @@ public class MenuManager : MonoBehaviour
 
 
     // ========================================================================
+    // POSITION QA PANEL
+    // ========================================================================
+
+    private void PositionQAPanel()
+    {
+        if (menuMain == null || menuQA == null)
+            return;
+
+        // ------------------------------------------------------------
+        // Put QA to the LEFT of PanelMain
+        //
+        // PanelMain's local right direction is used so that the
+        // relationship remains correct regardless of rotation.
+        // ------------------------------------------------------------
+
+        Vector3 qaPosition =
+            menuMain.transform.position -
+            menuMain.transform.right *
+            qaPanelDistanceFromMain;
+
+        menuQA.transform.position = qaPosition;
+
+
+        // ------------------------------------------------------------
+        // Give QA the same rotation as PanelMain
+        // ------------------------------------------------------------
+
+        menuQA.transform.rotation =
+            menuMain.transform.rotation;
+    }
+
+
+    // ========================================================================
     // OPEN / CLOSE MENU
     // ========================================================================
 
@@ -190,21 +263,26 @@ public class MenuManager : MonoBehaviour
         if (openMenuClick == null)
             return;
 
-        if (openMenuClick.action.WasPressedThisFrame())
-        {
-            menuMain.SetActive(!menuMain.activeSelf);
+        if (!openMenuClick.action.WasPressedThisFrame())
+            return;
 
-            if (menuMain.activeSelf)
-            {
-                SetMenuInFrontOfCamera(
-                    menuMain,
-                    mainMenuDistanceFromCamera
-                );
-            }
-            else
-            {
-                hoveredButton = null;
-            }
+
+        // ------------------------------------------------------------
+        // Toggle the main menu
+        // ------------------------------------------------------------
+
+        bool shouldShow =
+            menuMain != null &&
+            !menuMain.activeSelf;
+
+
+        if (shouldShow)
+        {
+            Show_Menu_Ray();
+        }
+        else
+        {
+            Remove_Menu_Ray();
         }
     }
 
@@ -218,130 +296,46 @@ public class MenuManager : MonoBehaviour
         if (playerCamera == null)
             return;
 
-        if (graphicRaycaster == null)
-            return;
-
         if (eventSystem == null)
             return;
+
 
         // ------------------------------------------------------------
         // Create a ray from the center of the camera's FOV
         // ------------------------------------------------------------
 
-        Vector2 viewportCenter = new Vector2(0.5f, 0.5f);
+        Vector2 viewportCenter =
+            new Vector2(0.5f, 0.5f);
 
         Ray cameraRay =
-            playerCamera.ViewportPointToRay(viewportCenter);
-
-
-        // ------------------------------------------------------------
-        // Find the Canvas
-        // ------------------------------------------------------------
-
-        Canvas canvas =
-            graphicRaycaster.GetComponent<Canvas>();
-
-        if (canvas == null)
-            return;
-
-
-        RectTransform canvasRect =
-            canvas.GetComponent<RectTransform>();
-
-
-        // ------------------------------------------------------------
-        // Find where the camera ray intersects the Canvas
-        // ------------------------------------------------------------
-
-        Plane canvasPlane =
-            new Plane(
-                canvasRect.forward,
-                canvasRect.position
-            );
-
-        if (!canvasPlane.Raycast(
-            cameraRay,
-            out float distance))
-        {
-            hoveredButton = null;
-            return;
-        }
-
-
-        // Don't interact with the Canvas if it is behind us
-        if (distance < 0 || distance > raycastDistance)
-        {
-            hoveredButton = null;
-            return;
-        }
-
-
-        // ------------------------------------------------------------
-        // Get the actual world position on the Canvas
-        // ------------------------------------------------------------
-
-        Vector3 worldHit =
-            cameraRay.GetPoint(distance);
-
-
-        // ------------------------------------------------------------
-        // Convert that point into screen coordinates
-        // ------------------------------------------------------------
-
-        Vector3 screenPoint =
-            playerCamera.WorldToScreenPoint(worldHit);
-
-        Vector2 screenPosition =
-            new Vector2(
-                screenPoint.x,
-                screenPoint.y
+            playerCamera.ViewportPointToRay(
+                viewportCenter
             );
 
 
         // ------------------------------------------------------------
-        // Create PointerEventData
+        // Check PanelMain
         // ------------------------------------------------------------
 
-        PointerEventData pointerData =
-            new PointerEventData(eventSystem);
+        Button newHoveredButton =
+            RaycastPanel(
+                mainGraphicRaycaster,
+                cameraRay
+            );
 
-        pointerData.position = screenPosition;
-
-
-        // ------------------------------------------------------------
-        // Graphic Raycast
-        // ------------------------------------------------------------
-
-        List<RaycastResult> results =
-            new List<RaycastResult>();
-
-        graphicRaycaster.Raycast(
-            pointerData,
-            results
-        );
 
         // ------------------------------------------------------------
-        // Find a Button
+        // If PanelMain did not contain a button,
+        // check PanelQA
         // ------------------------------------------------------------
 
-        Button newHoveredButton = null;
-
-        foreach (RaycastResult result in results)
+        if (newHoveredButton == null)
         {
-            Button button =
-                result.gameObject.GetComponent<Button>();
-
-            if (button == null)
-            {
-                button =
-                    result.gameObject.GetComponentInParent<Button>();
-            }
-
-            if (button != null && button.interactable)
-            {
-                newHoveredButton = button;
-                break;
-            }
+            newHoveredButton =
+                RaycastPanel(
+                    qaGraphicRaycaster,
+                    cameraRay
+                );
         }
 
 
@@ -359,8 +353,11 @@ public class MenuManager : MonoBehaviour
                 );
             }
 
+
             // Store new button
-            hoveredButton = newHoveredButton;
+            hoveredButton =
+                newHoveredButton;
+
 
             // Highlight new button
             if (hoveredButton != null)
@@ -370,9 +367,145 @@ public class MenuManager : MonoBehaviour
                 );
             }
         }
-
-
     }
+
+
+    // ========================================================================
+    // RAYCAST A SINGLE PANEL
+    // ========================================================================
+
+    private Button RaycastPanel(
+        GraphicRaycaster graphicRaycaster,
+        Ray cameraRay)
+    {
+        if (graphicRaycaster == null)
+            return null;
+
+
+        // ------------------------------------------------------------
+        // Find the Canvas belonging to this panel
+        // ------------------------------------------------------------
+
+        Canvas canvas =
+            graphicRaycaster.GetComponent<Canvas>();
+
+        if (canvas == null)
+            return null;
+
+
+        RectTransform canvasRect =
+            canvas.GetComponent<RectTransform>();
+
+        if (canvasRect == null)
+            return null;
+
+
+        // ------------------------------------------------------------
+        // Find where the camera ray intersects the Canvas
+        // ------------------------------------------------------------
+
+        Plane canvasPlane =
+            new Plane(
+                canvasRect.forward,
+                canvasRect.position
+            );
+
+
+        if (!canvasPlane.Raycast(
+            cameraRay,
+            out float distance))
+        {
+            return null;
+        }
+
+
+        // ------------------------------------------------------------
+        // Don't interact with a Canvas behind the user
+        // ------------------------------------------------------------
+
+        if (distance < 0 ||
+            distance > raycastDistance)
+        {
+            return null;
+        }
+
+
+        // ------------------------------------------------------------
+        // Get the actual world position on the Canvas
+        // ------------------------------------------------------------
+
+        Vector3 worldHit =
+            cameraRay.GetPoint(distance);
+
+
+        // ------------------------------------------------------------
+        // Convert world position into screen coordinates
+        // ------------------------------------------------------------
+
+        Vector3 screenPoint =
+            playerCamera.WorldToScreenPoint(
+                worldHit
+            );
+
+        Vector2 screenPosition =
+            new Vector2(
+                screenPoint.x,
+                screenPoint.y
+            );
+
+
+        // ------------------------------------------------------------
+        // Create PointerEventData
+        // ------------------------------------------------------------
+
+        PointerEventData pointerData =
+            new PointerEventData(eventSystem);
+
+        pointerData.position =
+            screenPosition;
+
+
+        // ------------------------------------------------------------
+        // Graphic Raycast
+        // ------------------------------------------------------------
+
+        List<RaycastResult> results =
+            new List<RaycastResult>();
+
+        graphicRaycaster.Raycast(
+            pointerData,
+            results
+        );
+
+
+        // ------------------------------------------------------------
+        // Find a Button
+        // ------------------------------------------------------------
+
+        foreach (RaycastResult result in results)
+        {
+            Button button =
+                result.gameObject.GetComponent<Button>();
+
+
+            if (button == null)
+            {
+                button =
+                    result.gameObject.GetComponentInParent<Button>();
+            }
+
+
+            if (button != null &&
+                button.interactable)
+            {
+                return button;
+            }
+        }
+
+
+        return null;
+    }
+
 
     // ========================================================================
     // SELECT BUTTON
@@ -392,7 +525,11 @@ public class MenuManager : MonoBehaviour
         if (!hoveredButton.interactable)
             return;
 
+
+        // ------------------------------------------------------------
         // Trigger the button's normal Unity onClick events
+        // ------------------------------------------------------------
+
         hoveredButton.onClick.Invoke();
     }
 }
