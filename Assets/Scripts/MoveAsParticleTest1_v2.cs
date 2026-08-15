@@ -13,6 +13,7 @@ using TMPro;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static UnityEngine.ParticleSystem;
 
 public class MoveAsParticleTest1_v2: MonoBehaviour
 {
@@ -316,14 +317,150 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
     }
 
 
+    // Code for rendering message transmission and reception on top of the wave
+    private string message;
+    private float message_fontsize;
+    private float changeAlpha;
+    private GameObject[] particle_text_objs;
+    bool[] completed_particles;
+
+    public void SetMessage(string message, float message_fontsize = 1f, float changeAlpha=0.05f)
+    {
+        // We're going to assume that none of the examples will ever have the message change midway through rays bouncing
+        // Or, honestly I don't see why we would need the user to control the messages at all.
+        this.message_fontsize = message_fontsize;
+        this.changeAlpha = changeAlpha;
+        this.message = message;
+    }
+
+    private GameObject MakeMessageParticleText(ParticleSystem.Particle particle, int idx)
+    {
+        GameObject textObject =
+                    new GameObject($"ParticleMessage_{idx}");
+
+        textObject.AddComponent<FaceCamera>(); // Rotate to face camera.
+
+        textObject.transform.position =
+            particle.position;
+
+        TextMeshPro text =
+            textObject.AddComponent<TextMeshPro>();
+
+
+        text.text = message;
+        text.fontSize = message_fontsize;
+        text.alignment = TextAlignmentOptions.Center;
+
+        return textObject;
+    }
+
+    private void clearMessageVisuals()
+    {
+        // Clear completed particles
+        completed_particles = new bool[particles.Length];
+        // clear all receiver text
+        for (int i = 0; i < particles.Length; i++)
+        {
+            if (path_idx_to_rx_obj[i] == null)
+                continue;
+
+            TextMeshProUGUI[] texts =
+                path_idx_to_rx_obj[i].GetComponentsInChildren<TextMeshProUGUI>();
+
+            foreach (TextMeshProUGUI text in texts)
+            {
+                Destroy(text.gameObject);
+            }
+        }
+    }
+
+    private void addMessageToRx(string message, GameObject rx)
+    {
+        Transform messageDisplay =
+            rx.transform.Find("MessageDisplay");
+
+        if (messageDisplay == null)
+        {
+            Debug.LogWarning(
+                "Could not find MessageDisplay on " + rx.name
+            );
+            return;
+        }
+
+        // ------------------------------------------------------------
+        // Look for an existing message
+        // ------------------------------------------------------------
+
+        TextMeshPro[] existingTexts =
+            messageDisplay.GetComponentsInChildren<TextMeshPro>();
+
+        foreach (TextMeshPro existingText in existingTexts)
+        {
+            if (existingText.text == message)
+            {
+                Color color = existingText.color;
+
+                float oldAlpha = color.a;
+                float newAlpha =
+                    Mathf.Min(oldAlpha + changeAlpha, 1.0f);
+
+                color.a = newAlpha;
+                existingText.color = color;
+
+                return;
+            }
+        }
+
+        // ------------------------------------------------------------
+        // Message doesn't exist - create it
+        // ------------------------------------------------------------
+
+        GameObject textObject =
+            new GameObject("MessageText");
+
+        textObject.transform.SetParent(
+            messageDisplay,
+            false
+        );
+
+        // Add the same camera-facing script
+        textObject.AddComponent<FaceCamera>();
+
+        // Add TextMeshPro
+        TextMeshPro text =
+            textObject.AddComponent<TextMeshPro>();
+
+        text.text = message;
+
+        // SAME SIZE AS PARTICLE MESSAGE
+        text.fontSize = message_fontsize;
+
+        text.alignment =
+            TextAlignmentOptions.Center;
+
+        // Initial opacity
+        Color textColor = Color.white;
+        textColor.a = changeAlpha;
+        text.color = textColor;
+
+        // Position at the center of MessageDisplay
+        textObject.transform.localPosition =
+            Vector3.zero;
+
+        Debug.Log(
+            $"Created message '{message}' with opacity {text.color.a}"
+        );
+    }
+
+
+
+
     // sets the initial positions for each particle of ParticleSystem1
-
-
-    private GameObject[] particle_message_objs;
 
     private void InitializeParticlePositions()
     {
-        particle_message_objs = new GameObject[this.numRays];
+        particle_text_objs = new GameObject[this.numRays];
+
         // Loop through each particle
         for (int i = 0; i < this.numRays; i++)
         {
@@ -356,23 +493,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
 
             // Update the particle in the system
             this.particles[i] = particle;
-            GameObject textObject =
-                    new GameObject($"ParticleMessage_{i}");
-
-            textObject.AddComponent<FaceCamera>(); // Rotate to face camera.
-
-            textObject.transform.position =
-                particle.position;
-
-            TextMeshPro text =
-                textObject.AddComponent<TextMeshPro>();
-
-            text.text = "Test";
-            text.fontSize = 1f;
-            text.alignment =
-                TextAlignmentOptions.Center;
-
-            particle_message_objs[i] = textObject;
+            this.particle_text_objs[i] = MakeMessageParticleText(particle, i);
         }
 
         // Set the updated particles back to the ParticleSystem
@@ -1396,14 +1517,14 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         HideObjects_T3();
         T3buttons.SetActive(false);
         T4buttons.SetActive(false);
-
         wiVizOffTextObj.SetActive(false);
 
         // Init color palette related things
         InitializeColorPalette();
 
+        SetMessage("TEST"); //Ordering is important, the first time this is called must be before SetCurrentDataset
+        // SetCurrentDataset calls InitParticle functions, that need to make the message text, so message text must be defined beforehhand
         SetCurrentDataSet(csvFile_Demo);
-
 
         if (showAllMarksAtOnce_DBG)
         {
@@ -1545,131 +1666,13 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         // add this to ensure particles are updated immediately after reset
         particleSystem1.Clear(); // Clear any existing moving particles
         //particleSystem1.Play();  // don't need now, but may need later to turn on an particle system's effect if needed
+        clearMessageVisuals();
+
 
         Debug.Log("Rays reset to initial positions");
-
-        // Clear completed particles
-        completed_particles = new bool[particles.Length];
-        // clear all receiver text
-        for (int i = 0; i < particles.Length; i++)
-        {
-            if (path_idx_to_rx_obj[i] == null)
-                continue;
-
-            TextMeshProUGUI[] texts =
-                path_idx_to_rx_obj[i].GetComponentsInChildren<TextMeshProUGUI>();
-
-            foreach (TextMeshProUGUI text in texts)
-            {
-                Destroy(text.gameObject);
-            }
-        }
     }
 
-
-    private void addMessageToRx(string message, GameObject rx)
-    {
-        Transform messageDisplay =
-            rx.transform.Find("MessageDisplay");
-
-        if (messageDisplay == null)
-        {
-            Debug.LogWarning(
-                "Could not find MessageDisplay on " + rx.name
-            );
-            return;
-        }
-
-        Canvas canvas =
-            messageDisplay.GetComponent<Canvas>();
-
-        if (canvas == null)
-        {
-            Debug.LogWarning(
-                "MessageDisplay does not have a Canvas component."
-            );
-            return;
-        }
-
-        // ------------------------------------------------------------
-        // Look for an existing message
-        // ------------------------------------------------------------
-
-        TextMeshProUGUI[] existingTexts =
-            canvas.GetComponentsInChildren<TextMeshProUGUI>();
-
-        foreach (TextMeshProUGUI existingText in existingTexts)
-        {
-            if (existingText.text == message)
-            {
-                Color color = existingText.color;
-
-                float oldAlpha = color.a;
-                float newAlpha = Mathf.Min(oldAlpha + 0.05f, 1.0f);
-
-                color.a = newAlpha;
-                existingText.color = color;
-
-                return;
-            }
-        }
-
-
-        // ------------------------------------------------------------
-        // Message doesn't exist - create it
-        // ------------------------------------------------------------
-
-        GameObject textObject =
-            new GameObject("MessageText");
-
-        textObject.transform.SetParent(
-            canvas.transform,
-            false
-        );
-
-        TextMeshProUGUI text =
-            textObject.AddComponent<TextMeshProUGUI>();
-
-        text.text = message;
-
-        text.alignment =
-            TextAlignmentOptions.Center;
-
-        text.fontSize = 0.5f;
-
-        // Initial opacity
-        Color textColor = Color.white;
-        textColor.a = 0.01f;
-        text.color = textColor;
-
-
-        // ------------------------------------------------------------
-        // Position
-        // ------------------------------------------------------------
-
-        RectTransform rect =
-            textObject.GetComponent<RectTransform>();
-
-        rect.anchorMin =
-            new Vector2(0.5f, 0.5f);
-
-        rect.anchorMax =
-            new Vector2(0.5f, 0.5f);
-
-        rect.pivot =
-            new Vector2(0.5f, 0.5f);
-
-        rect.anchoredPosition =
-            Vector2.zero;
-
-        rect.sizeDelta =
-            new Vector2(10f, 10f);
-
-
-        Debug.Log(
-            $"Created message '{message}' with opacity {text.color.a}"
-        );
-    }
+    
 
     // ray moves first two positions but after that it just continue to next positions until the last position, and remove self - OK
     // ray's color changes based on its power value toward its minimum power value as moving along the path
@@ -1727,11 +1730,11 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
                 // ------------------------------------------------------------
                 // Update the text object to follow the particle
                 // ------------------------------------------------------------
-                if (particle_message_objs != null &&
-                    i < particle_message_objs.Length &&
-                    particle_message_objs[i] != null)
+                if (particle_text_objs != null &&
+                    i < particle_text_objs.Length &&
+                    particle_text_objs[i] != null)
                 {
-                    particle_message_objs[i].transform.position =
+                    particle_text_objs[i].transform.position =
                         particle.position;
                 }
 
@@ -1783,11 +1786,11 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
                     particle.position = currentSegmentEnd;
 
                     // Update the text object to the exact segment endpoint
-                    if (particle_message_objs != null &&
-                        i < particle_message_objs.Length &&
-                        particle_message_objs[i] != null)
+                    if (particle_text_objs != null &&
+                        i < particle_text_objs.Length &&
+                        particle_text_objs[i] != null)
                     {
-                        particle_message_objs[i].transform.position =
+                        particle_text_objs[i].transform.position =
                             particle.position;
                     }
 
@@ -1826,11 +1829,11 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
             // Keep text object synchronized with final particle position
             // ------------------------------------------------------------
             if (!particleReachedEnd &&
-                particle_message_objs != null &&
-                i < particle_message_objs.Length &&
-                particle_message_objs[i] != null)
+                particle_text_objs != null &&
+                i < particle_text_objs.Length &&
+                particle_text_objs[i] != null)
             {
-                particle_message_objs[i].transform.position =
+                particle_text_objs[i].transform.position =
                     particle.position;
             }
 
@@ -1841,21 +1844,20 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
                 particle.startSize = 0f;
                 particle.remainingLifetime = 0f;
 
+                // Mark particle as completed so it will not be added to Rx in next iteration
                 if (!completed_particles[i])
                 {
-                    string message = "test";
                     addMessageToRx(message, path_idx_to_rx_obj[i]);
                 }
-
                 completed_particles[i] = true;
 
                 // Clear the particle's text object once it reaches the end
-                if (particle_message_objs != null &&
-                    i < particle_message_objs.Length &&
-                    particle_message_objs[i] != null)
+                if (particle_text_objs != null &&
+                    i < particle_text_objs.Length &&
+                    particle_text_objs[i] != null)
                 {
-                    Destroy(particle_message_objs[i]);
-                    particle_message_objs[i] = null;
+                    Destroy(particle_text_objs[i]);
+                    particle_text_objs[i] = null;
                 }
             }
 
@@ -1904,9 +1906,9 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
     }
 
     // Ed - switch current dataset
-    bool[] completed_particles;
     void SetCurrentDataSet(string fileName)
     {
+
 
         GetData(fileName);
 
@@ -1920,15 +1922,14 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
 
         // Initialize particle system
         InitializeParticles1(); // For rays movement
-
         InitTotalNumOfIntersectionMarks();
         InitializeParticles2(); // For all intersection markers
         InitializeParticles3(); // For intersection markers on pass
+        this.completed_particles = new bool[particles.Length]; // All false by default, particles should be defined by now
 
         // Initialize path distances for power calculations
         InitializePathDistances();
 
-        completed_particles = new bool[particles.Length]; // All false by default
 
     }
 
