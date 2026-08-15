@@ -359,6 +359,8 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
             GameObject textObject =
                     new GameObject($"ParticleMessage_{i}");
 
+            textObject.AddComponent<FaceCamera>(); // Rotate to face camera.
+
             textObject.transform.position =
                 particle.position;
 
@@ -366,19 +368,9 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
                 textObject.AddComponent<TextMeshPro>();
 
             text.text = "Test";
-            text.fontSize = 10f;
+            text.fontSize = 1f;
             text.alignment =
                 TextAlignmentOptions.Center;
-
-            // Optional: make it face the camera
-            if (Camera.main != null)
-            {
-                textObject.transform.rotation =
-                    Quaternion.LookRotation(
-                        textObject.transform.position -
-                        Camera.main.transform.position
-                    );
-            }
 
             particle_message_objs[i] = textObject;
         }
