@@ -356,6 +356,8 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
 
     private void clearMessageVisuals()
     {
+        if (particles == null) return;
+
         // Clear completed particles
         completed_particles = new bool[particles.Length];
         // clear all receiver text
@@ -364,12 +366,18 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
             if (path_idx_to_rx_obj[i] == null)
                 continue;
 
+            // Destroy text on receiver
             TextMeshProUGUI[] texts =
                 path_idx_to_rx_obj[i].GetComponentsInChildren<TextMeshProUGUI>();
-
             foreach (TextMeshProUGUI text in texts)
             {
                 Destroy(text.gameObject);
+            }
+
+            // Destroy text on particles
+            foreach (GameObject particle_text in particle_text_objs)
+            {
+                Destroy(particle_text);
             }
         }
     }
@@ -1022,9 +1030,24 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
     }
 
     // Represents end Rx power with a single heatmap material applied to a slab
-    void MakeHeatmap_Rx()
-    {
+    GameObject heatmap_obj;
 
+    public void ToggleHeatmap()
+    {
+        if (heatmap_obj == null)
+        {
+            Debug.Log("Making heatmap");
+            MakeHeatmap();
+        }
+        else
+        {
+            Debug.Log("Clearing heatmap");
+            ClearHeatmap();
+        }
+    }
+
+    void MakeHeatmap()
+    {
 
         // Dictionary to track unique end positions to avoid duplicate RxObj instances
         Dictionary<Vector3, float> position_to_power = new Dictionary<Vector3, float>();
@@ -1092,20 +1115,20 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         float depth = 0.1f;
 
         // Create the heatmap plane as a cube
-        GameObject heatmap = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        heatmap.name = "Heatmap";
+        heatmap_obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        heatmap_obj.name = "Heatmap";
 
         Debug.Log("width" + width);
         Debug.Log("height" + height); //height is 0?
         Debug.Log("Z_level" + Z_level);
 
         // Position and size it
-        heatmap.transform.position = center;
+        heatmap_obj.transform.position = center;
         //heatmap.transform.localScale = new Vector3(width, height, depth);
-        heatmap.transform.localScale = new Vector3(height, depth, width);
+        heatmap_obj.transform.localScale = new Vector3(height, depth, width);
         // TODO: Apply your heatmap material here.
         Material heatmapMaterial = mat_heatmap;
-        heatmap.GetComponent<MeshRenderer>().material = heatmapMaterial;
+        heatmap_obj.GetComponent<MeshRenderer>().material = heatmapMaterial;
         HeatmapUpdater heatmapUpdater = new HeatmapUpdater();
         heatmapUpdater.material = heatmapMaterial;
         heatmapUpdater.points = position_to_color;
@@ -1113,21 +1136,13 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
 
         heatmapUpdater.Upload();
 
-/*
+    }
 
-        // Instantiate the RxObj at the end position as a child of RxObjGrp
-        GameObject endMarker = Instantiate(RxObj, endPosition, Quaternion.identity, RxObjGrp.transform);
-
-        // Ed - Set color of recievers based on power
-        MeshRenderer endMarkRend = endMarker.GetComponent<MeshRenderer>();
-        int rxColorIdx = GetColorIndexFromRx_dBm(rayPath.TotalPowerNum, 0);
-        Color rxColor = colorHelper.GetPaletteColor(rxColorIdx);
-        rxColor.a = 0.6f;
-        endMarkRend.material.SetColor("_BaseColor", rxColor);
-        endMarkRend.material.SetColor("_EmissionColor", rxColor);
-
-        Debug.Log($"Marked {position_to_power.Count} unique end points with RxObj instances.");*/
-
+    public void ClearHeatmap()
+    {
+        if (heatmap_obj == null) return;
+        Destroy(heatmap_obj);
+        heatmap_obj = null;
     }
 
     // Hide all Rx endpoints
@@ -1196,12 +1211,28 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         }
     }
 
+
+
+    LineRenderer[] ray_objects;
+    public void ToggleRays()
+    {
+        if (ray_objects == null)
+        {
+            MarkPathLine_MultiPaths();
+        }
+        else
+        {
+            ClearPathLine_MultiPaths();
+        }
+    }
     // Draw lines with multiple LineRenderers from loadedRaysPath
     void MarkPathLine_MultiPaths()
     {
+        ray_objects = new LineRenderer[loadedRaysPath.Count];
+
         // Iterate through each path in the loaded data
-        foreach (RayPathSet_v2 rayPath in loadedRaysPath)
-        {
+        for (int i = 0; i < loadedRaysPath.Count; i++) { 
+            RayPathSet_v2 rayPath = loadedRaysPath[i];
             // Create a new GameObject for each pathLine
             GameObject pathObject = new GameObject("PathLine_" + rayPath.RxNum);
             LineRenderer lineRenderer = pathObject.AddComponent<LineRenderer>();
@@ -1223,7 +1254,21 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
 
             // Set the positions for the LineRenderer
             lineRenderer.SetPositions(rayPath.PathPositions.ToArray());
+            ray_objects[i] = lineRenderer;
         }
+    }
+
+    void ClearPathLine_MultiPaths()
+    {
+        if (ray_objects == null) return;
+        // Iterate through each path in the loaded data
+        for (int i = 0; i < ray_objects.Length; i++) 
+        {
+            LineRenderer r = ray_objects[i];
+            r.positionCount = 0;
+
+        }
+        ray_objects = null; // Clear the line Renderer
     }
 
     // Check if a file exists in the Resources directory
@@ -1531,7 +1576,6 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
             ShowAllIntersectionMarks();
         }
         ToggleLiveMarksVisibility();
-        MarkPathLine_MultiPaths();
 
         //MarkPathPositions_obj();
     }
@@ -1909,12 +1953,14 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
     void SetCurrentDataSet(string fileName)
     {
 
+        ClearPathLine_MultiPaths();
+        ClearHeatmap();
 
         GetData(fileName);
 
         MarkStartPoint_Tx();
         MarkEndPoints_Rx();
-        //MakeHeatmap_Rx();
+        /*MakeHeatmap();*/
         //HideAllEndPoints_Rx(); // make Rx markers invisible initially
 
         //MarkPathLine_MultiPaths();
@@ -1979,12 +2025,16 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         {
             NextTask();
         }
+
+
     }
 
 
     public void NextTask()
     {
         taskState += 1;
+
+        clearMessageVisuals();
 
         if (taskState == 1)
         {
