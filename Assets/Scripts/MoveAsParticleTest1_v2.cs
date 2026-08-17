@@ -950,8 +950,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         // keep Transmitter Surface Type as Opaque in the Inspector
         startMark.GetComponent<Renderer>().material.SetFloat("_Surface", 0); // Uncomment if you want to set it programmatically
 
-        // Testing object highlighter script
-        highlighter.SetHighlighted(startMark, true);
+        //Book keeping for highlighting
+        this.tx_obj = startMark;
     }
 
 
@@ -1013,6 +1013,10 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
                 // Instantiate the RxObj at the end position as a child of RxObjGrp
                 GameObject endMarker = Instantiate(RxObj, endPosition, Quaternion.identity, RxObjGrp.transform);
+
+                // Bookkeeping for highlighting
+                this.rx_obj = endMarker;
+
 
                 // Ed - Set color of recievers based on power
                 MeshRenderer endMarkRend = endMarker.GetComponent<MeshRenderer>();
@@ -1555,6 +1559,11 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
     private ObjectHighlighter highlighter;
     private DemoTaskManager demoTask;
+
+    // bookkeeping.
+    private GameObject tx_obj;
+    private GameObject rx_obj;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -1594,7 +1603,6 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
 
         demoTask = new DemoTaskManager(this);
-
         //MarkPathPositions_obj();
     }
 
@@ -2053,10 +2061,6 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
         private State state, next_state;
 
-        [SerializeField]
-        public GameObject tx; // Make these public so that we can highlight them when necessary.
-        public GameObject rx;
-
         MoveAsParticleTest1_v2 m;
 
         public DemoTaskManager(MoveAsParticleTest1_v2 m)
@@ -2088,9 +2092,9 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                 case State.D2:
                     Debug.Log("State D2");
                     m.qTextObj.GetComponent<TextMeshProUGUI>().text = "Your router has a cable that connects it to the internet.\n Your router and TV both have antennas";
-/*                    highlighter.SetHighlighted(tx, true);
-                    highlighter.SetHighlighted(rx, true);*/
-                    
+                    m.highlighter.SetHighlighted(m.tx_obj, true); // Can access these, even though they are private??
+                    m.highlighter.SetHighlighted(m.rx_obj, true);
+
                     // Maybe add the SerializeField highlightable object in this class.
 
                     next_state = State.D2;
