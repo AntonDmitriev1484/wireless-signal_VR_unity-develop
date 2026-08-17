@@ -15,7 +15,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using static UnityEngine.ParticleSystem;
 
-public class MoveAsParticleTest1_v2: MonoBehaviour
+public class MoveAsParticleTest1_v2 : MonoBehaviour
 {
     [SerializeField, Tooltip("Particle System to show rays move on paths")]
     private ParticleSystem particleSystem1;
@@ -201,7 +201,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
             Debug.LogError("ParticleSystem component is missing. Please assign a Particle System in the Inspector.");
             return;
         }
-     
+
         var partSysMain = particleSystem1.main;
         partSysMain.startSize = 0;
 
@@ -244,7 +244,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
 
     // Init is for ParticleSystem2 to show all intersection marks at once
     private void InitializeParticles2()
-    {    
+    {
         // Check if particleSystem2 is assigned
         if (particleSystem2 == null)
         {
@@ -265,7 +265,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         var partSysMain2 = particleSystem2.main;
         partSysMain2.maxParticles = totalNumOfIntersectionMarks;
         partSysMain2.startLifetime = float.MaxValue; // Set long lifetime so particles stay visible
-        partSysMain2.startSize = rayAllMarkSize; 
+        partSysMain2.startSize = rayAllMarkSize;
         partSysMain2.startColor = Color.yellow; // Use yellow color for path markers
     }
 
@@ -325,7 +325,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
     private GameObject[] particle_text_objs;
     bool[] completed_particles;
 
-    public void SetMessage(string message, float message_fontsize = 1f, float changeAlpha=0.05f)
+    public void SetMessage(string message, float message_fontsize = 1f, float changeAlpha = 0.05f)
     {
         // We're going to assume that none of the examples will ever have the message change midway through rays bouncing
         // Or, honestly I don't see why we would need the user to control the messages at all.
@@ -696,7 +696,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
      */
     void ReadDataFromCode_Test1()
     {
-     
+
 
         loadedRaysPath.Clear();
 
@@ -704,7 +704,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         // Simulate reading a few lines of CSV data with 5 columns
         string csvLine1 = "1,0,Tx-Rx,2,\"0 0 0, 1.5 2 0, 3 1 0\"";
         string csvLine2 = "1,0,Tx-Rx,4,\"0 0 0, 1 3 0, 2 1 0, 3 2 0\"";
-        string csvLine3 = "2,0,Tx-Rx,2,\"0 0 0, 3 3 0\""; 
+        string csvLine3 = "2,0,Tx-Rx,2,\"0 0 0, 3 3 0\"";
         string csvLine4 = "2,0,Tx-Rx,3,\"0 0 0, 2 1.5 0, 3 3.5 0\"";
 
         LoadDataFromCSVLine(csvLine1);
@@ -712,7 +712,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         LoadDataFromCSVLine(csvLine3);
         LoadDataFromCSVLine(csvLine4);
 
-       
+
     }
 
 
@@ -1013,7 +1013,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
 
                 // Instantiate the RxObj at the end position as a child of RxObjGrp
                 GameObject endMarker = Instantiate(RxObj, endPosition, Quaternion.identity, RxObjGrp.transform);
-                
+
                 // Ed - Set color of recievers based on power
                 MeshRenderer endMarkRend = endMarker.GetComponent<MeshRenderer>();
                 int rxColorIdx = GetColorIndexFromRx_dBm(rayPath.TotalPowerNum, 0);
@@ -1114,8 +1114,8 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
             (minY + maxY) * 0.5f
         );
 
-        float width = maxX - minX + (2*padding);
-        float height = maxY - minY + (2*padding);
+        float width = maxX - minX + (2 * padding);
+        float height = maxY - minY + (2 * padding);
         float depth = 0.1f;
 
         // Create the heatmap plane as a cube
@@ -1235,7 +1235,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         ray_objects = new LineRenderer[loadedRaysPath.Count];
 
         // Iterate through each path in the loaded data
-        for (int i = 0; i < loadedRaysPath.Count; i++) { 
+        for (int i = 0; i < loadedRaysPath.Count; i++) {
             RayPathSet_v2 rayPath = loadedRaysPath[i];
             // Create a new GameObject for each pathLine
             GameObject pathObject = new GameObject("PathLine_" + rayPath.RxNum);
@@ -1266,7 +1266,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
     {
         if (ray_objects == null) return;
         // Iterate through each path in the loaded data
-        for (int i = 0; i < ray_objects.Length; i++) 
+        for (int i = 0; i < ray_objects.Length; i++)
         {
             LineRenderer r = ray_objects[i];
             r.positionCount = 0;
@@ -1294,7 +1294,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         }
     }
 
-    
+
     // Show or hide all particles in a ParticleSystem by enabling/disabling its renderer
     private void ShowHideParticleSystem(ParticleSystem partSys, bool isVisible)
     {
@@ -1457,7 +1457,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         // Update the particle at the current index
         intersectionMarksParticlesOnPass[currentMarkIdxOnPass].position = position;
         intersectionMarksParticlesOnPass[currentMarkIdxOnPass].startColor = color;
-        intersectionMarksParticlesOnPass[currentMarkIdxOnPass].startSize = rayLiveMarkSize; 
+        intersectionMarksParticlesOnPass[currentMarkIdxOnPass].startSize = rayLiveMarkSize;
         intersectionMarksParticlesOnPass[currentMarkIdxOnPass].remainingLifetime = float.MaxValue;
 
         // Increment the current index
@@ -1554,6 +1554,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
     }
 
     private ObjectHighlighter highlighter;
+    private DemoTaskManager demoTask;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -1564,7 +1565,13 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
 
         RxAreaObj1.SetActive(false);
         RxAreaObj2.SetActive(false);
-        NextButton.SetActive(false);
+        /*NextButton.SetActive(true);*/
+        a1TextObj.SetActive(false);
+        a2TextObj.SetActive(false);
+        a3TextObj.SetActive(false);
+        a4TextObj.SetActive(false);
+
+
         HideObjects_T1();
         T2obj1.GetComponent<MeshRenderer>().material = mat_objDisabled;
         HideObjects_T3();
@@ -1584,6 +1591,9 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
             ShowAllIntersectionMarks();
         }
         ToggleLiveMarksVisibility();
+
+
+        demoTask = new DemoTaskManager(this);
 
         //MarkPathPositions_obj();
     }
@@ -1629,7 +1639,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         // If resuming, adjust the start times based on stored progress
         else
         {
-            
+
 
             // Check if all rays are at their starting positions (index 0)
             bool allRaysAtStart = true;
@@ -1724,7 +1734,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
         Debug.Log("Rays reset to initial positions");
     }
 
-    
+
 
     // ray moves first two positions but after that it just continue to next positions until the last position, and remove self - OK
     // ray's color changes based on its power value toward its minimum power value as moving along the path
@@ -1987,6 +1997,24 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
 
     }
 
+    public class TaskNode {
+        public string taskName;
+
+        public int pre_text_idx;
+        public Dictionary<string, Action> pre_slides;
+
+        public string question;
+        public int correct_answer; // index corresponding to correct answer.
+        public List<string> answers;
+        public List<string> responses; // parallel arrays
+
+        public int post_text_idx;
+        public List<string> post_text;
+
+        public TaskNode[] nextTasks; // all possible next tasks
+        // logic for selecting next task depends on the selected answer
+    }
+
     public void StartTest(int testVer)
     {
         Destroy(case1button);
@@ -2015,9 +2043,66 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
 
 
     }
-    
-    
-    
+
+    public class DemoTaskManager
+    {
+        private enum State
+        {
+            D1, D2, D3, T1, D4, D5, D6
+        }
+
+        private State state, next_state;
+
+        [SerializeField]
+        public GameObject tx; // Make these public so that we can highlight them when necessary.
+        public GameObject rx;
+
+        MoveAsParticleTest1_v2 m;
+
+        public DemoTaskManager(MoveAsParticleTest1_v2 m)
+        {
+            this.m = m;
+            state = State.D1;
+            next_state = State.D1;
+        }
+
+        public void Advance()
+        {
+            state = next_state;
+        }
+
+        public void DoState()
+        {
+            switch (state)
+            {
+                case State.D1:
+                    Debug.Log("State D1");
+
+                    // Why is NextButton null??? It was just active 
+
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "How does your Smart TV stream videos from the internet?";
+                    // Maybe add the SerializeField highlightable object in this class.
+                    next_state = State.D2;
+
+                    break;
+                case State.D2:
+                    Debug.Log("State D2");
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "Your router has a cable that connects it to the internet.\n Your router and TV both have antennas";
+/*                    highlighter.SetHighlighted(tx, true);
+                    highlighter.SetHighlighted(rx, true);*/
+                    
+                    // Maybe add the SerializeField highlightable object in this class.
+
+                    next_state = State.D2;
+                    break;
+
+            }
+
+        }
+    }
+
+
+
     public void ButtonAnswer(int answer)
     {
         if((taskState > 0) && (taskState < 15))
@@ -2029,12 +2114,8 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
 
     public void ButtonNext()
     {
-        if ((taskState > 0) && (taskState < 15))
-        {
-            NextTask();
-        }
-
-
+        demoTask.Advance();
+        demoTask.DoState();
     }
 
 
@@ -2365,40 +2446,5 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
     }
 
 
-    //public void DisableCase1objs()
-    //{
-    //    case1_obj1.GetComponent<MeshRenderer>().material = mat_objDisabled;
-    //    case1_obj2.GetComponent<MeshRenderer>().material = mat_objDisabled;
-    //    case1_obj3.GetComponent<MeshRenderer>().material = mat_objDisabled;
-    //    case1_obj4.GetComponent<MeshRenderer>().material = mat_objDisabled;
-    //    case1_obj5.GetComponent<MeshRenderer>().material = mat_objDisabled;
-    //}
-
-    //public void EnableCase1objs()
-    //{
-    //    case1_obj1.GetComponent<MeshRenderer>().material = mat_obj1;
-    //    case1_obj2.GetComponent<MeshRenderer>().material = mat_obj2;
-    //    case1_obj3.GetComponent<MeshRenderer>().material = mat_obj3;
-    //    case1_obj4.GetComponent<MeshRenderer>().material = mat_obj4;
-    //    case1_obj5.GetComponent<MeshRenderer>().material = mat_obj5;
-    //}
-
-    //public void DisableCase2objs()
-    //{
-    //    case2_obj1.GetComponent<MeshRenderer>().material = mat_objDisabled;
-    //    case2_obj2.GetComponent<MeshRenderer>().material = mat_objDisabled;
-    //    case2_obj3.GetComponent<MeshRenderer>().material = mat_objDisabled;
-    //    case2_obj4.GetComponent<MeshRenderer>().material = mat_objDisabled;
-    //    case2_obj5.GetComponent<MeshRenderer>().material = mat_objDisabled;
-    //}
-
-    //public void EnableCase2objs()
-    //{
-    //    case2_obj1.GetComponent<MeshRenderer>().material = mat_obj1;
-    //    case2_obj2.GetComponent<MeshRenderer>().material = mat_obj2;
-    //    case2_obj3.GetComponent<MeshRenderer>().material = mat_obj3;
-    //    case2_obj4.GetComponent<MeshRenderer>().material = mat_obj4;
-    //    case2_obj5.GetComponent<MeshRenderer>().material = mat_obj5;
-    //}
 
 }
