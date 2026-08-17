@@ -96,6 +96,7 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
     [SerializeField] private Material mat_objDisabled;
 
     [SerializeField] private Material mat_heatmap;
+    [SerializeField] private Material mat_highlight;
 
     //case button objs (to be deleted after selection)
     [SerializeField] private GameObject case1button;
@@ -948,6 +949,9 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
 
         // keep Transmitter Surface Type as Opaque in the Inspector
         startMark.GetComponent<Renderer>().material.SetFloat("_Surface", 0); // Uncomment if you want to set it programmatically
+
+        // Testing object highlighter script
+        highlighter.SetHighlighted(startMark, true);
     }
 
 
@@ -1549,10 +1553,14 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
 
     }
 
+    private ObjectHighlighter highlighter;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         GetData(csvFile_Demo);
+
+        highlighter = new ObjectHighlighter();
+        highlighter.SetOutlineMaterial(mat_highlight);
 
         RxAreaObj1.SetActive(false);
         RxAreaObj2.SetActive(false);
@@ -2033,6 +2041,8 @@ public class MoveAsParticleTest1_v2: MonoBehaviour
     public void NextTask()
     {
         taskState += 1;
+
+
 
         clearMessageVisuals();
 
