@@ -134,6 +134,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
     // A list to hold all the loaded data from the CSV
     private List<RayPathSet_v2> loadedRaysPath = new List<RayPathSet_v2>();
+    private List<RayPathSet_v2> loadedHeatmapPath = new List<RayPathSet_v2>();
 
     // = Color Control ======================================================== BEGIN
     // Add a ColorHelper component to your scene and assign it in the Inspector. 
@@ -861,6 +862,111 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     }
 
 
+    // Changed to separate the heatmap data from the rx data.
+    void ReadDataFromCSVFile_Heatmap(string filename)
+    {
+        loadedHeatmapPath.Clear();
+
+        try
+        {
+            // Load the file located in the resources folder
+            string csvData = Resources.Load<TextAsset>(filename).text;
+
+            // Split the CSV data into lines
+            string[] lines = csvData.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+            // To skip the header line, start processing from the second line (index 1) 
+            for (int i = 1; i < lines.Length; i++)
+            {
+                LoadDataFromCSVLine_Heatmap(lines[i]); // Pass each data line to the processing method
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError("Error reading CSV file: " + e.Message);
+        }
+    }
+
+    void LoadDataFromCSVLine_Heatmap(string line)
+    {
+        // Skip empty, comment, or the header line content
+        if (string.IsNullOrEmpty(line) || line.TrimStart().StartsWith("//"))
+        {
+            return;
+        }
+
+        // Split the line by the primary comma delimiter
+        string[] fields = line.Split(',');
+
+        if (fields.Length >= numFields)
+        {
+            // --- Parse Rx Number ---
+            if (int.TryParse(fields[0].Trim(), out int rxNum))
+            {
+                // Create a new RayPathData object
+                RayPathSet_v2 rayPathDat = new RayPathSet_v2();
+                rayPathDat.RxNum = rxNum;
+                rayPathDat.PathPositionsIdx = 0; // Explicitly initialize path position index to 0
+
+                // --- Parse Power Number ---
+                if (float.TryParse(fields[1].Trim(), out float powNum))
+                {
+                    // Store the min power value for this ray at Rx position
+                    rayPathDat.PowerNum = powNum;
+
+                    // --- Parse Interaction Description ---
+                    rayPathDat.Interaction_Description = fields[2].Trim();
+
+                    // --- Parse Total Interactions for Path ---
+                    if (int.TryParse(fields[3].Trim(), out int totalInteractions))
+                    {
+                        rayPathDat.Total_Interactions_for_Path = totalInteractions;
+                    }
+                    else
+                    {
+                        Debug.LogError($"Failed to parse Total Interactions for Path from line: {line}");
+                    }
+
+                    if (float.TryParse(fields[4].Trim(), out float totPowNum))
+                    {
+                        rayPathDat.TotalPowerNum = totPowNum;
+                    }
+
+                    // --- Parse Path Positions String ---
+                    string positionsStringRaw = string.Join(",", fields, 5, fields.Length - 5).Trim();
+
+                    // Remove potential surrounding quotes
+                    if (positionsStringRaw.StartsWith("\"") && positionsStringRaw.EndsWith("\""))
+                    {
+                        positionsStringRaw = positionsStringRaw.Substring(1, positionsStringRaw.Length - 2);
+                    }
+
+                    // Use the ParsePathPositionsString method from our data structure
+                    rayPathDat.ParsePathPositionsString(positionsStringRaw);
+
+
+
+                    // NOTE: THEONLY CHANGE FROM OTHER FUNCTIONS
+                    loadedHeatmapPath.Add(rayPathDat);
+
+                }
+                else
+                {
+                    Debug.LogError($"Failed to parse Power Num {powNum} from line: {line}");
+                }
+            }
+            else
+            {
+                Debug.LogError($"Failed to parse RxNum from line: {line}");
+            }
+        }
+        else
+        {
+            Debug.LogError($"Line does not have enough fields (expected at least 4): {line}");
+        }
+    }
+
+
 
     // Mark all path change positions with objToMark prefab 
     void MarkPathPositions_obj()
@@ -1040,6 +1146,85 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         Debug.Log($"Marked {markedPositions.Count} unique end points with RxObj instances.");
     }
 
+    void MarkEndPoints_Rx_Heatmap()
+    {
+
+        path_idx_to_rx_obj = new GameObject[loadedHeatmapPath.Count()]; // Later used for displaying message above Rx as particles arrive.
+
+        // Check if RxObj is assigned
+        if (RxObj == null)
+        {
+            Debug.LogError("RxObj is not assigned in the Inspector! Cannot mark end points.");
+            return;
+        }
+
+        // Check if there are any paths loaded
+        if (loadedHeatmapPath.Count <= 0)
+        {
+            Debug.LogWarning("No ray paths available to mark end points.");
+            return;
+        }
+
+        // Create parent group for all Rx objects if it doesn't exist
+        if (RxObjGrp == null)
+        {
+            RxObjGrp = new GameObject("Rx_Objects_Group");
+        }
+        else
+        {
+            // Clear any existing children
+            foreach (Transform child in RxObjGrp.transform)
+            {
+                Destroy(child.gameObject);
+            }
+        }
+
+        // Dictionary to track unique end positions to avoid duplicate RxObj instances
+        Dictionary<Vector3, GameObject> markedPositions = new Dictionary<Vector3, GameObject>();
+
+
+        // Iterate through each path to mark its end point
+        for (int i = 0; i < loadedHeatmapPath.Count; i++)
+        {
+            RayPathSet_v2 rayPath = loadedHeatmapPath[i];
+            if (rayPath.PathPositions.Count > 0)
+            {
+                // Get the last position in the path (the end point)
+                Vector3 endPosition = rayPath.PathPositions[rayPath.PathPositions.Count - 1];
+
+                // Skip if we've already marked this position (avoid duplicates)
+                if (markedPositions.ContainsKey(endPosition))
+                {
+                    path_idx_to_rx_obj[i] = markedPositions[endPosition];
+                    continue;
+                }
+
+                // Instantiate the RxObj at the end position as a child of RxObjGrp
+                GameObject endMarker = Instantiate(RxObj, endPosition, Quaternion.identity, RxObjGrp.transform);
+
+                // Bookkeeping for highlighting
+                this.rx_obj = endMarker;
+
+
+                // Ed - Set color of recievers based on power
+                MeshRenderer endMarkRend = endMarker.GetComponent<MeshRenderer>();
+                int rxColorIdx = GetColorIndexFromRx_dBm(rayPath.TotalPowerNum, 0);
+                Color rxColor = colorHelper.GetPaletteColor(rxColorIdx);
+                rxColor.a = 0.6f;
+                endMarkRend.material.SetColor("_BaseColor", rxColor);
+                endMarkRend.material.SetColor("_EmissionColor", rxColor);
+
+                // Name the marker for easy identification
+                endMarker.name = $"Rx_Obj_{rayPath.RxNum}";
+
+                // Mark this position as processed
+                markedPositions[endPosition] = endMarker;
+                path_idx_to_rx_obj[i] = endMarker;
+            }
+        }
+        Debug.Log($"Marked {markedPositions.Count} unique end points with RxObj instances.");
+    }
+
     // Represents end Rx power with a single heatmap material applied to a slab
     GameObject heatmap_obj;
 
@@ -1048,7 +1233,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         if (heatmap_obj == null)
         {
             Debug.Log("Making heatmap");
-            MakeHeatmap();
+            //MakeHeatmap();
+            MarkEndPoints_Rx_Heatmap();
         }
         else
         {
@@ -1057,7 +1243,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         }
     }
 
-    void MakeHeatmap()
+/*    void MakeHeatmap()
     {
 
         // Dictionary to track unique end positions to avoid duplicate RxObj instances
@@ -1065,20 +1251,34 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         float Z_level = 0;
 
         // Iterate through each path store its position to its RX power
-        foreach (RayPathSet_v2 rayPath in loadedRaysPath)
+        foreach (RayPathSet_v2 rayPath in loadedHeatmapPath)
         {
             if (rayPath.PathPositions.Count > 0)
             {
                 // Get the last position in the path (the end point)
                 Vector3 endPosition = rayPath.PathPositions[rayPath.PathPositions.Count - 1];
-                Z_level = endPosition.y; // all Rx have same Z.
+                
+
+                Vector3 transformed_endPosition = endPosition;
+                // Unity -> Sionna
+                *//*                transformed_endPosition.x = -endPosition.z;
+                                transformed_endPosition.y = -endPosition.x;
+                                transformed_endPosition.z = endPosition.y;*//*
+                // Sionna -> Unity
+*//*                transformed_endPosition.x = -endPosition.y;
+                transformed_endPosition.y = endPosition.z;
+                transformed_endPosition.z = -endPosition.x;*/
+                /*              float temp = endPosition.z;
+                              endPosition.z = endPosition.y;
+                              endPosition.y = temp;*//*
+                Z_level = transformed_endPosition.z; // all Rx have same Z.
 
                 // Skip if we've already marked this position (avoid duplicates)
-                if (position_to_power.ContainsKey(endPosition))
+                if (position_to_power.ContainsKey(transformed_endPosition))
                     continue;
 
                 // Mark this position as processed
-                position_to_power[endPosition] = rayPath.TotalPowerNum;
+                position_to_power[transformed_endPosition] = rayPath.TotalPowerNum;
             }
         }
 
@@ -1098,8 +1298,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
             minX = Mathf.Min(minX, pos.x);
             maxX = Mathf.Max(maxX, pos.x);
 
-            minY = Mathf.Min(minY, pos.z); // No idea why this is the format lol
-            maxY = Mathf.Max(maxY, pos.z);
+            minY = Mathf.Min(minY, pos.y); // No idea why this is the format lol
+            maxY = Mathf.Max(maxY, pos.y);
 
             float power = kvp.Value;
             int rxColorIdx = GetColorIndexFromRx_dBm(power, 0);
@@ -1108,17 +1308,16 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
             position_to_color[pos] = rxColor;
         }
 
-        // Compute center and dimensions
-        /*        Vector3 center = new Vector3(
-                    (minX + maxX) * 0.5f,
-                    (minY + maxY) * 0.5f,
-                    Z_level
-                );*/
+        foreach (KeyValuePair<Vector3, float> kvp in position_to_power)
+        {
+            Debug.Log($"Rx position: {kvp.Key}");
+        }
+
 
         Vector3 center = new Vector3(
             (minX + maxX) * 0.5f,
-            Z_level,
-            (minY + maxY) * 0.5f
+            (minY + maxY) * 0.5f,
+            Z_level
         );
 
         float width = maxX - minX + (2 * padding);
@@ -1147,7 +1346,113 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
         heatmapUpdater.Upload();
 
-    }
+    }*/
+
+    void MakeHeatmap()
+    {
+
+        // Dictionary to track unique end positions to avoid duplicate RxObj instances
+        Dictionary<Vector3, float> position_to_power = new Dictionary<Vector3, float>();
+        float Z_level = 0;
+
+        // Iterate through each path store its position to its RX power
+        foreach (RayPathSet_v2 rayPath in loadedHeatmapPath)
+        {
+            if (rayPath.PathPositions.Count > 0)
+            {
+                // Get the last position in the path (the end point)
+                Vector3 endPosition = rayPath.PathPositions[rayPath.PathPositions.Count - 1];
+                Z_level = endPosition.y; // all Rx have same Z.
+
+               Vector3 transformed_endPosition;
+                transformed_endPosition.x = endPosition.x;
+                transformed_endPosition.y = endPosition.z;
+                transformed_endPosition.z = endPosition.y;
+    /*              float temp = endPosition.z;
+                  endPosition.z = endPosition.y;
+                  endPosition.y = temp;*/
+
+                  // Skip if we've already marked this position (avoid duplicates)
+                  if (position_to_power.ContainsKey(transformed_endPosition))
+                      continue;
+
+                  // Mark this position as processed
+                  position_to_power[transformed_endPosition] = rayPath.TotalPowerNum;
+              }
+          }
+
+          // Compute the bounds of all Rx positions
+          float minX = float.MaxValue;
+          float maxX = float.MinValue;
+          float minY = float.MaxValue;
+          float maxY = float.MinValue;
+          float padding = 0.1f;
+
+
+          Dictionary<Vector3, Color> position_to_color = new Dictionary<Vector3, Color>();
+          foreach (KeyValuePair<Vector3, float> kvp in position_to_power)
+          {
+              Vector3 pos = kvp.Key;
+
+              minX = Mathf.Min(minX, pos.x);
+              maxX = Mathf.Max(maxX, pos.x);
+
+              minY = Mathf.Min(minY, pos.z); // No idea why this is the format lol
+              maxY = Mathf.Max(maxY, pos.z);
+
+              float power = kvp.Value;
+              int rxColorIdx = GetColorIndexFromRx_dBm(power, 0);
+              Color rxColor = colorHelper.GetPaletteColor(rxColorIdx);
+              rxColor.a = 0.6f;
+              position_to_color[pos] = rxColor;
+          }
+
+          foreach (KeyValuePair<Vector3, float> kvp in position_to_power)
+          {
+              Debug.Log($"Rx position: {kvp.Key}");
+          }
+
+          // Compute center and dimensions
+          /*        Vector3 center = new Vector3(
+                      (minX + maxX) * 0.5f,
+                      (minY + maxY) * 0.5f,
+                      Z_level
+                  );
+          */
+
+          Vector3 center = new Vector3(
+              (minX + maxX) * 0.5f,
+              Z_level,
+              (minY + maxY) * 0.5f
+          );
+
+          float width = maxX - minX + (2 * padding);
+          float height = maxY - minY + (2 * padding);
+          float depth = 0.1f;
+
+          // Create the heatmap plane as a cube
+          heatmap_obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+          heatmap_obj.name = "Heatmap";
+
+          Debug.Log("width" + width);
+          Debug.Log("height" + height); //height is 0?
+          Debug.Log("Z_level" + Z_level);
+
+          // Position and size it
+          heatmap_obj.transform.position = center;
+          //heatmap.transform.localScale = new Vector3(width, height, depth);
+          heatmap_obj.transform.localScale = new Vector3(height, depth, width);
+          // TODO: Apply your heatmap material here.
+          Material heatmapMaterial = mat_heatmap;
+          heatmap_obj.GetComponent<MeshRenderer>().material = heatmapMaterial;
+          HeatmapUpdater heatmapUpdater = new HeatmapUpdater();
+          heatmapUpdater.material = heatmapMaterial;
+          heatmapUpdater.points = position_to_color;
+          // Should scale to how many rows there are. Or essentially to cover the distance between two adjacent Rx.
+
+          heatmapUpdater.Upload();
+
+      }
 
     public void ClearHeatmap()
     {
@@ -1534,7 +1839,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
     //=====================================================
 
-    void GetData(string fileName)
+    void GetData(string fileName, bool for_heatmap)
     {
 
         //-----------------------------------------
@@ -1550,7 +1855,15 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         // check if csvFileName exist in Asset/Resources dir, csvFileName should not contain extension name
         if (CheckIfFileExistsInResources(fileName))
         {
-            ReadDataFromCSVFile(fileName);
+            if (for_heatmap)
+            {
+                // Just call a different version of the functions that load into loadedHeatmapPath
+                ReadDataFromCSVFile_Heatmap(fileName);
+            }
+            else
+            {
+                ReadDataFromCSVFile(fileName);
+            }
             //DisplayLoadedData();
         }
         else
@@ -1570,7 +1883,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        GetData(csvFile_Demo);
+        GetData(csvFile_Demo, false);
+        GetData(csvFile_Demo +"_heatmap", true);
 
         highlighter = new ObjectHighlighter();
         highlighter.SetOutlineMaterial(mat_highlight);
@@ -1986,7 +2300,9 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         ClearPathLine_MultiPaths();
         ClearHeatmap();
 
-        GetData(fileName);
+        GetData(fileName, false);
+        GetData(fileName + "_heatmap", true);
+
 
         MarkStartPoint_Tx();
         MarkEndPoints_Rx();

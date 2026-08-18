@@ -34,6 +34,12 @@ public class HeatmapUpdater : MonoBehaviour
                 p.z,
                 defaultRadius);
 
+            /*            positions[count] = new Vector4(
+                            p.y,
+                            p.z,
+                            p.x,
+                            defaultRadius);*/
+
             colors[count] = new Vector4(
                 c.r,
                 c.g,
