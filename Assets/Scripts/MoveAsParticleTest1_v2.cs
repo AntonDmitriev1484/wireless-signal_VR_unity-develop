@@ -6,6 +6,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -367,20 +368,22 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
             if (path_idx_to_rx_obj[i] == null)
                 continue;
 
+            /// What if we specifically go to the MessageDisplay
             // Destroy text on receiver
-            TextMeshProUGUI[] texts =
-                path_idx_to_rx_obj[i].GetComponentsInChildren<TextMeshProUGUI>();
-            foreach (TextMeshProUGUI text in texts)
+            TextMeshPro[] texts =
+                path_idx_to_rx_obj[i].GetComponentsInChildren<TextMeshPro>(); // Texts is empty??? Should at least be filled the first time.
+            foreach (TextMeshPro text in texts)
             {
                 Destroy(text.gameObject);
             }
 
             // Destroy text on particles
-            foreach (GameObject particle_text in particle_text_objs)
-            {
-                Destroy(particle_text);
-            }
+            Destroy(particle_text_objs[i]);
         }
+
+        // Note this goes through the loop, but it doesn't destroy any text thats midair or on the receiver.
+
+        particle_text_objs = new GameObject[particles.Length];
     }
 
     private void addMessageToRx(string message, GameObject rx)
@@ -1591,9 +1594,9 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         // Init color palette related things
         InitializeColorPalette();
 
-        SetMessage("TEST"); //Ordering is important, the first time this is called must be before SetCurrentDataset
+/*        SetMessage("TEST");
         // SetCurrentDataset calls InitParticle functions, that need to make the message text, so message text must be defined beforehhand
-        SetCurrentDataSet(csvFile_Demo);
+        SetCurrentDataSet(csvFile_Demo);*/
 
         if (showAllMarksAtOnce_DBG)
         {
@@ -1696,6 +1699,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     {
         Debug.Log("Restarting rays...");
 
+        clearMessageVisuals();
+
         // Pause rays while we reset them
         bool wasPlaying = !isRayMovementPaused;
         if (wasPlaying)
@@ -1736,7 +1741,6 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         // add this to ensure particles are updated immediately after reset
         particleSystem1.Clear(); // Clear any existing moving particles
         //particleSystem1.Play();  // don't need now, but may need later to turn on an particle system's effect if needed
-        clearMessageVisuals();
 
 
         Debug.Log("Rays reset to initial positions");
@@ -2056,7 +2060,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     {
         private enum State
         {
-            D1, D2, D3, T1, D4, D5, D6
+            D1, D2, D3, D4, D5, D6, D7, D8, D9, END
         }
 
         private State state, next_state;
@@ -2068,6 +2072,10 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
             this.m = m;
             state = State.D1;
             next_state = State.D1;
+
+            m.SetMessage("Hello");
+            // SetCurrentDataset calls InitParticle functions, that need to make the message text, so message text must be defined beforehhand
+            m.SetCurrentDataSet(m.csvFile_Demo);
         }
 
         public void Advance()
@@ -2080,26 +2088,66 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
             switch (state)
             {
                 case State.D1:
-                    Debug.Log("State D1");
-
-                    // Why is NextButton null??? It was just active 
-
                     m.qTextObj.GetComponent<TextMeshProUGUI>().text = "How does your Smart TV stream videos from the internet?";
                     // Maybe add the SerializeField highlightable object in this class.
                     next_state = State.D2;
-
                     break;
                 case State.D2:
-                    Debug.Log("State D2");
-                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "Your router has a cable that connects it to the internet.\n Your router and TV both have antennas";
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "Your router has a cable that connects it to the internet. It has a transmitter (tx) that can send signals!";
                     m.highlighter.SetHighlighted(m.tx_obj, true); // Can access these, even though they are private??
-                    m.highlighter.SetHighlighted(m.rx_obj, true);
-
-                    // Maybe add the SerializeField highlightable object in this class.
-
-                    next_state = State.D2;
+                    m.highlighter.SetHighlighted(m.rx_obj, false);
+                    next_state = State.D3;
                     break;
-
+                case State.D3:
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "Your TV has a receiver (rx) that lets it hear signals!";
+                    m.highlighter.SetHighlighted(m.tx_obj, false); 
+                    m.highlighter.SetHighlighted(m.rx_obj, true);
+                    next_state = State.D4;
+                    break;
+                case State.D4:
+                    m.highlighter.SetHighlighted(m.tx_obj, true);
+                    m.highlighter.SetHighlighted(m.rx_obj, true);
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "Let's look at how the tx communicates with the rx. The router is going to say \"Hello\" to your TV!";
+                    m.NextButton.SetActive(false);
+                    // yield return new WaitForSeconds(2f);
+                    m.SetMessage("Hello");
+                    m.RayPlayPause();
+                    m.NextButton.SetActive(true);
+                    next_state = State.D5;
+                    break;
+                case State.D5:
+                    m.highlighter.SetHighlighted(m.tx_obj, false);
+                    m.highlighter.SetHighlighted(m.rx_obj, false);
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "You can see that the signal contains the message, and it interacts with the entire room." +
+                        "The signal moving through the environment like this is called propagation.";
+                    m.NextButton.SetActive(false);
+                    // yield return new WaitForSeconds(2f);
+                    m.RayPlayPause();
+                    m.NextButton.SetActive(true);
+                    next_state = State.D6;
+                    break;
+                case State.D6:
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "You can Play, Pause, and Re-start the signal using the menu. " +
+                        "Go ahead and play the signal using the menu, and take a look at the rx.";
+                    m.highlighter.SetHighlighted(m.tx_obj, false);
+                    m.highlighter.SetHighlighted(m.rx_obj, true);
+                    next_state = State.D7;
+                    break;
+                case State.D7:
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "As more signal reaches the receiver, you can see that the message becomes clearer. " +
+                                                            "The yellow ring represents the signal strength. " +
+                                                            "Think of receiving a strong signal, as someone talking very loudly - normally its clearer to hear someone the louder they speak";
+                    next_state = State.D8;
+                    break;
+                case State.D8:
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "Seeing the signal strength can give you an idea of how easy the signal is for the rx to understand. " +
+                                                                    "Just like the signal is impacted by the environment, so is its signal strength. Press the \'Heatmap\' button to see how the signal strength varies across the room. ";
+                    next_state = State.D9;
+                    break;
+                case State.D9:
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "If you want to see the paths the signal takes, without seeing the . Press the \'Rays\' button in the menu.";
+                    next_state = State.END;
+                    break;
             }
 
         }
