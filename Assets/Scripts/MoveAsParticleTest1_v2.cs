@@ -1244,111 +1244,6 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         }
     }
 
-/*    void MakeHeatmap()
-    {
-
-        // Dictionary to track unique end positions to avoid duplicate RxObj instances
-        Dictionary<Vector3, float> position_to_power = new Dictionary<Vector3, float>();
-        float Z_level = 0;
-
-        // Iterate through each path store its position to its RX power
-        foreach (RayPathSet_v2 rayPath in loadedHeatmapPath)
-        {
-            if (rayPath.PathPositions.Count > 0)
-            {
-                // Get the last position in the path (the end point)
-                Vector3 endPosition = rayPath.PathPositions[rayPath.PathPositions.Count - 1];
-                
-
-                Vector3 transformed_endPosition = endPosition;
-                // Unity -> Sionna
-                *//*                transformed_endPosition.x = -endPosition.z;
-                                transformed_endPosition.y = -endPosition.x;
-                                transformed_endPosition.z = endPosition.y;*//*
-                // Sionna -> Unity
-*//*                transformed_endPosition.x = -endPosition.y;
-                transformed_endPosition.y = endPosition.z;
-                transformed_endPosition.z = -endPosition.x;*/
-                /*              float temp = endPosition.z;
-                              endPosition.z = endPosition.y;
-                              endPosition.y = temp;*//*
-                Z_level = transformed_endPosition.z; // all Rx have same Z.
-
-                // Skip if we've already marked this position (avoid duplicates)
-                if (position_to_power.ContainsKey(transformed_endPosition))
-                    continue;
-
-                // Mark this position as processed
-                position_to_power[transformed_endPosition] = rayPath.TotalPowerNum;
-            }
-        }
-
-        // Compute the bounds of all Rx positions
-        float minX = float.MaxValue;
-        float maxX = float.MinValue;
-        float minY = float.MaxValue;
-        float maxY = float.MinValue;
-        float padding = 0.1f;
-
-
-        Dictionary<Vector3, Color> position_to_color = new Dictionary<Vector3, Color>();
-        foreach (KeyValuePair<Vector3, float> kvp in position_to_power)
-        {
-            Vector3 pos = kvp.Key;
-
-            minX = Mathf.Min(minX, pos.x);
-            maxX = Mathf.Max(maxX, pos.x);
-
-            minY = Mathf.Min(minY, pos.y); // No idea why this is the format lol
-            maxY = Mathf.Max(maxY, pos.y);
-
-            float power = kvp.Value;
-            int rxColorIdx = GetColorIndexFromRx_dBm(power, 0);
-            Color rxColor = colorHelper.GetPaletteColor(rxColorIdx);
-            rxColor.a = 0.6f;
-            position_to_color[pos] = rxColor;
-        }
-
-        foreach (KeyValuePair<Vector3, float> kvp in position_to_power)
-        {
-            Debug.Log($"Rx position: {kvp.Key}");
-        }
-
-
-        Vector3 center = new Vector3(
-            (minX + maxX) * 0.5f,
-            (minY + maxY) * 0.5f,
-            Z_level
-        );
-
-        float width = maxX - minX + (2 * padding);
-        float height = maxY - minY + (2 * padding);
-        float depth = 0.1f;
-
-        // Create the heatmap plane as a cube
-        heatmap_obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        heatmap_obj.name = "Heatmap";
-
-        Debug.Log("width" + width);
-        Debug.Log("height" + height); //height is 0?
-        Debug.Log("Z_level" + Z_level);
-
-        // Position and size it
-        heatmap_obj.transform.position = center;
-        //heatmap.transform.localScale = new Vector3(width, height, depth);
-        heatmap_obj.transform.localScale = new Vector3(height, depth, width);
-        // TODO: Apply your heatmap material here.
-        Material heatmapMaterial = mat_heatmap;
-        heatmap_obj.GetComponent<MeshRenderer>().material = heatmapMaterial;
-        HeatmapUpdater heatmapUpdater = new HeatmapUpdater();
-        heatmapUpdater.material = heatmapMaterial;
-        heatmapUpdater.points = position_to_color;
-        // Should scale to how many rows there are. Or essentially to cover the distance between two adjacent Rx.
-
-        heatmapUpdater.Upload();
-
-    }*/
-
     void MakeHeatmap()
     {
 
@@ -1401,18 +1296,11 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
               position_to_color[pos] = rxColor;
           }
 
-          foreach (KeyValuePair<Vector3, float> kvp in position_to_power)
+          foreach (KeyValuePair<Vector3, Color> kvp in position_to_color)
           {
               Debug.Log($"Rx position: {kvp.Key}");
           }
 
-          // Compute center and dimensions
-          /*        Vector3 center = new Vector3(
-                      (minX + maxX) * 0.5f,
-                      (minY + maxY) * 0.5f,
-                      Z_level
-                  );
-          */
 
           Vector3 center = new Vector3(
               (minX + maxX) * 0.5f,
@@ -1428,6 +1316,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
           // Create the heatmap plane as a cube
           heatmap_obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
           heatmap_obj.name = "Heatmap";
+          heatmap_obj.GetComponent<Collider>().enabled = false;
 
           Debug.Log("width" + width);
           Debug.Log("height" + height); //height is 0?
@@ -1440,14 +1329,16 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
           // TODO: Apply your heatmap material here.
           Material heatmapMaterial = mat_heatmap;
           heatmap_obj.GetComponent<MeshRenderer>().material = heatmapMaterial;
-          HeatmapUpdater heatmapUpdater = new HeatmapUpdater();
-          heatmapUpdater.material = heatmapMaterial;
-          heatmapUpdater.points = position_to_color;
-          // Should scale to how many rows there are. Or essentially to cover the distance between two adjacent Rx.
 
-          heatmapUpdater.Upload();
+            HeatmapUpdater heatmapUpdater =
+                heatmap_obj.AddComponent<HeatmapUpdater>();
 
-      }
+            heatmapUpdater.material = heatmapMaterial;
+            heatmapUpdater.points = position_to_color;
+
+            heatmapUpdater.Upload();
+
+    }
 
     public void ClearHeatmap()
     {
