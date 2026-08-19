@@ -98,6 +98,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
     [SerializeField] private Material mat_heatmap;
     [SerializeField] private Material mat_highlight;
+    [SerializeField] private UnityEngine.UI.Image highlightCirclePrefab;
 
     //case button objs (to be deleted after selection)
     [SerializeField] private GameObject case1button;
@@ -1057,7 +1058,11 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         startMark.name = "Tx_Obj";
 
         // keep Transmitter Surface Type as Opaque in the Inspector
-        startMark.GetComponent<Renderer>().material.SetFloat("_Surface", 0); // Uncomment if you want to set it programmatically
+        if (startMark.GetComponent<Renderer>() != null)
+        {
+            startMark.GetComponent<Renderer>().material.SetFloat("_Surface", 0); // Uncomment if you want to set it programmatically
+        }
+
 
         //Book keeping for highlighting
         this.tx_obj = startMark;
@@ -1654,7 +1659,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
         // Update the particle at the current index
         intersectionMarksParticlesOnPass[currentMarkIdxOnPass].position = position;
-        intersectionMarksParticlesOnPass[currentMarkIdxOnPass].startColor = color;
+        /*intersectionMarksParticlesOnPass[currentMarkIdxOnPass].startColor = color;*/
+        intersectionMarksParticlesOnPass[currentMarkIdxOnPass].startColor = viz_color;
         intersectionMarksParticlesOnPass[currentMarkIdxOnPass].startSize = rayLiveMarkSize;
         intersectionMarksParticlesOnPass[currentMarkIdxOnPass].remainingLifetime = float.MaxValue;
 
@@ -1772,8 +1778,41 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         GetData(csvFile_Demo, false);
         GetData(csvFile_Demo +"_heatmap", true);
 
-        highlighter = new ObjectHighlighter();
-        highlighter.SetOutlineMaterial(mat_highlight);
+        GameObject highlighterObject =
+            new GameObject("ObjectHighlighter");
+
+                highlighter =
+                    highlighterObject.AddComponent<ObjectHighlighter>();
+
+        GameObject player = GameObject.Find("Player");
+
+        if (player == null)
+        {
+            Debug.LogError("Player not found.");
+            return;
+        }
+
+        Transform cameraTransform = player.transform.Find("Camera");
+
+        if (cameraTransform == null)
+        {
+            Debug.LogError("Camera not found under Player.");
+            return;
+        }
+
+        Camera playerCamera = cameraTransform.GetComponent<Camera>();
+
+        if (playerCamera == null)
+        {
+            Debug.LogError("No Camera component found on Player/Camera.");
+            return;
+        }
+
+        highlighter.Initialize(
+                    playerCamera,
+                    highlightCirclePrefab
+                );
+
 
         RxAreaObj1.SetActive(false);
         RxAreaObj2.SetActive(false);
@@ -2304,6 +2343,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                     break;
                 case State.D2:
                     m.qTextObj.GetComponent<TextMeshProUGUI>().text = "Your router has a cable that connects it to the internet. It has a transmitter (tx) that can send signals!";
+                    Debug.Log(m);
+                    Debug.Log(m.highlighter);
                     m.highlighter.SetHighlighted(m.tx_obj, true); // Can access these, even though they are private??
                     m.highlighter.SetHighlighted(m.rx_obj, false);
                     next_state = State.D3;
