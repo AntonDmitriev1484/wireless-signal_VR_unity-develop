@@ -1440,11 +1440,11 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
             LineRenderer lineRenderer = pathObject.AddComponent<LineRenderer>();
 
             // Set the LineRenderer properties
-            lineRenderer.startWidth = 0.003f;
-            lineRenderer.endWidth = 0.003f;
+            lineRenderer.startWidth = 0.01f;
+            lineRenderer.endWidth = 0.01f;
             lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
-            lineRenderer.startColor = Color.red;
-            lineRenderer.endColor = Color.red;
+            lineRenderer.startColor = this.viz_color;
+            lineRenderer.endColor = this.viz_color;
             lineRenderer.positionCount = 0; // Initialize with zero positions
             lineRenderer.useWorldSpace = true; // Use world space for the positions
             lineRenderer.numCapVertices = 3; // Set the number of cap vertices for smoother ends
@@ -2046,9 +2046,10 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                     rayColor = colorHelper.GetPaletteColor(colorIdx);
 
                     // Apply color to the particle
-                    particle.startColor = rayColor;
+                    //particle.startColor = rayColor;
                     //particle.startColor = Color.green; // TEST
                 }
+
                 //== Ray Color ======================================== END
 
                 // Check if the particle has completed the current segment (or should instantly move)
@@ -2180,6 +2181,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     }
 
     // Ed - switch current dataset
+    public Color32 viz_color = Color.red;
+
     void SetCurrentDataSet(string fileName)
     {
 
@@ -2207,6 +2210,11 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
         // Initialize path distances for power calculations
         InitializePathDistances();
+
+        for (int i = 0; i < this.particles.Length; i++) {
+            this.particles[i].startColor = this.viz_color;
+            this.particles[i].color = this.viz_color;
+        }
 
 
     }
