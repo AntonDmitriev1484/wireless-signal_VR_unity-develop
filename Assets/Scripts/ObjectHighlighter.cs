@@ -5,19 +5,23 @@ using System.Collections.Generic;
 public class ObjectHighlighter : MonoBehaviour
 {
     private Camera playerCamera;
-    private Image highlightCirclePrefab;
+    private Sprite highlightSprite;
     private float padding = 20f;
+
+    private Canvas highlightCanvas;
 
     private Dictionary<GameObject, Image> highlights = new();
 
     public void Initialize(
         Camera camera,
-        Image circlePrefab,
+        Sprite circleSprite,
         float circlePadding = 20f)
     {
         playerCamera = camera;
-        highlightCirclePrefab = circlePrefab;
+        highlightSprite = circleSprite;
         padding = circlePadding;
+
+        CreateHighlightCanvas();
     }
 
     private void LateUpdate()
@@ -25,7 +29,29 @@ public class ObjectHighlighter : MonoBehaviour
         UpdateHighlights();
     }
 
-    public void SetHighlighted(GameObject target, bool highlighted)
+    private void CreateHighlightCanvas()
+    {
+        GameObject canvasObject =
+            new GameObject("HighlightCanvas");
+
+        highlightCanvas =
+            canvasObject.AddComponent<Canvas>();
+
+        highlightCanvas.renderMode =
+            RenderMode.ScreenSpaceOverlay;
+
+        CanvasScaler scaler =
+            canvasObject.AddComponent<CanvasScaler>();
+
+        scaler.uiScaleMode =
+            CanvasScaler.ScaleMode.ScaleWithScreenSize;
+
+        canvasObject.AddComponent<GraphicRaycaster>();
+    }
+
+    public void SetHighlighted(
+        GameObject target,
+        bool highlighted)
     {
         if (target == null)
             return;
@@ -43,25 +69,53 @@ public class ObjectHighlighter : MonoBehaviour
 
     private void CreateHighlight(GameObject target)
     {
-        if (highlightCirclePrefab == null)
+        if (highlightSprite == null)
         {
-            Debug.LogError("Highlight circle prefab has not been initialized.");
+            Debug.LogError(
+                "Highlight sprite has not been initialized."
+            );
+
             return;
         }
 
-        Image highlight = Instantiate(
-            highlightCirclePrefab,
-            highlightCirclePrefab.transform.parent
+        if (highlightCanvas == null)
+        {
+            Debug.LogError(
+                "Highlight canvas has not been created."
+            );
+
+            return;
+        }
+
+        GameObject highlightObject =
+            new GameObject(
+                target.name + "_Highlight"
+            );
+
+        highlightObject.transform.SetParent(
+            highlightCanvas.transform,
+            false
         );
 
-        highlight.gameObject.SetActive(true);
+        Image highlight =
+            highlightObject.AddComponent<Image>();
 
-        highlights.Add(target, highlight);
+        highlight.sprite = highlightSprite;
+        highlight.preserveAspect = true;
+
+        highlightObject.SetActive(true);
+
+        highlights.Add(
+            target,
+            highlight
+        );
     }
 
     private void RemoveHighlight(GameObject target)
     {
-        if (highlights.TryGetValue(target, out Image highlight))
+        if (highlights.TryGetValue(
+            target,
+            out Image highlight))
         {
             if (highlight != null)
                 Destroy(highlight.gameObject);
@@ -72,16 +126,26 @@ public class ObjectHighlighter : MonoBehaviour
 
     private void UpdateHighlights()
     {
-        foreach (KeyValuePair<GameObject, Image> pair in highlights)
+        foreach (
+            KeyValuePair<GameObject, Image> pair
+            in highlights)
         {
-            if (pair.Key == null || pair.Value == null)
+            if (pair.Key == null ||
+                pair.Value == null)
+            {
                 continue;
+            }
 
-            UpdateHighlight(pair.Key, pair.Value);
+            UpdateHighlight(
+                pair.Key,
+                pair.Value
+            );
         }
     }
 
-    private void UpdateHighlight(GameObject target, Image highlight)
+    private void UpdateHighlight(
+        GameObject target,
+        Image highlight)
     {
         Renderer[] renderers =
             target.GetComponentsInChildren<Renderer>();
@@ -92,11 +156,18 @@ public class ObjectHighlighter : MonoBehaviour
             return;
         }
 
-        Bounds bounds = renderers[0].bounds;
+        highlight.gameObject.SetActive(true);
 
-        for (int i = 1; i < renderers.Length; i++)
+        Bounds bounds =
+            renderers[0].bounds;
+
+        for (int i = 1;
+             i < renderers.Length;
+             i++)
         {
-            bounds.Encapsulate(renderers[i].bounds);
+            bounds.Encapsulate(
+                renderers[i].bounds
+            );
         }
 
         Vector3 min = bounds.min;
@@ -104,15 +175,53 @@ public class ObjectHighlighter : MonoBehaviour
 
         Vector3[] corners =
         {
-            new Vector3(min.x, min.y, min.z),
-            new Vector3(min.x, min.y, max.z),
-            new Vector3(min.x, max.y, min.z),
-            new Vector3(min.x, max.y, max.z),
+            new Vector3(
+                min.x,
+                min.y,
+                min.z
+            ),
 
-            new Vector3(max.x, min.y, min.z),
-            new Vector3(max.x, min.y, max.z),
-            new Vector3(max.x, max.y, min.z),
-            new Vector3(max.x, max.y, max.z)
+            new Vector3(
+                min.x,
+                min.y,
+                max.z
+            ),
+
+            new Vector3(
+                min.x,
+                max.y,
+                min.z
+            ),
+
+            new Vector3(
+                min.x,
+                max.y,
+                max.z
+            ),
+
+            new Vector3(
+                max.x,
+                min.y,
+                min.z
+            ),
+
+            new Vector3(
+                max.x,
+                min.y,
+                max.z
+            ),
+
+            new Vector3(
+                max.x,
+                max.y,
+                min.z
+            ),
+
+            new Vector3(
+                max.x,
+                max.y,
+                max.z
+            )
         };
 
         float minX = float.MaxValue;
@@ -122,23 +231,43 @@ public class ObjectHighlighter : MonoBehaviour
 
         foreach (Vector3 corner in corners)
         {
-            Debug.Log(playerCamera);
-           
             Vector3 screenPoint =
-                playerCamera.WorldToScreenPoint(corner);
+                playerCamera.WorldToScreenPoint(
+                    corner
+                );
 
-            minX = Mathf.Min(minX, screenPoint.x);
-            maxX = Mathf.Max(maxX, screenPoint.x);
+            minX = Mathf.Min(
+                minX,
+                screenPoint.x
+            );
 
-            minY = Mathf.Min(minY, screenPoint.y);
-            maxY = Mathf.Max(maxY, screenPoint.y);
+            maxX = Mathf.Max(
+                maxX,
+                screenPoint.x
+            );
+
+            minY = Mathf.Min(
+                minY,
+                screenPoint.y
+            );
+
+            maxY = Mathf.Max(
+                maxY,
+                screenPoint.y
+            );
         }
 
-        float width = maxX - minX;
-        float height = maxY - minY;
+        float width =
+            maxX - minX;
+
+        float height =
+            maxY - minY;
 
         float circleSize =
-            Mathf.Max(width, height) + padding * 2f;
+            Mathf.Max(
+                width,
+                height
+            ) + padding * 2f;
 
         highlight.rectTransform.position =
             new Vector3(
@@ -148,12 +277,17 @@ public class ObjectHighlighter : MonoBehaviour
             );
 
         highlight.rectTransform.sizeDelta =
-            new Vector2(circleSize, circleSize);
+            new Vector2(
+                circleSize,
+                circleSize
+            );
     }
 
     public void ClearAllHighlights()
     {
-        foreach (Image highlight in highlights.Values)
+        foreach (
+            Image highlight
+            in highlights.Values)
         {
             if (highlight != null)
                 Destroy(highlight.gameObject);
@@ -161,88 +295,14 @@ public class ObjectHighlighter : MonoBehaviour
 
         highlights.Clear();
     }
+
+    private void OnDestroy()
+    {
+        if (highlightCanvas != null)
+        {
+            Destroy(
+                highlightCanvas.gameObject
+            );
+        }
+    }
 }
-
-/*using UnityEngine;
-using System.Collections.Generic;
-
-public class ObjectHighlighter : MonoBehaviour
-{
-    private Material highlightMaterial;
-
-    [SerializeField] private float highlightScale = 3.5f;
-
-    private Dictionary<GameObject, GameObject> highlights = new();
-
-    public void SetOutlineMaterial(Material material)
-    {
-        highlightMaterial = material;
-    }
-
-    public void SetHighlighted(GameObject target, bool highlighted)
-    {
-        if (target == null)
-            return;
-
-        if (highlighted)
-        {
-            if (!highlights.ContainsKey(target))
-                CreateHighlight(target);
-        }
-        else
-        {
-            RemoveHighlight(target);
-        }
-    }
-
-    private void CreateHighlight(GameObject target)
-    {
-        MeshFilter source = target.GetComponent<MeshFilter>();
-
-        if (source == null || source.sharedMesh == null)
-        {
-            Debug.LogWarning($"No MeshFilter found on {target.name}");
-            return;
-        }
-
-        GameObject highlight = new GameObject(
-            target.name + "_Highlight"
-        );
-
-        highlight.transform.position = target.transform.position;
-        highlight.transform.rotation = target.transform.rotation;
-        highlight.transform.localScale =
-            target.transform.localScale * highlightScale;
-
-        MeshFilter meshFilter =
-            highlight.AddComponent<MeshFilter>();
-
-        MeshRenderer meshRenderer =
-            highlight.AddComponent<MeshRenderer>();
-
-        meshFilter.sharedMesh = source.sharedMesh;
-        meshRenderer.sharedMaterial = highlightMaterial;
-
-        highlights.Add(target, highlight);
-    }
-
-    private void RemoveHighlight(GameObject target)
-    {
-        if (highlights.TryGetValue(target, out GameObject highlight))
-        {
-            Destroy(highlight);
-            highlights.Remove(target);
-        }
-    }
-
-    public void ClearAllHighlights()
-    {
-        foreach (GameObject highlight in highlights.Values)
-        {
-            if (highlight != null)
-                Destroy(highlight);
-        }
-
-        highlights.Clear();
-    }
-}*/

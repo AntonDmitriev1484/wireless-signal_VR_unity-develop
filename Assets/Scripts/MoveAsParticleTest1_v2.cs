@@ -99,6 +99,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     [SerializeField] private Material mat_heatmap;
     [SerializeField] private Material mat_highlight;
     [SerializeField] private UnityEngine.UI.Image highlightCirclePrefab;
+    [SerializeField] private Sprite highlightCircleSprite;
 
     //case button objs (to be deleted after selection)
     [SerializeField] private GameObject case1button;
@@ -1810,7 +1811,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
         highlighter.Initialize(
                     playerCamera,
-                    highlightCirclePrefab
+                    highlightCircleSprite
                 );
 
 
