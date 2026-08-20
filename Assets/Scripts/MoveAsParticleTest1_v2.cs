@@ -2280,6 +2280,31 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
     }
 
+    private static string HighlightSubstrings(
+        string text,
+        List<string> substrings)
+    {
+        if (string.IsNullOrEmpty(text) ||
+            substrings == null ||
+            substrings.Count == 0)
+        {
+            return text;
+        }
+
+        foreach (string substring in substrings)
+        {
+            if (string.IsNullOrEmpty(substring))
+                continue;
+
+            text = text.Replace(
+                substring,
+                "<color=#00FF00>" + substring + "</color>"
+            );
+        }
+
+        return text;
+    }
+
     public class DemoTaskManager
     {
         private enum State
@@ -2290,6 +2315,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         private State state, next_state;
 
         MoveAsParticleTest1_v2 m;
+        List<string> highlights;
 
         public DemoTaskManager(MoveAsParticleTest1_v2 m)
         {
@@ -2309,6 +2335,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
         public void DoState()
         {
+
             switch (state)
             {
                 case State.D1:
@@ -2317,7 +2344,13 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                     next_state = State.D2;
                     break;
                 case State.D2:
-                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "Your router has a cable that connects it to the internet. It has a transmitter (tx) that can send signals!";
+                    highlights = new List<string>
+                        {
+                            "transmitter (tx)"
+                        };
+
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = 
+                        HighlightSubstrings("Your router has a cable that connects it to the internet. It has a transmitter (tx) that can send signals!", highlights);
                     Debug.Log(m);
                     Debug.Log(m.highlighter);
                     m.highlighter.SetHighlighted(m.tx_obj, true); // Can access these, even though they are private??
@@ -2325,15 +2358,23 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                     next_state = State.D3;
                     break;
                 case State.D3:
-                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "Your TV has a receiver (rx) that lets it hear signals!";
+                    highlights = new List<string>
+                        {
+                            "receiver (rx)"
+                        };
+
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = 
+                        HighlightSubstrings("Your TV has a receiver (rx) that lets it hear signals!", highlights);
                     m.highlighter.SetHighlighted(m.tx_obj, false); 
                     m.highlighter.SetHighlighted(m.rx_obj, true);
                     next_state = State.D4;
                     break;
                 case State.D4:
+                    highlights = new List<string>{"rx", "tx"};
                     m.highlighter.SetHighlighted(m.tx_obj, true);
                     m.highlighter.SetHighlighted(m.rx_obj, true);
-                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "Let's look at how the tx communicates with the rx. The router is going to say \"Hello\" to your TV!";
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = 
+                        HighlightSubstrings("Let's look at how the tx communicates with the rx. The router is going to say \"Hello\" to your TV!", highlights);
                     m.NextButton.SetActive(false);
                     // yield return new WaitForSeconds(2f);
                     m.SetMessage("Hello");
@@ -2354,24 +2395,32 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                     break;
                 case State.D6:
                     m.qTextObj.GetComponent<TextMeshProUGUI>().text = "You can Play, Pause, and Re-start the signal using the menu. " +
-                        "Go ahead and play the signal using the menu, and take a look at the rx.";
+                        "If you want to see the paths the signal takes through the room . Press the \'Rays\' button in the menu.";
                     m.highlighter.SetHighlighted(m.tx_obj, false);
-                    m.highlighter.SetHighlighted(m.rx_obj, true);
+                    m.highlighter.SetHighlighted(m.rx_obj, false);
                     next_state = State.D7;
                     break;
                 case State.D7:
-                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "As more signal reaches the receiver, you can see that the message becomes clearer. " +
-                                                            "The yellow ring represents the signal strength. " +
-                                                            "Think of receiving a strong signal, as someone talking very loudly - normally its clearer to hear someone the louder they speak";
+                    highlights = new List<string> { "rx"};
+                    m.highlighter.SetHighlighted(m.tx_obj, false);
+                    m.highlighter.SetHighlighted(m.rx_obj, true);
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = 
+                        HighlightSubstrings("Go ahead and play the signal using the menu and take a look at the rx."
+                        + "You can see that the message becomes clearer to read as more paths arrive.", highlights);
                     next_state = State.D8;
                     break;
                 case State.D8:
-                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "Seeing the signal strength can give you an idea of how easy the signal is for the rx to understand. " +
-                                                                    "Just like the signal is impacted by the environment, so is its signal strength. Press the \'Heatmap\' button to see how the signal strength varies across the room. ";
+                    m.highlighter.SetHighlighted(m.tx_obj, false);
+                    m.highlighter.SetHighlighted(m.rx_obj, false);
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "The signal gets stronger the more paths arrive. A higher signal strength can help the rx better understand the message."
+                        + " A high received signal strength is like someone talking loudly. The louder you hear someone speak - the easier it is for you to understand them.";
                     next_state = State.D9;
                     break;
                 case State.D9:
-                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "If you want to see the paths the signal takes, without seeing the . Press the \'Rays\' button in the menu.";
+
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "The final signal strength is shown by the color of the receiver." +
+                                                                    " Just like the signal is impacted by the environment, so is its signal strength. Press the \'Heatmap\' button to see how the signal strength varies across the room. ";
+
                     next_state = State.END;
                     break;
             }
