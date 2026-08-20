@@ -326,17 +326,19 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     private string message;
     private float message_fontsize;
     private float changeAlpha;
+    private float changeSize;
     private GameObject[] particle_text_objs;
     bool[] completed_particles;
     Vector3 fixed_text_translation = new Vector3(0f, 0.1f, 0f);
 
-    public void SetMessage(string message, float message_fontsize = 1f, float changeAlpha = 0.05f)
+    public void SetMessage(string message, float message_fontsize = 1f, float changeAlpha = 0.1f, float changeSize = 0.3f)
     {
         // We're going to assume that none of the examples will ever have the message change midway through rays bouncing
         // Or, honestly I don't see why we would need the user to control the messages at all.
         this.message_fontsize = message_fontsize;
         this.changeAlpha = changeAlpha;
         this.message = message;
+        this.changeSize = changeSize;
     }
 
     private GameObject MakeMessageParticleText(ParticleSystem.Particle particle, int idx)
@@ -417,11 +419,13 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                 Color color = existingText.color;
 
                 float oldAlpha = color.a;
-                float newAlpha =
-                    Mathf.Min(oldAlpha + changeAlpha, 1.0f);
+                float newAlpha = Mathf.Min(oldAlpha + changeAlpha, 5.0f);
+
+                float newSize = Mathf.Min(existingText.fontSize + changeAlpha, 1.0f);
 
                 color.a = newAlpha;
                 existingText.color = color;
+                existingText.fontSize += changeSize;
 
                 return;
             }

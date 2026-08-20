@@ -170,22 +170,25 @@ public class ObjectHighlighter : MonoBehaviour
             );
         }
 
-        // Check whether the object is in front of the camera.
-        Vector3 directionToTarget =
-            bounds.center - playerCamera.transform.position;
+        // --------------------------------------------------
+        // Check whether the CENTER of the object is in front
+        // of the camera.
+        // --------------------------------------------------
 
-        float cameraDot =
-            Vector3.Dot(
-                playerCamera.transform.forward,
-                directionToTarget
+        Vector3 cameraSpaceCenter =
+            playerCamera.transform.InverseTransformPoint(
+                bounds.center
             );
 
-        // Object is behind the camera.
-        if (cameraDot <= 0f)
+        if (cameraSpaceCenter.z <= 0f)
         {
             highlight.gameObject.SetActive(false);
             return;
         }
+
+        // --------------------------------------------------
+        // Project the bounds corners onto the screen.
+        // --------------------------------------------------
 
         Vector3 min = bounds.min;
         Vector3 max = bounds.max;
@@ -210,14 +213,32 @@ public class ObjectHighlighter : MonoBehaviour
 
         bool anyPointInFront = false;
 
+        // Don't project points that are extremely close
+        // to the camera plane.
+        const float minimumDepth = 0.05f;
+
         foreach (Vector3 corner in corners)
         {
+            Vector3 cameraSpacePoint =
+                playerCamera.transform.InverseTransformPoint(
+                    corner
+                );
+
+            // Ignore points behind or extremely close
+            // to the camera plane.
+            if (cameraSpacePoint.z <= minimumDepth)
+                continue;
+
             Vector3 screenPoint =
                 playerCamera.WorldToScreenPoint(corner);
 
-            // Ignore corners behind the camera.
-            if (screenPoint.z <= 0f)
+            if (float.IsNaN(screenPoint.x) ||
+                float.IsNaN(screenPoint.y) ||
+                float.IsInfinity(screenPoint.x) ||
+                float.IsInfinity(screenPoint.y))
+            {
                 continue;
+            }
 
             anyPointInFront = true;
 
@@ -242,32 +263,104 @@ public class ObjectHighlighter : MonoBehaviour
             );
         }
 
-        // None of the object's bounds are in front
-        // of the camera.
         if (!anyPointInFront)
         {
             highlight.gameObject.SetActive(false);
             return;
         }
 
-        float width =
-            maxX - minX;
+        // --------------------------------------------------
+        // Prevent pathological projections from creating a
+        // full-screen highlight.
+        // --------------------------------------------------
 
-        float height =
-            maxY - minY;
+        float width = maxX - minX;
+        float height = maxY - minY;
+
+        if (width <= 0f ||
+            height <= 0f ||
+            width > Screen.width * 2f ||
+            height > Screen.height * 2f)
+        {
+            highlight.gameObject.SetActive(false);
+            return;
+        }
+
+        // --------------------------------------------------
+        // Clamp the projected bounds to the screen.
+        // --------------------------------------------------
+
+        float clampedMinX =
+            Mathf.Clamp(
+                minX,
+                0f,
+                Screen.width
+            );
+
+        float clampedMaxX =
+            Mathf.Clamp(
+                maxX,
+                0f,
+                Screen.width
+            );
+
+        float clampedMinY =
+            Mathf.Clamp(
+                minY,
+                0f,
+                Screen.height
+            );
+
+        float clampedMaxY =
+            Mathf.Clamp(
+                maxY,
+                0f,
+                Screen.height
+            );
+
+        float clampedWidth =
+            clampedMaxX - clampedMinX;
+
+        float clampedHeight =
+            clampedMaxY - clampedMinY;
+
+        // Object is completely outside the screen.
+        if (clampedWidth <= 0f ||
+            clampedHeight <= 0f)
+        {
+            highlight.gameObject.SetActive(false);
+            return;
+        }
+
+        // --------------------------------------------------
+        // Calculate highlight size.
+        // --------------------------------------------------
 
         float circleSize =
             Mathf.Max(
-                width,
-                height
+                clampedWidth,
+                clampedHeight
             ) + padding * 2f;
+
+        // Final safety check.
+        if (circleSize > Mathf.Max(
+                Screen.width,
+                Screen.height) * 2f)
+        {
+            highlight.gameObject.SetActive(false);
+            return;
+        }
+
+        // --------------------------------------------------
+        // Position the highlight.
+        // --------------------------------------------------
 
         highlight.gameObject.SetActive(true);
 
         highlight.rectTransform.position =
             new Vector3(
-                (minX + maxX) / 2f,
-                (minY + maxY) / 2f,
+                (clampedMinX + clampedMaxX) / 2f,
+                (clampedMinY + clampedMaxY) / 2f,
                 0f
             );
 
