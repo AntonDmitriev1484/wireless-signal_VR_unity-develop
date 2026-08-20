@@ -62,12 +62,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     [SerializeField] private GameObject AnswerButtons;
     [SerializeField] private GameObject NextButton;
 
-    [SerializeField] private GameObject T3buttons;
-    [SerializeField] private GameObject T4buttons;
-
     //WiViz on/off text boxes
-    [SerializeField] private GameObject wiVizOnTextObj;
-    [SerializeField] private GameObject wiVizOffTextObj;
 
     //objects for case 1 and 2
     [SerializeField] private GameObject T1obj1;
@@ -1832,9 +1827,6 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         HideObjects_T1();
         T2obj1.GetComponent<MeshRenderer>().material = mat_objDisabled;
         HideObjects_T3();
-        T3buttons.SetActive(false);
-        T4buttons.SetActive(false);
-        wiVizOffTextObj.SetActive(false);
 
         // Init color palette related things
         InitializeColorPalette();
@@ -2285,30 +2277,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
     public void StartTest(int testVer)
     {
-        Destroy(case1button);
-        Destroy(case2button);
-
-        answerLog += "C" + testVer.ToString() + ".";
-
-        taskState = 0;
-        caseState = testVer;
-        NextTask();
-
-        if (caseState == 1)
-        {
-            HideAllEndPoints_Rx();
-            RxAreaObj1.SetActive(true);
-            wiVizOffTextObj.SetActive(false);
-            wiVizOnTextObj.SetActive(true);
-        }
-        else if (caseState == 2)
-        {
-            HideAllMovingRays();
-            DisableMarksOnPass();
-            wiVizOffTextObj.SetActive(true);
-            wiVizOnTextObj.SetActive(false);
-        }
-
+        
 
     }
 
@@ -2415,11 +2384,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
     public void ButtonAnswer(int answer)
     {
-        if((taskState > 0) && (taskState < 15))
-        {
-            answerLog += answer.ToString();
-            NextTask();
-        }
+
     }
 
     public void ButtonNext()
@@ -2428,241 +2393,6 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         demoTask.DoState();
     }
 
-
-    public void NextTask()
-    {
-        taskState += 1;
-
-
-
-        clearMessageVisuals();
-
-        if (taskState == 1)
-        {
-            SetCurrentDataSet(csvFile_T12_1); //data set
-
-            ShowObjects_T1();
-
-            NextButton.SetActive(false);
-            AnswerButtons.SetActive(true);
-
-            qTextObj.GetComponent<TextMeshProUGUI>().text = "Q: Which highlighted object is having the biggest effect on the WiFi performance at the desk?";
-            a1TextObj.GetComponent<TextMeshProUGUI>().text = "Couch (red)";
-            a2TextObj.GetComponent<TextMeshProUGUI>().text = "TV/TV Stand (green)";
-            a3TextObj.GetComponent<TextMeshProUGUI>().text = "Projector Stand (blue)";
-            a4TextObj.GetComponent<TextMeshProUGUI>().text = "Wall Shelf (orange)";
-        }
-        else if (taskState == 2)
-        {
-            NextButton.SetActive(true);
-            AnswerButtons.SetActive(false);
-
-            qTextObj.GetComponent<TextMeshProUGUI>().text = "Q: (Verbal) Explain your answer and what in the visualization led you to it.";
-            a1TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a2TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a3TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a4TextObj.GetComponent<TextMeshProUGUI>().text = "";
-        }
-        else if (taskState == 3)
-        {
-            HideObjects_T1();
-            SetCurrentDataSet(csvFile_T12_1); //data set
-
-            T2obj1.GetComponent<MeshRenderer>().material = mat_obj1;
-
-            NextButton.SetActive(false);
-            AnswerButtons.SetActive(true);
-
-            qTextObj.GetComponent<TextMeshProUGUI>().text = "Q: If we were to add a metal cabinet in the highlighted location (red), how do you think it will affect WiFi performance at the desk?";
-            a1TextObj.GetComponent<TextMeshProUGUI>().text = "Improve";
-            a2TextObj.GetComponent<TextMeshProUGUI>().text = "Worsen";
-            a3TextObj.GetComponent<TextMeshProUGUI>().text = "Stay about the same";
-            a4TextObj.GetComponent<TextMeshProUGUI>().text = "------";
-        }
-        else if (taskState == 4)
-        {
-            NextButton.SetActive(true);
-            AnswerButtons.SetActive(false);
-
-            qTextObj.GetComponent<TextMeshProUGUI>().text = "Q: (Verbal) Explain your answer and what in the visualization led you to it.";
-            a1TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a2TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a3TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a4TextObj.GetComponent<TextMeshProUGUI>().text = "";
-        }
-        else if (taskState == 5)
-        {
-            T2obj1.GetComponent<MeshRenderer>().material = mat_objDisabled;
-
-            SetCurrentDataSet(csvFile_T12_1); //data set
-
-            ShowObjects_T3();
-            T3buttons.SetActive(true);
-
-            NextButton.SetActive(false);
-            AnswerButtons.SetActive(true);
-
-            qTextObj.GetComponent<TextMeshProUGUI>().text = "Q: If you had to choose a spot to install a metal cabinet, which location do you think will have the biggest affect on the WiFi performance at the desk?";
-            a1TextObj.GetComponent<TextMeshProUGUI>().text = "Location 1 (red)";
-            a2TextObj.GetComponent<TextMeshProUGUI>().text = "Location 2 (green)";
-            a3TextObj.GetComponent<TextMeshProUGUI>().text = "Location 3 (blue)";
-            a4TextObj.GetComponent<TextMeshProUGUI>().text = "-----";
-        }
-        else if (taskState == 6)
-        {
-            NextButton.SetActive(true);
-            AnswerButtons.SetActive(false);
-
-            qTextObj.GetComponent<TextMeshProUGUI>().text = "Q: (Verbal) Explain your answer and what in the visualization led you to it.";
-            a1TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a2TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a3TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a4TextObj.GetComponent<TextMeshProUGUI>().text = "";
-        }
-        else if (taskState == 7)
-        {
-            HideObjects_T3();
-            T3buttons.SetActive(false);
-
-            SetCurrentDataSet(csvFile_T12_2); //data set
-
-            ShowObjects_T1();
-
-            NextButton.SetActive(false);
-            AnswerButtons.SetActive(true);
-
-            qTextObj.GetComponent<TextMeshProUGUI>().text = "Q: Which highlighted object is having the biggest effect on the WiFi performance at the desk?";
-            a1TextObj.GetComponent<TextMeshProUGUI>().text = "Couch (red)";
-            a2TextObj.GetComponent<TextMeshProUGUI>().text = "TV/TV Stand (green)";
-            a3TextObj.GetComponent<TextMeshProUGUI>().text = "Projector Stand (blue)";
-            a4TextObj.GetComponent<TextMeshProUGUI>().text = "Wall Shelf (orange)";
-        }
-        else if (taskState == 8)
-        {
-            NextButton.SetActive(true);
-            AnswerButtons.SetActive(false);
-
-            qTextObj.GetComponent<TextMeshProUGUI>().text = "Q: (Verbal) Explain your answer and what in the visualization led you to it.";
-            a1TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a2TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a3TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a4TextObj.GetComponent<TextMeshProUGUI>().text = "";
-        }
-        else if (taskState == 9)
-        {
-            HideObjects_T1();
-            SetCurrentDataSet(csvFile_T12_2); //data set
-
-            T2obj2.GetComponent<MeshRenderer>().material = mat_obj3;
-
-            NextButton.SetActive(false);
-            AnswerButtons.SetActive(true);
-
-            qTextObj.GetComponent<TextMeshProUGUI>().text = "Q: If we were to remove the highlighted projector stand (blue), how do you think it will affect WiFi performance at the desk?";
-            a1TextObj.GetComponent<TextMeshProUGUI>().text = "Improve";
-            a2TextObj.GetComponent<TextMeshProUGUI>().text = "Worsen";
-            a3TextObj.GetComponent<TextMeshProUGUI>().text = "Stay about the same";
-            a4TextObj.GetComponent<TextMeshProUGUI>().text = "------";
-        }
-        else if (taskState == 10)
-        {
-            NextButton.SetActive(true);
-            AnswerButtons.SetActive(false);
-
-            qTextObj.GetComponent<TextMeshProUGUI>().text = "Q: (Verbal) Explain your answer and what in the visualization led you to it.";
-            a1TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a2TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a3TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a4TextObj.GetComponent<TextMeshProUGUI>().text = "";
-        }
-        else if (taskState == 11)
-        {
-            T2obj2.GetComponent<MeshRenderer>().material = mat_objNeutral;
-
-            SetCurrentDataSet(csvFile_T12_2); //data set
-
-            ShowObjects_T3();
-            T3buttons.SetActive(true);
-
-            NextButton.SetActive(false);
-            AnswerButtons.SetActive(true);
-
-            qTextObj.GetComponent<TextMeshProUGUI>().text = "Q: If you had to choose a spot to install a metal cabinet, which location do you think will have the biggest affect on the WiFi performance at the desk?";
-            a1TextObj.GetComponent<TextMeshProUGUI>().text = "Location 1 (red)";
-            a2TextObj.GetComponent<TextMeshProUGUI>().text = "Location 2 (green)";
-            a3TextObj.GetComponent<TextMeshProUGUI>().text = "Location 3 (blue)";
-            a4TextObj.GetComponent<TextMeshProUGUI>().text = "-----";
-        }
-        else if (taskState == 12)
-        {
-            NextButton.SetActive(true);
-            AnswerButtons.SetActive(false);
-
-            qTextObj.GetComponent<TextMeshProUGUI>().text = "Q: (Verbal) Explain your answer and what in the visualization led you to it.";
-            a1TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a2TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a3TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a4TextObj.GetComponent<TextMeshProUGUI>().text = "";
-        }
-        else if (taskState == 13)
-        {
-            HideObjects_T3();
-            T3buttons.SetActive(false);
-
-            if (caseState == 1)
-            {
-                RxAreaObj1.SetActive(false);
-                RxAreaObj2.SetActive(true);
-            }
-
-            SetCurrentDataSet(csvFile_T4_base);
-
-            NextButton.SetActive(true);
-            AnswerButtons.SetActive(false);
-
-            if (caseState == 1)
-            {
-                qTextObj.GetComponent<TextMeshProUGUI>().text = "Q: (Verbal) Let's now inspect the wireless propogation in the conference room. If this scene was changed to have all of the walls be made out of metal, what do you think will change about the WiFi behavior?";
-            }
-            else
-            {
-                qTextObj.GetComponent<TextMeshProUGUI>().text = "Q: (Verbal) Let's now inspect the signal power heatmap in the conference room. If this scene was changed to have all of the walls be made out of metal, what do you think will change about the WiFi behavior?";
-            }
-
-            a1TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a2TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a3TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a4TextObj.GetComponent<TextMeshProUGUI>().text = "";
-        }
-        else if (taskState == 14)
-        {
-            T4buttons.SetActive(true);
-
-            NextButton.SetActive(true);
-            AnswerButtons.SetActive(false);
-
-            qTextObj.GetComponent<TextMeshProUGUI>().text = "Q: (Verbal) When we change to metal walls, the Wifi performance gets worse. Can you explain why based on the visualization?\n\nYou can toggle between both versions of the scene.";
-            a1TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a2TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a3TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a4TextObj.GetComponent<TextMeshProUGUI>().text = "";
-        }
-        else if (taskState == 15)
-        {
-            T4buttons.SetActive(false);
-
-            NextButton.SetActive(false);
-            AnswerButtons.SetActive(false);
-
-            qTextObj.GetComponent<TextMeshProUGUI>().text = "Complete";
-            a1TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a2TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a3TextObj.GetComponent<TextMeshProUGUI>().text = "";
-            a4TextObj.GetComponent<TextMeshProUGUI>().text = "";
-
-            outputTextObj.GetComponent<TextMeshProUGUI>().text = answerLog;
-        }
-    }
 
 
     public void ShowObjects_T1()
