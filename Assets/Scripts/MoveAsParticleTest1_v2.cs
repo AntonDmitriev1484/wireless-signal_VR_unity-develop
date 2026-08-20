@@ -59,7 +59,6 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     [SerializeField] private GameObject a3TextObj;
     [SerializeField] private GameObject a4TextObj;
 
-    [SerializeField] private GameObject AnswerButtons;
     [SerializeField] private GameObject NextButton;
 
     //WiViz on/off text boxes
