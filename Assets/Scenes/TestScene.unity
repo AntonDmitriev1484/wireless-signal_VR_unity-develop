@@ -20904,7 +20904,7 @@ MonoBehaviour:
   mat_heatmap: {fileID: 2100000, guid: bd35fa17620d0ac469203ef011918a20, type: 2}
   mat_highlight: {fileID: 2100000, guid: 1f00de6ab9c5361439e9937b56d070a5, type: 2}
   highlightCirclePrefab: {fileID: 0}
-  highlightCircleSprite: {fileID: 21300000, guid: 499d6198fbaaf79488ddb297b28d62b2, type: 3}
+  highlightCircleSprite: {fileID: 21300000, guid: fb82fda7d834d7b4590ce1e966bc03ce, type: 3}
   case1button: {fileID: 0}
   case2button: {fileID: 0}
   outputTextObj: {fileID: 853662665}

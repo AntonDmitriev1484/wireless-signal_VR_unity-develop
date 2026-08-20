@@ -103,6 +103,8 @@ public class ObjectHighlighter : MonoBehaviour
         highlight.sprite = highlightSprite;
         highlight.preserveAspect = true;
 
+        highlight.color = Color.yellow;
+
         highlightObject.SetActive(true);
 
         highlights.Add(
@@ -144,8 +146,8 @@ public class ObjectHighlighter : MonoBehaviour
     }
 
     private void UpdateHighlight(
-        GameObject target,
-        Image highlight)
+    GameObject target,
+    Image highlight)
     {
         Renderer[] renderers =
             target.GetComponentsInChildren<Renderer>();
@@ -155,8 +157,6 @@ public class ObjectHighlighter : MonoBehaviour
             highlight.gameObject.SetActive(false);
             return;
         }
-
-        highlight.gameObject.SetActive(true);
 
         Bounds bounds =
             renderers[0].bounds;
@@ -170,71 +170,56 @@ public class ObjectHighlighter : MonoBehaviour
             );
         }
 
+        // Check whether the object is in front of the camera.
+        Vector3 directionToTarget =
+            bounds.center - playerCamera.transform.position;
+
+        float cameraDot =
+            Vector3.Dot(
+                playerCamera.transform.forward,
+                directionToTarget
+            );
+
+        // Object is behind the camera.
+        if (cameraDot <= 0f)
+        {
+            highlight.gameObject.SetActive(false);
+            return;
+        }
+
         Vector3 min = bounds.min;
         Vector3 max = bounds.max;
 
         Vector3[] corners =
         {
-            new Vector3(
-                min.x,
-                min.y,
-                min.z
-            ),
+        new Vector3(min.x, min.y, min.z),
+        new Vector3(min.x, min.y, max.z),
+        new Vector3(min.x, max.y, min.z),
+        new Vector3(min.x, max.y, max.z),
 
-            new Vector3(
-                min.x,
-                min.y,
-                max.z
-            ),
-
-            new Vector3(
-                min.x,
-                max.y,
-                min.z
-            ),
-
-            new Vector3(
-                min.x,
-                max.y,
-                max.z
-            ),
-
-            new Vector3(
-                max.x,
-                min.y,
-                min.z
-            ),
-
-            new Vector3(
-                max.x,
-                min.y,
-                max.z
-            ),
-
-            new Vector3(
-                max.x,
-                max.y,
-                min.z
-            ),
-
-            new Vector3(
-                max.x,
-                max.y,
-                max.z
-            )
-        };
+        new Vector3(max.x, min.y, min.z),
+        new Vector3(max.x, min.y, max.z),
+        new Vector3(max.x, max.y, min.z),
+        new Vector3(max.x, max.y, max.z)
+    };
 
         float minX = float.MaxValue;
         float maxX = float.MinValue;
         float minY = float.MaxValue;
         float maxY = float.MinValue;
 
+        bool anyPointInFront = false;
+
         foreach (Vector3 corner in corners)
         {
             Vector3 screenPoint =
-                playerCamera.WorldToScreenPoint(
-                    corner
-                );
+                playerCamera.WorldToScreenPoint(corner);
+
+            // Ignore corners behind the camera.
+            if (screenPoint.z <= 0f)
+                continue;
+
+            anyPointInFront = true;
 
             minX = Mathf.Min(
                 minX,
@@ -257,6 +242,14 @@ public class ObjectHighlighter : MonoBehaviour
             );
         }
 
+        // None of the object's bounds are in front
+        // of the camera.
+        if (!anyPointInFront)
+        {
+            highlight.gameObject.SetActive(false);
+            return;
+        }
+
         float width =
             maxX - minX;
 
@@ -268,6 +261,8 @@ public class ObjectHighlighter : MonoBehaviour
                 width,
                 height
             ) + padding * 2f;
+
+        highlight.gameObject.SetActive(true);
 
         highlight.rectTransform.position =
             new Vector3(
