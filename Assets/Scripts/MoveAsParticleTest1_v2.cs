@@ -139,9 +139,9 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     // Constants for power interpolation
     // each ray's power value is updated toward its min power val in UpdateParticles()
     private const float POWER_MAX_dBm = 20.0f;
-    private const float Rx_POWER_MAX_dBm = -75.0f;
+    private const float Rx_POWER_MAX_dBm = -40.0f;
     private float LowestPowerValRays_dBm; //  lowest power value among all rays from data file. calculate once at begin.
-    private float LowestPowerValRx_dBm = -90f;
+    private float LowestPowerValRx_dBm = -100f;
     private const float TEST_LOWEST_POWER_VAL_dBm = -90f; // 129.7 , 96.8 for testing, set to a constant value
 
     // Constants for color interpolation
@@ -1137,8 +1137,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                 int rxColorIdx = GetColorIndexFromRx_dBm(rayPath.TotalPowerNum, 0);
                 Color rxColor = colorHelper.GetPaletteColor(rxColorIdx);
                 rxColor.a = 0.6f;
-                endMarkRend.material.SetColor("_BaseColor", rxColor);
-                endMarkRend.material.SetColor("_EmissionColor", rxColor);
+/*                endMarkRend.material.SetColor("_BaseColor", rxColor);
+                endMarkRend.material.SetColor("_EmissionColor", rxColor);*/
 
                 // Name the marker for easy identification
                 endMarker.name = $"Rx_Obj_{rayPath.RxNum}";

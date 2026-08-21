@@ -18831,7 +18831,7 @@ MonoBehaviour:
   case2button: {fileID: 0}
   outputTextObj: {fileID: 853662665}
   TxObj: {fileID: 6507594055690754941, guid: d42d51ba655fbdf41b01953753dafdb5, type: 3}
-  RxObj: {fileID: 1322866641868832272, guid: 4ea3dfe91773b5b42b8a0eeff3f0321c, type: 3}
+  RxObj: {fileID: 3569645100760575924, guid: 841b8cae37e0274428ec742fa6a4dc83, type: 3}
   objToMark: {fileID: 8393753577389970397, guid: 26f10b2788f13ce4cb01e892664cc2b8, type: 3}
   RaySpeed: 2
   raySize: 0.08
