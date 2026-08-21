@@ -1766,7 +1766,52 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     }
 
     private ObjectHighlighter highlighter;
-    private DemoTaskManager demoTask;
+
+    // The task manager currently driving the Q&A panel (demo first, then Lesson 1, ...).
+    private ITaskManager CurrentTaskManager;
+
+    // ---- Accessors used by task managers living outside this class (e.g. Task1Manager) ----
+    public TextMeshProUGUI QuestionText => qTextObj.GetComponent<TextMeshProUGUI>();
+    public GameObject[] AnswerButtons => new[] { a1TextObj, a2TextObj, a3TextObj, a4TextObj };
+    public GameObject NextButtonObj => NextButton;
+    public Material[] OptionMaterials => new[] { mat_obj1, mat_obj2, mat_obj3, mat_obj4 };
+    public GameObject RxPrefab => RxObj;
+    public ObjectHighlighter Highlighter => highlighter;
+    public GameObject TxMarker => tx_obj;
+    public GameObject RxMarker => rx_obj;
+    public bool IsHeatmapShown => heatmap_obj != null;
+    public bool AreRaysShown => ray_objects != null;
+
+    public void LogAnswer(string line)
+    {
+        answerLog += "\n" + line;
+        Debug.Log(line);
+        if (outputTextObj != null)
+        {
+            var t = outputTextObj.GetComponent<TextMeshProUGUI>();
+            if (t != null) t.text = answerLog;
+        }
+    }
+
+    // The answer buttons in the scene still carry stale persistent onClick calls (RayPlayPause).
+    // Turn those off and route the buttons to ButtonAnswer(idx) instead, without editing the scene.
+    private void WireAnswerButtons()
+    {
+        GameObject[] btns = AnswerButtons;
+        for (int k = 0; k < btns.Length; k++)
+        {
+            if (btns[k] == null) continue;
+            var button = btns[k].GetComponent<UnityEngine.UI.Button>();
+            if (button == null) continue;
+
+            for (int i = 0; i < button.onClick.GetPersistentEventCount(); i++)
+                button.onClick.SetPersistentListenerState(i, UnityEngine.Events.UnityEventCallState.Off);
+
+            int idx = k; // capture per button
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() => ButtonAnswer(idx));
+        }
+    }
 
     // bookkeeping.
     private GameObject tx_obj;
@@ -1841,7 +1886,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         ToggleLiveMarksVisibility();
 
 
-        demoTask = new DemoTaskManager(this);
+        WireAnswerButtons();
+        CurrentTaskManager = new DemoTaskManager(this);
         //MarkPathPositions_obj();
     }
 
@@ -2220,8 +2266,15 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     // Ed - switch current dataset
     public Color32 viz_color = Color.red;
 
-    void SetCurrentDataSet(string fileName)
+    // Switch the active dataset (<fileName>.csv + <fileName>_heatmap.csv in Resources).
+    // If the heatmap / static rays were shown before the switch, they are re-created for the
+    // new dataset so the participant can compare options without re-toggling.
+    public void SetCurrentDataSet(string fileName)
     {
+        bool heatmapWasShown = heatmap_obj != null;
+        bool raysWereShown = ray_objects != null;
+
+        Debug.Log($"SetCurrentDataSet({fileName})");
 
         ClearPathLine_MultiPaths();
         ClearHeatmap();
@@ -2253,7 +2306,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
             this.particles[i].color = this.viz_color;
         }
 
-
+        if (heatmapWasShown) MakeHeatmap();
+        if (raysWereShown) MarkPathLine_MultiPaths();
     }
 
     public class TaskNode {
@@ -2305,7 +2359,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         return text;
     }
 
-    public class DemoTaskManager
+    public class DemoTaskManager : ITaskManager
     {
         private enum State
         {
@@ -2316,6 +2370,11 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
         MoveAsParticleTest1_v2 m;
         List<string> highlights;
+
+        public bool IsComplete => state == State.END;
+
+        // The demo has no MCQ; answer buttons are hidden during it.
+        public void OnAnswerSelected(int answerIdx) { }
 
         public DemoTaskManager(MoveAsParticleTest1_v2 m)
         {
@@ -2432,13 +2491,22 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
     public void ButtonAnswer(int answer)
     {
-
+        CurrentTaskManager?.OnAnswerSelected(answer);
     }
 
     public void ButtonNext()
     {
-        demoTask.Advance();
-        demoTask.DoState();
+        if (CurrentTaskManager == null) return;
+
+        CurrentTaskManager.Advance();
+
+        // Demo finished -> hand over to Lesson 1. Task1Manager's first DoState() shows its first screen.
+        if (CurrentTaskManager is DemoTaskManager && CurrentTaskManager.IsComplete)
+        {
+            CurrentTaskManager = new Task1Manager(this);
+        }
+
+        CurrentTaskManager.DoState();
     }
 
 
