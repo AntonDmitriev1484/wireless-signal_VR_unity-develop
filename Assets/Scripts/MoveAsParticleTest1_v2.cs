@@ -323,7 +323,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     private float changeSize;
     private GameObject[] particle_text_objs;
     bool[] completed_particles;
-    Vector3 fixed_text_translation = new Vector3(0f, 0.1f, 0f);
+    Vector3 particle_text_translation = new Vector3(0f, 0.1f, 0f);
+    Vector3 endpoint_text_translation = new Vector3(0f, 0.45f, 0f);
 
     public void SetMessage(string message, float message_fontsize = 1f, float changeAlpha = 0.1f, float changeSize = 0.3f)
     {
@@ -362,108 +363,95 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
         // Clear completed particles
         completed_particles = new bool[particles.Length];
-        // clear all receiver text
-        for (int i = 0; i < particles.Length; i++)
+
+        // Clear all arrived-message text
+        ClearMessageAnchors();
+
+        // Destroy text still riding on particles (including any left in mid-air)
+        if (particle_text_objs != null)
         {
-            if (path_idx_to_rx_obj[i] == null)
-                continue;
-
-            /// What if we specifically go to the MessageDisplay
-            // Destroy text on receiver
-            TextMeshPro[] texts =
-                path_idx_to_rx_obj[i].GetComponentsInChildren<TextMeshPro>(); // Texts is empty??? Should at least be filled the first time.
-            foreach (TextMeshPro text in texts)
+            for (int i = 0; i < particle_text_objs.Length; i++)
             {
-                Destroy(text.gameObject);
+                if (particle_text_objs[i] != null) Destroy(particle_text_objs[i]);
             }
-
-            // Destroy text on particles
-            Destroy(particle_text_objs[i]);
         }
-
-        // Note this goes through the loop, but it doesn't destroy any text thats midair or on the receiver.
 
         particle_text_objs = new GameObject[particles.Length];
     }
 
-    private void addMessageToRx(string message, GameObject rx)
-    {
-        Transform messageDisplay =
-            rx.transform.Find("MessageDisplay");
+    // Message text that has arrived, keyed by the world position of the ray endpoint it arrived at.
+    private readonly Dictionary<Vector3, GameObject> messageAnchors = new Dictionary<Vector3, GameObject>();
+    private GameObject messageAnchorGrp;
 
-        if (messageDisplay == null)
+    // Accumulate the message at a world position - the last point of a ray path.
+    // Each further arrival at the same point makes the text brighter and larger.
+    //
+    // This replaces the old addMessageToRx(message, rxGameObject): parenting the text to the Rx prefab's
+    // "MessageDisplay" made it inherit that hierarchy's scale (root 0.02/-0.15/0.02 x child 4/33.3/4 =
+    // 0.08/-5/0.08, i.e. squashed and vertically mirrored), and MessageDisplay is a Canvas RectTransform,
+    // which a 3D TextMeshPro is not meant to live under. Anchoring in world space avoids both problems.
+    private void AddMessageToEndpoint(string message, Vector3 endpoint)
+    {
+        if (string.IsNullOrEmpty(message)) return;
+
+        if (messageAnchorGrp == null)
         {
-            Debug.LogWarning(
-                "Could not find MessageDisplay on " + rx.name
-            );
+            messageAnchorGrp = new GameObject("Message_Anchors_Group");
+        }
+
+        if (!messageAnchors.TryGetValue(endpoint, out GameObject anchor) || anchor == null)
+        {
+            anchor = new GameObject("MessageAnchor");
+            anchor.transform.SetParent(messageAnchorGrp.transform, false);
+            anchor.transform.position = endpoint + endpoint_text_translation;
+            messageAnchors[endpoint] = anchor;
+        }
+
+        // ------------------------------------------------------------
+        // Reinforce the existing message
+        // ------------------------------------------------------------
+
+        TextMeshPro existing = anchor.GetComponentInChildren<TextMeshPro>();
+
+        if (existing != null && existing.text == message)
+        {
+            Color color = existing.color;
+            color.a = Mathf.Min(color.a + changeAlpha, 1f);
+            existing.color = color;
+            existing.fontSize += changeSize;
             return;
         }
 
         // ------------------------------------------------------------
-        // Look for an existing message
+        // Message doesn't exist here yet - create it
         // ------------------------------------------------------------
 
-        TextMeshPro[] existingTexts =
-            messageDisplay.GetComponentsInChildren<TextMeshPro>();
-
-        foreach (TextMeshPro existingText in existingTexts)
-        {
-            if (existingText.text == message)
-            {
-                Color color = existingText.color;
-
-                float oldAlpha = color.a;
-                float newAlpha = Mathf.Min(oldAlpha + changeAlpha, 5.0f);
-
-                float newSize = Mathf.Min(existingText.fontSize + changeAlpha, 1.0f);
-
-                color.a = newAlpha;
-                existingText.color = color;
-                existingText.fontSize += changeSize;
-
-                return;
-            }
-        }
-
-        // ------------------------------------------------------------
-        // Message doesn't exist - create it
-        // ------------------------------------------------------------
-
-        GameObject textObject =
-            new GameObject("MessageText");
-
-        textObject.transform.SetParent(
-            messageDisplay,
-            false
-        );
+        GameObject textObject = new GameObject("MessageText");
+        textObject.transform.SetParent(anchor.transform, false);
 
         // Add the same camera-facing script
         textObject.AddComponent<FaceCamera>();
 
-        // Add TextMeshPro
-        TextMeshPro text =
-            textObject.AddComponent<TextMeshPro>();
-
+        TextMeshPro text = textObject.AddComponent<TextMeshPro>();
         text.text = message;
-
-        // SAME SIZE AS PARTICLE MESSAGE
-        text.fontSize = message_fontsize;
-
-        text.alignment =
-            TextAlignmentOptions.Center;
+        text.fontSize = message_fontsize;   // SAME SIZE AS PARTICLE MESSAGE
+        text.alignment = TextAlignmentOptions.Center;
 
         // Initial opacity
         Color textColor = Color.white;
         textColor.a = changeAlpha;
         text.color = textColor;
+    }
 
-        // Position at the center of MessageDisplay
-        textObject.transform.localPosition =
-            Vector3.zero;
+    // Remove every arrived-message anchor (called when restarting or switching dataset).
+    private void ClearMessageAnchors()
+    {
+        foreach (GameObject anchor in messageAnchors.Values)
+        {
+            if (anchor != null) Destroy(anchor);
+        }
 
-        Debug.Log(
-            $"Created message '{message}' with opacity {text.color.a}"
-        );
+        messageAnchors.Clear();
     }
 
 
@@ -1075,7 +1063,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     void MarkEndPoints_Rx()
     {
 
-        path_idx_to_rx_obj = new GameObject[loadedRaysPath.Count()]; // Later used for displaying message above Rx as particles arrive.
+        path_idx_to_rx_obj = new GameObject[loadedRaysPath.Count()]; // Maps ray index -> its Rx marker. No longer used for message text (see AddMessageToEndpoint); kept as bookkeeping.
 
         // Check if RxObj is assigned
         if (RxObj == null)
@@ -1154,7 +1142,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     void MarkEndPoints_Rx_Heatmap()
     {
 
-        path_idx_to_rx_obj = new GameObject[loadedHeatmapPath.Count()]; // Later used for displaying message above Rx as particles arrive.
+        path_idx_to_rx_obj = new GameObject[loadedHeatmapPath.Count()]; // Maps ray index -> its Rx marker. No longer used for message text (see AddMessageToEndpoint); kept as bookkeeping.
 
         // Check if RxObj is assigned
         if (RxObj == null)
@@ -2133,7 +2121,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                     particle_text_objs[i] != null)
                 {
                     particle_text_objs[i].transform.position =
-                        particle.position + fixed_text_translation;
+                        particle.position + particle_text_translation;
                 }
 
                 //== Ray Color ===================================== START
@@ -2233,7 +2221,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                 particle_text_objs[i] != null)
             {
                 particle_text_objs[i].transform.position =
-                    particle.position + fixed_text_translation;
+                    particle.position + particle_text_translation;
             }
 
             // Handle particles that have reached their end position
@@ -2244,9 +2232,9 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                 particle.remainingLifetime = 0f;
 
                 // Mark particle as completed so it will not be added to Rx in next iteration
-                if (!completed_particles[i])
+                if (!completed_particles[i] && pathPositions != null && pathPositions.Count > 0)
                 {
-                    addMessageToRx(message, path_idx_to_rx_obj[i]);
+                    AddMessageToEndpoint(message, pathPositions[pathPositions.Count - 1]);
                 }
                 completed_particles[i] = true;
 
@@ -2333,6 +2321,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
         ClearPathLine_MultiPaths();
         ClearHeatmap();
+        ClearMessageAnchors();  // endpoints belong to the outgoing dataset
 
         GetData(fileName, false);
         GetData(fileName + "_heatmap", true);
