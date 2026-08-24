@@ -48,40 +48,40 @@ public class Task1Manager : ITaskManager
                 { 1, "Correct! This spot is in the same room as the router with a direct line-of-sight path, so the signal is strongest here. " +
                      "The other locations are behind walls, which weaken the signal a lot." },
                 { 2, "Correct! This spot is in the same room as the router with a direct line-of-sight path, so the signal is strongest here. " +
-                     "The other locations are behind one or two walls, which weaken the signal a lot." },
+                     "The other locations are all behind a wall, which weakens the signal a lot." },
             },
             wrongText =
             {
                 { (1, 'A'), "Not quite. This spot is close to the router, but the kitchen wall is in the way. Walls weaken the signal - look for a location that can see the router directly." },
-                { (1, 'C'), "Not quite. This spot is far from the router and behind the dividing wall, so only weak signals reach it. Look for a location that can see the router directly." },
-                { (1, 'D'), "Not quite. This spot is behind the dividing wall and the projector screen, so the signal is weak. Look for a location that can see the router directly." },
-                { (2, 'A'), "Not quite. The couch is behind the dividing wall between the living room and the office, so the signal is weak. Look for a location that can see the router directly." },
-                { (2, 'B'), "Not quite. The kitchen is two walls away from the router, so the signal is weak. Look for a location that can see the router directly." },
+                { (1, 'C'), "Not quite. This spot is over in the office, behind the dividing wall, so only weak signals reach it. Look for a location that can see the router directly." },
+                { (1, 'D'), "Not quite. This is the far corner of the office - behind the dividing wall and the furthest of all four spots from the router. Look for a location that can see the router directly." },
+                { (2, 'A'), "Not quite. This spot is over by the TV in the living room, behind the dividing wall, so the signal is weak. Look for a location that can see the router directly." },
+                { (2, 'B'), "Not quite. The kitchen is behind the kitchen wall - a little signal leaks through the doorway, but it is still weak. Look for a location that can see the router directly." },
                 { (2, 'C'), "Not quite. This spot is far from the router and behind the dividing wall, so only weak signals reach it. Look for a location that can see the router directly." },
             },
         },
         new TaskDef
         {
             name = "los_creation",
-            prompt = "The TV isn't getting a very strong signal. This is because the furniture and walls are all impacting your signal. " +
-                     "Move the furniture around to give the TV the strongest signal.",
+            prompt = "The TV isn't getting a very strong signal - the furniture and walls are all impacting it. " +
+                     "Where can you put this cabinet so that the TV gets the strongest signal?",
             hasCabinet = true,
             correct = { { 1, 'C' }, { 2, 'A' } },
             correctText =
             {
-                { 1, "Correct! With the cabinet behind the TV, the direct path from the router to the TV stays open and the TV gets a much stronger signal. " +
-                     "Anything placed between the router and the TV blocks that direct path." },
-                { 2, "Correct! With the cabinet beside the TV, the direct path from the router to the TV stays open and the TV gets a much stronger signal. " +
-                     "Anything placed between the router and the TV blocks that direct path." },
+                { 1, "Correct! The cabinet is off to the side of the TV, against the same wall, so it never crosses the line between the router and the TV. " +
+                     "The direct path stays open and the TV keeps a strong signal - anything standing on that line blocks it." },
+                { 2, "Correct! The cabinet is off to the side of the TV, against the same wall, so it never crosses the line between the router and the TV. " +
+                     "The direct path stays open, and the cabinet even bounces an extra path toward the TV - anything standing on that line would block it instead." },
             },
             wrongText =
             {
-                { (1, 'A'), "Not quite. Here the cabinet sits between the router and the TV and blocks the direct path, so the TV only gets weaker signals that bounce off the walls. Try a spot that is not in the way." },
-                { (1, 'B'), "Not quite. The cabinet is right in front of the TV, blocking the direct path from the router. Only weaker reflected signals reach the TV. Try a spot that is not in the way." },
-                { (1, 'D'), "Not quite. Here the cabinet sits between the router and the TV and blocks the direct path, so the TV only gets weaker signals that bounce off the walls. Try a spot that is not in the way." },
-                { (2, 'B'), "Not quite. Here the cabinet sits between the router and the TV and blocks the direct path, so the TV only gets weaker signals that bounce off the walls. Try a spot that is not in the way." },
-                { (2, 'C'), "Not quite. The cabinet is right in front of the TV, blocking the direct path from the router. Only weaker reflected signals reach the TV. Try a spot that is not in the way." },
-                { (2, 'D'), "Not quite. Here the cabinet sits between the router and the TV and blocks the direct path, so the TV only gets weaker signals that bounce off the walls. Try a spot that is not in the way." },
+                { (1, 'A'), "Not quite. The cabinet stands on the line between the router and the TV, about two metres short of it, so the direct path is blocked. Only weaker signals that bounce off the walls reach the TV. Try a spot that is out of that line." },
+                { (1, 'B'), "Not quite. The cabinet is right in front of the TV, blocking the direct path from the router. Only weaker reflected signals reach the TV. Try a spot that is out of that line." },
+                { (1, 'D'), "Not quite. The cabinet is further back, just in front of the couch, but it is still on the line between the router and the TV, so the direct path is blocked. Try a spot that is out of that line." },
+                { (2, 'B'), "Not quite. The cabinet stands on the line between the router and the TV, a couple of metres short of it, so the direct path is blocked. Only weaker signals that bounce off the walls reach the TV. Try a spot that is out of that line." },
+                { (2, 'C'), "Not quite. The cabinet is about halfway along the line between the router and the TV, so it still blocks the direct path. Try a spot that is out of that line." },
+                { (2, 'D'), "Not quite. The cabinet is over near the router, but it is still on the line to the TV - it blocks the direct path right where the signal starts out. Try a spot that is out of that line." },
             },
         },
         new TaskDef
@@ -95,24 +95,28 @@ public class Task1Manager : ITaskManager
             correct = { { 1, 'D' }, { 2, 'B' } },
             correctText =
             {
-                { 1, "Correct! The metal cabinet acts like a mirror: the signal from the router bounces off it, passes through the doorway and reaches the TV. " +
-                     "That reflected path is the strongest one arriving at the TV, which is why the signal improves so much." },
-                { 2, "Correct! The metal cabinet acts like a mirror: the signal from the router bounces off it, passes through the doorway and reaches the TV. " +
-                     "That reflected path is the strongest one arriving at the TV, which is why the signal improves so much." },
+                { 1, "Correct! The metal cabinet acts like a mirror: the signal from the router bounces off it, travels through the doorway and reaches the TV. " +
+                     "That reflected path is now the strongest one arriving at the TV, which is why the signal improves so much." },
+                { 2, "Correct! The metal cabinet acts like a mirror: the signal from the router bounces off it, travels through the doorway and reaches the TV. " +
+                     "That reflected path is now the strongest one arriving at the TV, which is why the signal improves so much." },
             },
             wrongText =
             {
-                { (1, 'A'), "Not quite. In this corner of the office the cabinet reflects the signal away from the doorway, so no strong bounce reaches the TV. Try to place it so the router 'mirrors' onto the TV." },
-                { (1, 'B'), "Not quite. Here the cabinet stands in the doorway and blocks it instead of reflecting the signal toward the TV. Try to place it so the router 'mirrors' onto the TV." },
-                { (1, 'C'), "Not quite. Next to the TV the cabinet cannot redirect the router's signal toward it - the signal still has to pass through the wall. Try to place it so the router 'mirrors' onto the TV." },
-                { (2, 'A'), "Not quite. In this corner the cabinet reflects the signal away from the doorway, so no strong bounce reaches the TV. Try to place it so the router 'mirrors' onto the TV." },
-                { (2, 'C'), "Not quite. On this side of the doorway the cabinet does not reflect the router's signal toward the TV. Try to place it so the router 'mirrors' onto the TV." },
-                { (2, 'D'), "Not quite. Next to the TV the cabinet cannot redirect the router's signal toward it - the signal still has to pass through the wall. Try to place it so the router 'mirrors' onto the TV." },
+                { (1, 'A'), "Not quite. Over in the far corner of the office the cabinet faces the wrong way - its reflection goes off to the side instead of through the doorway. Try to place it so the router 'mirrors' onto the TV." },
+                { (1, 'B'), "Not quite. Here the cabinet stands in the doorway and blocks it, instead of reflecting the signal through it. Try to place it so the router 'mirrors' onto the TV." },
+                { (1, 'C'), "Not quite. Right next to the TV the cabinet has nothing useful to reflect - the signal still has to get through the wall to reach it. Try to place it so the router 'mirrors' onto the TV." },
+                { (2, 'A'), "Not quite. In the corner of the living room next to the TV the cabinet has nothing useful to reflect - the signal still has to get through the wall to reach it. Try to place it so the router 'mirrors' onto the TV." },
+                { (2, 'C'), "Not quite. On the office side of the doorway the cabinet does not aim the router's signal through it. Try to place it so the router 'mirrors' onto the TV." },
+                { (2, 'D'), "Not quite. Back in the office beside the router, the cabinet has no angle on the doorway, so no strong bounce reaches the TV. Try to place it so the router 'mirrors' onto the TV." },
             },
         },
     };
 
     private static string ConditionName(string task, int set, char option) => $"{task}_{set}_{option}";
+
+    // Option previewed when a task is entered. Derived from the answer key so the correct layout is
+    // never shown as the default (in the v2 data, A is the correct answer for los_creation set 2).
+    private static char PreviewOption(TaskDef t, int set) => t.correct[set] == 'A' ? 'B' : 'A';
 
     // ------------------------------------------------------------------
     // State
@@ -131,11 +135,20 @@ public class Task1Manager : ITaskManager
 
     private TaskDef Task => TASKS[taskIdx];
 
+    // Translucent option-coloured box drawn around each candidate receiver.
+    private const float BOX_PADDING = 0.12f;    // metres added on every side of the mesh bounds
+    private const float BOX_MIN_SIZE = 0.30f;   // keeps thin markers visible
+    private const float BOX_ALPHA = 0.15f;
+    private const float BOX_ALPHA_SELECTED = 0.45f;
+
     // candidate objects shown for the current MCQ (index = option)
     private readonly GameObject[] candidates = new GameObject[4];
+    private readonly GameObject[] candidateBoxes = new GameObject[4];
     private bool candidatesSpawned;
     private Material[] normalMats;
     private Material[] activeMats;
+    private Material[] boxMats;
+    private Material[] boxSelectedMats;
 
     // answer button bookkeeping
     private readonly Button[] buttons = new Button[4];
@@ -171,14 +184,25 @@ public class Task1Manager : ITaskManager
         Material[] src = m.OptionMaterials;
         normalMats = new Material[4];
         activeMats = new Material[4];
+        boxMats = new Material[4];
+        boxSelectedMats = new Material[4];
         for (int i = 0; i < 4; i++)
         {
             normalMats[i] = src[i];
-            activeMats[i] = new Material(src[i]);
-            Color c = OptionColor(i); c.a = 1f;
-            activeMats[i].color = c;
-            if (activeMats[i].HasProperty("_BaseColor")) activeMats[i].SetColor("_BaseColor", c);
+            activeMats[i] = MakeTinted(src[i], OptionColor(i), 1f);
+            boxMats[i] = MakeTinted(src[i], OptionColor(i), BOX_ALPHA);
+            boxSelectedMats[i] = MakeTinted(src[i], OptionColor(i), BOX_ALPHA_SELECTED);
         }
+    }
+
+    // Runtime copy of an option material at a given opacity (project assets are never mutated).
+    private static Material MakeTinted(Material src, Color color, float alpha)
+    {
+        Material mat = new Material(src);
+        Color c = color; c.a = alpha;
+        mat.color = c;
+        if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
+        return mat;
     }
 
     private Color OptionColor(int i)
@@ -335,8 +359,8 @@ public class Task1Manager : ITaskManager
     {
         selected = -1;
         attempt = 0;
-        // Every task starts on option A so there is always something to look at.
-        m.SetCurrentDataSet(ConditionName(Task.name, currentSet, 'A'));
+        // Start on an incorrect option so there is something to look at without giving the answer away.
+        m.SetCurrentDataSet(ConditionName(Task.name, currentSet, PreviewOption(Task, currentSet)));
         SetState(string.IsNullOrEmpty(Task.intro) ? State.MCQ : State.Intro);
     }
 
@@ -354,7 +378,36 @@ public class Task1Manager : ITaskManager
             go.name = $"Candidate_{cond}";
             ApplyMaterial(go, normalMats[i]);
             candidates[i] = go;
+
+            // Cabinets are already option-coloured box meshes; the small receiver markers get a
+            // translucent box around them so each candidate location is easy to spot and tell apart.
+            if (!Task.hasCabinet) candidateBoxes[i] = AddCandidateBox(go, i, cond);
         }
+    }
+
+    // Translucent option-coloured cube enclosing the candidate's mesh bounds.
+    // Kept as a separate root object so the marker's non-uniform scale cannot distort it.
+    private GameObject AddCandidateBox(GameObject target, int optionIdx, string cond)
+    {
+        Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
+        if (renderers.Length == 0) return null;
+
+        Bounds bounds = renderers[0].bounds;
+        for (int i = 1; i < renderers.Length; i++) bounds.Encapsulate(renderers[i].bounds);
+
+        Vector3 size = bounds.size + Vector3.one * (2f * BOX_PADDING);
+        size = new Vector3(Mathf.Max(size.x, BOX_MIN_SIZE), Mathf.Max(size.y, BOX_MIN_SIZE), Mathf.Max(size.z, BOX_MIN_SIZE));
+
+        GameObject box = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        box.name = $"CandidateBox_{cond}";
+        box.transform.position = bounds.center;
+        box.transform.localScale = size;
+
+        Collider col = box.GetComponent<Collider>();
+        if (col != null) col.enabled = false;
+
+        box.GetComponent<MeshRenderer>().sharedMaterial = boxMats[optionIdx];
+        return box;
     }
 
     private GameObject SpawnCabinet(string cond)
@@ -427,7 +480,9 @@ public class Task1Manager : ITaskManager
         for (int i = 0; i < 4; i++)
         {
             if (candidates[i] != null) UnityEngine.Object.Destroy(candidates[i]);
+            if (candidateBoxes[i] != null) UnityEngine.Object.Destroy(candidateBoxes[i]);
             candidates[i] = null;
+            candidateBoxes[i] = null;
         }
     }
 
@@ -435,7 +490,11 @@ public class Task1Manager : ITaskManager
     private void HighlightOption(int sel)
     {
         for (int i = 0; i < 4; i++)
+        {
             if (candidates[i] != null) ApplyMaterial(candidates[i], i == sel ? activeMats[i] : normalMats[i]);
+            if (candidateBoxes[i] != null)
+                candidateBoxes[i].GetComponent<MeshRenderer>().sharedMaterial = i == sel ? boxSelectedMats[i] : boxMats[i];
+        }
 
         ClearButtonHighlights();
         HighlightButton(sel, OptionColor(sel));
