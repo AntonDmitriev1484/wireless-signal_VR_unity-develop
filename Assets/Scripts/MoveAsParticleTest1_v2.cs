@@ -1423,6 +1423,12 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     LineRenderer[] ray_objects;
     public void ToggleRays()
     {
+        if (MoveTempParticles.Current != null)
+        {
+            MoveTempParticles.Current.ToggleRays();
+            return;
+        }
+
         if (ray_objects == null)
         {
             MarkPathLine_MultiPaths();
@@ -1781,6 +1787,24 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     public GameObject RxMarker => rx_obj;
     public bool IsHeatmapShown => heatmap_obj != null;
     public bool AreRaysShown => ray_objects != null;
+    public bool RaysPaused => isRayMovementPaused;
+    public string DemoCsvFile => csvFile_Demo;
+    public List<RayPathSet_v2> LoadedRaysPath => loadedRaysPath;
+
+    // Raised once when every ray of the current dataset has reached its receiver.
+    // Reset whenever the dataset is reloaded or the rays are restarted.
+    public event Action OnAllRaysCompleted;
+    private bool allRaysCompletedFired;
+
+    // Spawn a temporary animation over the supplied paths, reusing this component's
+    // particle system settings, ray speed and ray size.
+    public MoveTempParticles SpawnTempParticles(List<RayPathSet_v2> paths, Color32 color)
+    {
+        return MoveTempParticles.Create(paths, particleSystem1, color, RaySpeed, raySize);
+    }
+
+    // Load a dataset's ray paths / heatmap rows into this component (no particle re-initialisation).
+    public void LoadData(string fileName, bool forHeatmap) => GetData(fileName, forHeatmap);
 
     public void LogAnswer(string line)
     {
@@ -1887,7 +1911,9 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
 
         WireAnswerButtons();
-        CurrentTaskManager = new DemoTaskManager(this);
+        // Comm test runs first, then the demo, then Lesson 1.
+        CurrentTaskManager = new TaskCommTestManager(this);
+        CurrentTaskManager.DoState();
         //MarkPathPositions_obj();
     }
 
@@ -1900,6 +1926,13 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     // toggle play/pause state of entire rays movement
     public void RayPlayPause()
     {
+        // A temporary animation takes over the transport controls while it is alive.
+        if (MoveTempParticles.Current != null)
+        {
+            MoveTempParticles.Current.TogglePlayPause();
+            return;
+        }
+
         // Toggle the pause state
         isRayMovementPaused = !isRayMovementPaused;
 
@@ -1979,6 +2012,12 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     // Reset all rays to their initial positions
     public void Restart()
     {
+        if (MoveTempParticles.Current != null)
+        {
+            MoveTempParticles.Current.Restart();
+            return;
+        }
+
         Debug.Log("Restarting rays...");
 
         clearMessageVisuals();
@@ -1995,6 +2034,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         {
             rayPath.PathPositionsIdx = 0;
         }
+
+        allRaysCompletedFired = false;
 
         // Reset distance tracking
         if (pathDistanceTraveled != null)
@@ -2237,6 +2278,20 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                 particleSystem3.SetParticles(intersectionMarksParticlesOnPass, currentMarkIdxOnPass + 1);
             }
         }
+
+        // Notify listeners once every ray has arrived at its receiver.
+        if (!allRaysCompletedFired && AllRaysCompleted())
+        {
+            allRaysCompletedFired = true;
+            OnAllRaysCompleted?.Invoke();
+        }
+    }
+
+    private bool AllRaysCompleted()
+    {
+        if (completed_particles == null || completed_particles.Length == 0) return false;
+        foreach (bool done in completed_particles) if (!done) return false;
+        return true;
     }
 
 
@@ -2297,6 +2352,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         InitializeParticles2(); // For all intersection markers
         InitializeParticles3(); // For intersection markers on pass
         this.completed_particles = new bool[particles.Length]; // All false by default, particles should be defined by now
+        this.allRaysCompletedFired = false;
 
         // Initialize path distances for power calculations
         InitializePathDistances();
@@ -2500,10 +2556,14 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
         CurrentTaskManager.Advance();
 
-        // Demo finished -> hand over to Lesson 1. Task1Manager's first DoState() shows its first screen.
-        if (CurrentTaskManager is DemoTaskManager && CurrentTaskManager.IsComplete)
+        // Hand over to the next manager in the sequence when the current one finishes.
+        // Task1Manager is last, so its completion matches neither case and it simply stays.
+        if (CurrentTaskManager.IsComplete)
         {
-            CurrentTaskManager = new Task1Manager(this);
+            if (CurrentTaskManager is TaskCommTestManager)
+                CurrentTaskManager = new DemoTaskManager(this);
+            else if (CurrentTaskManager is DemoTaskManager)
+                CurrentTaskManager = new Task1Manager(this);
         }
 
         CurrentTaskManager.DoState();
