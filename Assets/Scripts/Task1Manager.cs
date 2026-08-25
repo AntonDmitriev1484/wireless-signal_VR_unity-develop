@@ -256,7 +256,8 @@ public class Task1Manager : ITaskManager
                 break;
 
             case State.ExplainWrong:
-                selected = -1;                                  // retry same MCQ; dataset stays on last viewed option
+                // Retry the same MCQ. The dataset still shows the option that was just rejected, so
+                // keep it selected - the highlight must always match what is on screen.
                 SetState(State.MCQ);
                 break;
 
@@ -344,10 +345,15 @@ public class Task1Manager : ITaskManager
 
     private void GoToTaskStart()
     {
-        selected = -1;
         attempt = 0;
-        // Start on an incorrect option so there is something to look at without giving the answer away.
-        m.SetCurrentDataSet(ConditionName(Task.name, currentSet, PreviewOption(Task, currentSet)));
+
+        // Start on an incorrect option so there is something to look at without giving the answer
+        // away, and present it as the current choice: the receiver is standing in that option's
+        // marker, so its button and object must be emphasised to match.
+        char preview = PreviewOption(Task, currentSet);
+        selected = Array.IndexOf(LETTERS, preview);
+
+        m.SetCurrentDataSet(ConditionName(Task.name, currentSet, preview));
         SetState(string.IsNullOrEmpty(Task.intro) ? State.MCQ : State.Intro);
     }
 

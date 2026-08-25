@@ -170,8 +170,9 @@ public class Task2Manager : ITaskManager
                 break;
 
             case State.T2_Explain:
-                selected = -1;              // require a fresh pick, so Next cannot resubmit the wrong one
-                SetState(State.T2_MCQ);     // retry the same question
+                // Retry the same question. The Friend is still standing at the rejected option, so
+                // keep it selected - the highlight must always match what is on screen.
+                SetState(State.T2_MCQ);
                 break;
 
             case State.T2_MoveHassle:
