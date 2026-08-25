@@ -232,6 +232,12 @@ public class MoveTempParticles : MonoBehaviour
         var emission = ps.emission;
         emission.enabled = false;
 
+        // The template's renderer may be switched off (MoveAsParticleTest1_v2.HideAllMovingRays parks
+        // the main animation that way), and Instantiate copies that state. A temporary animation is
+        // always meant to be seen, so turn it back on.
+        Renderer psRenderer = ps.GetComponent<Renderer>();
+        if (psRenderer != null) psRenderer.enabled = true;
+
         // Emit / read back / clear is how the base implementation sizes its particle array.
         particles = new ParticleSystem.Particle[numRays];
         ps.Emit(numRays);
@@ -304,7 +310,12 @@ public class MoveTempParticles : MonoBehaviour
         for (int i = 0; i < particles.Length; i++)
         {
             if (completed[i]) continue;
+
             particleTextObjs[i] = MakeText(particles[i].position + particleTextOffset, message, messageFontSize, 1f);
+
+            // Hidden until the particle leaves its start point, so the messages do not stack up on
+            // the emitting object before playback begins.
+            particleTextObjs[i].SetActive(false);
         }
     }
 
@@ -526,9 +537,19 @@ public class MoveTempParticles : MonoBehaviour
                 reachedEnd = true;
             }
 
-            // Keep this particle's message text riding along with it.
+            // Keep this particle's message text riding along with it, revealing it once it has moved.
             if (particleTextObjs != null && i < particleTextObjs.Length && particleTextObjs[i] != null)
-                particleTextObjs[i].transform.position = particle.position + particleTextOffset;
+            {
+                GameObject textObj = particleTextObjs[i];
+                textObj.transform.position = particle.position + particleTextOffset;
+
+                if (!textObj.activeSelf &&
+                    pathPositions != null && pathPositions.Count > 0 &&
+                    (particle.position - pathPositions[0]).sqrMagnitude > 0.0001f)
+                {
+                    textObj.SetActive(true);
+                }
+            }
 
             if (reachedEnd)
             {

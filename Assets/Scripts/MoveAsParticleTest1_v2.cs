@@ -354,7 +354,29 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         text.fontSize = message_fontsize;
         text.alignment = TextAlignmentOptions.Center;
 
+        // Hidden until the particle actually leaves the transmitter - otherwise every ray's message
+        // stacks up on the Tx before playback even starts.
+        textObject.SetActive(false);
+
         return textObject;
+    }
+
+    // Keep a particle's message text with it, revealing it once the particle has left its start point.
+    private void UpdateParticleText(int i, Vector3 particlePos, List<Vector3> pathPositions)
+    {
+        if (particle_text_objs == null || i >= particle_text_objs.Length) return;
+
+        GameObject textObj = particle_text_objs[i];
+        if (textObj == null) return;
+
+        textObj.transform.position = particlePos + particle_text_translation;
+
+        if (!textObj.activeSelf &&
+            pathPositions != null && pathPositions.Count > 0 &&
+            (particlePos - pathPositions[0]).sqrMagnitude > 0.0001f)
+        {
+            textObj.SetActive(true);
+        }
     }
 
     private void clearMessageVisuals()
@@ -2128,13 +2150,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                 // Update the text object to follow the particle
                 // ------------------------------------------------------------
 
-                if (particle_text_objs != null &&
-                    i < particle_text_objs.Length &&
-                    particle_text_objs[i] != null)
-                {
-                    particle_text_objs[i].transform.position =
-                        particle.position + particle_text_translation;
-                }
+                UpdateParticleText(i, particle.position, pathPositions);
 
                 //== Ray Color ===================================== START
                 // Update distance traveled
@@ -2185,13 +2201,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                     particle.position = currentSegmentEnd;
 
                     // Update the text object to the exact segment endpoint
-                    if (particle_text_objs != null &&
-                        i < particle_text_objs.Length &&
-                        particle_text_objs[i] != null)
-                    {
-                        particle_text_objs[i].transform.position =
-                            particle.position;
-                    }
+                    UpdateParticleText(i, particle.position, pathPositions);
 
                     // Mark intersection points if enabled. (except the first and last points)
                     if (isShowIntersectionMarksOnPass && (rayPath.PathPositionsIdx >= 0 && rayPath.PathPositionsIdx < pathPositions.Count - 2))
@@ -2227,13 +2237,9 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
             // ------------------------------------------------------------
             // Keep text object synchronized with final particle position
             // ------------------------------------------------------------
-            if (!particleReachedEnd &&
-                particle_text_objs != null &&
-                i < particle_text_objs.Length &&
-                particle_text_objs[i] != null)
+            if (!particleReachedEnd)
             {
-                particle_text_objs[i].transform.position =
-                    particle.position + particle_text_translation;
+                UpdateParticleText(i, particle.position, pathPositions);
             }
 
             // Handle particles that have reached their end position
