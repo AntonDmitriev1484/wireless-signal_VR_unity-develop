@@ -398,6 +398,20 @@ public class MoveTempParticles : MonoBehaviour
         existing.fontSize = Mathf.Max(existing.fontSize + weight * changeSize, 0.01f);
     }
 
+    // Destroy this instance's message visuals: text riding on the particles and text already
+    // delivered to an endpoint. Safe mid-animation - the particles simply carry no label after it.
+    public void ClearMessageText()
+    {
+        DestroyParticleTexts();
+        ClearEndpointAnchors();
+    }
+
+    // Same for every live instance, without stopping the animations themselves.
+    public static void ClearAllMessageText()
+    {
+        foreach (MoveTempParticles t in ActiveInstances()) t.ClearMessageText();
+    }
+
     private void DestroyParticleTexts()
     {
         if (particleTextObjs == null) return;

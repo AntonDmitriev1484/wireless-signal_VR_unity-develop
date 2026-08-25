@@ -476,6 +476,28 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     }
 
     // Remove every arrived-message anchor (called when restarting or switching dataset).
+    // Destroy every message visual currently on screen - text riding on particles and text already
+    // delivered to an endpoint - here and in any live MoveTempParticles animation.
+    //
+    // Called before a task manager advances, so that interrupting an animation (Next or an MCQ
+    // option pressed early) never leaves labels hovering in mid-air. Unlike clearMessageVisuals()
+    // this deliberately does NOT reset completed_particles: particles that have already arrived
+    // must not deliver their message a second time.
+    public void ClearAllMessageText()
+    {
+        if (particle_text_objs != null)
+        {
+            for (int i = 0; i < particle_text_objs.Length; i++)
+            {
+                if (particle_text_objs[i] != null) Destroy(particle_text_objs[i]);
+                particle_text_objs[i] = null;
+            }
+        }
+
+        ClearMessageAnchors();
+        MoveTempParticles.ClearAllMessageText();
+    }
+
     private void ClearMessageAnchors()
     {
         foreach (GameObject anchor in messageAnchors.Values)
@@ -2562,12 +2584,22 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
     public void ButtonAnswer(int answer)
     {
-        CurrentTaskManager?.OnAnswerSelected(answer);
+        if (CurrentTaskManager == null) return;
+
+        // Selecting an option reloads the dataset and restarts the animation - drop any text the
+        // interrupted run left behind before the new state puts its own on screen.
+        ClearAllMessageText();
+
+        CurrentTaskManager.OnAnswerSelected(answer);
     }
 
     public void ButtonNext()
     {
         if (CurrentTaskManager == null) return;
+
+        // Same for advancing: clear first, so a state entered part-way through an animation starts
+        // from a clean screen.
+        ClearAllMessageText();
 
         CurrentTaskManager.Advance();
 
