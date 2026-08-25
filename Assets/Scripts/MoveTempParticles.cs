@@ -45,6 +45,52 @@ public class MoveTempParticles : MonoBehaviour
 
     public static bool AnyActive => Current != null;
 
+    // Every live instance, with destroyed ones pruned.
+    public static List<MoveTempParticles> ActiveInstances()
+    {
+        for (int i = active.Count - 1; i >= 0; i--)
+            if (active[i] == null) active.RemoveAt(i);
+
+        return new List<MoveTempParticles>(active);
+    }
+
+    // Transport controls applied to every live instance, so two phones animating together stay in
+    // sync. Each returns false when nothing is active, letting MoveAsParticleTest1_v2 fall through
+    // to its own animation.
+    public static bool TogglePlayPauseAll()
+    {
+        List<MoveTempParticles> all = ActiveInstances();
+        if (all.Count == 0) return false;
+
+        // If anything is running, the button reads as "pause"; otherwise it starts everything.
+        bool anyPlaying = all.Exists(t => t.IsPlaying);
+
+        foreach (MoveTempParticles t in all)
+        {
+            if (anyPlaying) t.Pause();
+            else t.Play();
+        }
+        return true;
+    }
+
+    public static bool RestartAll()
+    {
+        List<MoveTempParticles> all = ActiveInstances();
+        if (all.Count == 0) return false;
+
+        foreach (MoveTempParticles t in all) t.Restart();
+        return true;
+    }
+
+    public static bool ToggleRaysAll()
+    {
+        List<MoveTempParticles> all = ActiveInstances();
+        if (all.Count == 0) return false;
+
+        foreach (MoveTempParticles t in all) t.ToggleRays();
+        return true;
+    }
+
     // Destroy every live instance (used when a task manager tears its state down).
     public static void StopAll()
     {
@@ -85,7 +131,17 @@ public class MoveTempParticles : MonoBehaviour
     private float messageFontSize = 1f;
     private float changeAlpha = 0.1f;
     private float changeSize = 0.3f;
-    private static readonly Vector3 textOffset = new Vector3(0f, 0.1f, 0f);
+    // Offset of the text riding on a particle, and of the message that accumulates where a path ends.
+    // The endpoint offset is per-instance so two animations delivering to the same point (e.g. both
+    // phones talking to the router) can stack their text instead of overlapping.
+    private Vector3 particleTextOffset = new Vector3(0f, 0.1f, 0f);
+    private Vector3 endpointTextOffset = new Vector3(0f, 0.1f, 0f);
+
+    public Vector3 EndpointTextOffset
+    {
+        get => endpointTextOffset;
+        set => endpointTextOffset = value;
+    }
 
     private GameObject[] particleTextObjs;                  // text riding on each particle
     private readonly Dictionary<Vector3, GameObject> endpointAnchors = new Dictionary<Vector3, GameObject>();
@@ -248,7 +304,7 @@ public class MoveTempParticles : MonoBehaviour
         for (int i = 0; i < particles.Length; i++)
         {
             if (completed[i]) continue;
-            particleTextObjs[i] = MakeText(particles[i].position + textOffset, message, messageFontSize, 1f);
+            particleTextObjs[i] = MakeText(particles[i].position + particleTextOffset, message, messageFontSize, 1f);
         }
     }
 
@@ -285,7 +341,7 @@ public class MoveTempParticles : MonoBehaviour
             // distort the text if it were parented to them.
             anchor = new GameObject("TempMessageAnchor");
             anchor.transform.SetParent(transform, false);
-            anchor.transform.position = endpoint + textOffset;
+            anchor.transform.position = endpoint + endpointTextOffset;
             endpointAnchors[endpoint] = anchor;
         }
 
@@ -472,7 +528,7 @@ public class MoveTempParticles : MonoBehaviour
 
             // Keep this particle's message text riding along with it.
             if (particleTextObjs != null && i < particleTextObjs.Length && particleTextObjs[i] != null)
-                particleTextObjs[i].transform.position = particle.position + textOffset;
+                particleTextObjs[i].transform.position = particle.position + particleTextOffset;
 
             if (reachedEnd)
             {

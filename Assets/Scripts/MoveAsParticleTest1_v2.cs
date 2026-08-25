@@ -1059,6 +1059,10 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
 
     private GameObject[] path_idx_to_rx_obj;
+
+    // Rx_Number -> its spawned marker, so callers can address a specific receiver (e.g. to highlight
+    // both phones of a two-receiver dataset).
+    private readonly Dictionary<int, GameObject> rxMarkersByNum = new Dictionary<int, GameObject>();
     // Marks the end points of all ray paths with RxObj instances
     void MarkEndPoints_Rx()
     {
@@ -1096,6 +1100,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         // Dictionary to track unique end positions to avoid duplicate RxObj instances
         Dictionary<Vector3, GameObject> markedPositions = new Dictionary<Vector3, GameObject>();
 
+        rxMarkersByNum.Clear();
 
         // Iterate through each path to mark its end point
         for (int i = 0; i < loadedRaysPath.Count; i++)
@@ -1110,6 +1115,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                 if (markedPositions.ContainsKey(endPosition))
                 {
                     path_idx_to_rx_obj[i] = markedPositions[endPosition];
+                    rxMarkersByNum[rayPath.RxNum] = markedPositions[endPosition];
                     continue;
                 }
 
@@ -1118,6 +1124,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
                 // Bookkeeping for highlighting
                 this.rx_obj = endMarker;
+                rxMarkersByNum[rayPath.RxNum] = endMarker;
 
 
                 // Ed - Set color of recievers based on power
@@ -1411,11 +1418,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     LineRenderer[] ray_objects;
     public void ToggleRays()
     {
-        if (MoveTempParticles.Current != null)
-        {
-            MoveTempParticles.Current.ToggleRays();
-            return;
-        }
+        if (MoveTempParticles.ToggleRaysAll()) return;
 
         if (ray_objects == null)
         {
@@ -1779,6 +1782,22 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     public string DemoCsvFile => csvFile_Demo;
     public List<RayPathSet_v2> LoadedRaysPath => loadedRaysPath;
 
+    // Rays belonging to one receiver of a multi-Rx dataset (Rx_Number 1, 2, ...).
+    public List<RayPathSet_v2> PathsForRx(int rxNum) =>
+        loadedRaysPath.Where(p => p.RxNum == rxNum).ToList();
+
+    // Distinct Rx_Number values in the current dataset, ascending.
+    public List<int> RxNumbers()
+    {
+        List<int> nums = loadedRaysPath.Select(p => p.RxNum).Distinct().ToList();
+        nums.Sort();
+        return nums;
+    }
+
+    // The spawned Rx marker for a given Rx_Number (rx_obj only ever holds the last one created).
+    public GameObject RxMarkerFor(int rxNum) =>
+        rxMarkersByNum.TryGetValue(rxNum, out GameObject go) ? go : null;
+
     // Raised once when every ray of the current dataset has reached its receiver.
     // Reset whenever the dataset is reloaded or the rays are restarted.
     public event Action OnAllRaysCompleted;
@@ -1899,8 +1918,9 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
 
         WireAnswerButtons();
-        // Comm test runs first, then the demo, then Lesson 1.
-        CurrentTaskManager = new TaskCommTestManager(this);
+        // Current order: Lesson 2, then the demo, then Lesson 1.
+        // (TaskCommTestManager still exists but is not in the chain.)
+        CurrentTaskManager = new Task2Manager(this);
         CurrentTaskManager.DoState();
         //MarkPathPositions_obj();
     }
@@ -1914,12 +1934,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     // toggle play/pause state of entire rays movement
     public void RayPlayPause()
     {
-        // A temporary animation takes over the transport controls while it is alive.
-        if (MoveTempParticles.Current != null)
-        {
-            MoveTempParticles.Current.TogglePlayPause();
-            return;
-        }
+        // Temporary animations take over the transport controls while any are alive.
+        if (MoveTempParticles.TogglePlayPauseAll()) return;
 
         // Toggle the pause state
         isRayMovementPaused = !isRayMovementPaused;
@@ -2000,11 +2016,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     // Reset all rays to their initial positions
     public void Restart()
     {
-        if (MoveTempParticles.Current != null)
-        {
-            MoveTempParticles.Current.Restart();
-            return;
-        }
+        if (MoveTempParticles.RestartAll()) return;
 
         Debug.Log("Restarting rays...");
 
@@ -2549,7 +2561,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         // Task1Manager is last, so its completion matches neither case and it simply stays.
         if (CurrentTaskManager.IsComplete)
         {
-            if (CurrentTaskManager is TaskCommTestManager)
+            if (CurrentTaskManager is Task2Manager || CurrentTaskManager is TaskCommTestManager)
                 CurrentTaskManager = new DemoTaskManager(this);
             else if (CurrentTaskManager is DemoTaskManager)
                 CurrentTaskManager = new Task1Manager(this);
