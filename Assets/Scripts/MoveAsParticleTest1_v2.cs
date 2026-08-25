@@ -324,7 +324,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     private GameObject[] particle_text_objs;
     bool[] completed_particles;
     Vector3 particle_text_translation = new Vector3(0f, 0.1f, 0f);
-    Vector3 endpoint_text_translation = new Vector3(0f, 0.45f, 0f);
+    Vector3 endpoint_text_translation = new Vector3(0f, 0.5f, 0f);
 
     public void SetMessage(string message, float message_fontsize = 1f, float changeAlpha = 0.1f, float changeSize = 0.3f)
     {

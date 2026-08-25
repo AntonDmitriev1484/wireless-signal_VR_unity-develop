@@ -135,7 +135,7 @@ public class MoveTempParticles : MonoBehaviour
     // The endpoint offset is per-instance so two animations delivering to the same point (e.g. both
     // phones talking to the router) can stack their text instead of overlapping.
     private Vector3 particleTextOffset = new Vector3(0f, 0.1f, 0f);
-    private Vector3 endpointTextOffset = new Vector3(0f, 0.1f, 0f);
+    private Vector3 endpointTextOffset = new Vector3(0f, 0.5f, 0f); // Hard coded to mirror MoveAsParticleTest1_v2
 
     public Vector3 EndpointTextOffset
     {
