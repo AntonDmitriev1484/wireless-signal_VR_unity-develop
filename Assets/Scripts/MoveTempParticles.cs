@@ -117,6 +117,7 @@ public class MoveTempParticles : MonoBehaviour
     private ParticleSystem.Particle[] particles;
 
     private int[] segmentIdx;           // this animator's own cursor along each path
+    private float[] pathTotalLengths;   // total distance each particle travels
     private float[] startTime;          // when the current segment started, per path
     private float[] progressOnPause;    // elapsed segment time stored across a pause
     private bool[] completed;
@@ -127,10 +128,13 @@ public class MoveTempParticles : MonoBehaviour
     private LineRenderer[] rayLines;    // static rays, created on demand by ToggleRays()
 
     // ---- message rendering (mirrors MoveAsParticleTest1_v2) ----
+    // Reference distance for the arrival weighting in AddMessageToEndpoint.
+    private const float MESSAGE_DISTANCE_REF = 15f;
+
     private string message;
     private float messageFontSize = 1f;
-    private float changeAlpha = 0.1f;
-    private float changeSize = 0.3f;
+    private float changeAlpha = 0.05f;
+    private float changeSize = 0.05f;
     // Offset of the text riding on a particle, and of the message that accumulates where a path ends.
     // The endpoint offset is per-instance so two animations delivering to the same point (e.g. both
     // phones talking to the router) can stack their text instead of overlapping.
@@ -148,7 +152,7 @@ public class MoveTempParticles : MonoBehaviour
 
     // Text carried by the particles and accumulated at the far end of each path.
     // Call before Play(). Passing null or "" disables message rendering.
-    public void SetMessage(string message, float fontSize = 1f, float changeAlpha = 0.1f, float changeSize = 0.3f)
+    public void SetMessage(string message, float fontSize = 1f, float changeAlpha = 0.05f, float changeSize = 0.05f)
     {
         this.message = message;
         this.messageFontSize = fontSize;
@@ -247,6 +251,19 @@ public class MoveTempParticles : MonoBehaviour
         // Without this the ParticleSystem keeps simulating and moves the particles by itself.
         ps.Pause();
 
+        // Total length of each path, used to weight how much its arrival reinforces the message.
+        pathTotalLengths = new float[numRays];
+        for (int i = 0; i < numRays; i++)
+        {
+            List<Vector3> pts = paths[i].PathPositions;
+            float total = 0f;
+
+            if (pts != null)
+                for (int j = 0; j < pts.Count - 1; j++) total += Vector3.Distance(pts[j], pts[j + 1]);
+
+            pathTotalLengths[i] = total;
+        }
+
         segmentIdx = new int[numRays];
         startTime = new float[numRays];
         progressOnPause = new float[numRays];
@@ -342,9 +359,13 @@ public class MoveTempParticles : MonoBehaviour
 
     // Accumulate the message above the end of a path: repeated arrivals make it brighter and bigger,
     // the same way MoveAsParticleTest1_v2.addMessageToRx builds the text up on the receiver.
-    private void AddMessageToEndpoint(Vector3 endpoint)
+    // pathDistance: total length of the path this arrival travelled. A ray that took a long way
+    // round contributes less to how readable the message becomes.
+    private void AddMessageToEndpoint(Vector3 endpoint, float pathDistance)
     {
         if (!HasMessage) return;
+
+        float weight = Mathf.Max(MESSAGE_DISTANCE_REF - pathDistance, 1f);
 
         if (!endpointAnchors.TryGetValue(endpoint, out GameObject anchor) || anchor == null)
         {
@@ -358,18 +379,23 @@ public class MoveTempParticles : MonoBehaviour
 
         TextMeshPro existing = anchor.GetComponentInChildren<TextMeshPro>();
 
-        if (existing != null && existing.text == message)
+        // Create it fully transparent, so this arrival and every later one contribute the same
+        // weighted increment below.
+        if (existing == null || existing.text != message)
         {
-            Color color = existing.color;
-            color.a = Mathf.Min(color.a + changeAlpha, 1f);
-            existing.color = color;
-            existing.fontSize += changeSize;
-            return;
+            GameObject textObject = MakeText(anchor.transform.position, message, messageFontSize, 0f);
+            textObject.name = "TempMessageText";
+            textObject.transform.SetParent(anchor.transform, true);
+
+            existing = textObject.GetComponent<TextMeshPro>();
         }
 
-        GameObject textObject = MakeText(anchor.transform.position, message, messageFontSize, changeAlpha);
-        textObject.name = "TempMessageText";
-        textObject.transform.SetParent(anchor.transform, true);
+        Color color = existing.color;
+        color.a = Mathf.Clamp01(color.a + weight * changeAlpha);
+        existing.color = color;
+
+        // Guard the floor: a non-positive font size stops TextMeshPro rendering entirely.
+        existing.fontSize = Mathf.Max(existing.fontSize + weight * changeSize, 0.01f);
     }
 
     private void DestroyParticleTexts()
@@ -558,7 +584,7 @@ public class MoveTempParticles : MonoBehaviour
 
                 // Deliver the message once, on the frame this particle arrives.
                 if (!completed[i] && pathPositions != null && pathPositions.Count > 0)
-                    AddMessageToEndpoint(pathPositions[pathPositions.Count - 1]);
+                    AddMessageToEndpoint(pathPositions[pathPositions.Count - 1], pathTotalLengths[i]);
 
                 completed[i] = true;
 

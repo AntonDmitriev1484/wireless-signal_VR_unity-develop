@@ -102,8 +102,6 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
     //output string and text box
     private string answerLog = "Log: ";
-    [SerializeField] private GameObject outputTextObj;
-
 
 
     [SerializeField] private GameObject TxObj; // The object to instantiate for Transmiter
@@ -326,7 +324,10 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     Vector3 particle_text_translation = new Vector3(0f, 0.1f, 0f);
     Vector3 endpoint_text_translation = new Vector3(0f, 0.5f, 0f);
 
-    public void SetMessage(string message, float message_fontsize = 1f, float changeAlpha = 0.1f, float changeSize = 0.3f)
+    // Reference distance for the arrival weighting in AddMessageToEndpoint.
+    private const float MESSAGE_DISTANCE_REF = 15f;
+
+    public void SetMessage(string message, float message_fontsize = 1f, float changeAlpha = 0.05f, float changeSize = 0.05f)
     {
         // We're going to assume that none of the examples will ever have the message change midway through rays bouncing
         // Or, honestly I don't see why we would need the user to control the messages at all.
@@ -412,9 +413,13 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     // "MessageDisplay" made it inherit that hierarchy's scale (root 0.02/-0.15/0.02 x child 4/33.3/4 =
     // 0.08/-5/0.08, i.e. squashed and vertically mirrored), and MessageDisplay is a Canvas RectTransform,
     // which a 3D TextMeshPro is not meant to live under. Anchoring in world space avoids both problems.
-    private void AddMessageToEndpoint(string message, Vector3 endpoint)
+    // pathDistance: total length of the path this arrival travelled. A ray that took a long way
+    // round contributes less to how readable the message becomes.
+    private void AddMessageToEndpoint(string message, Vector3 endpoint, float pathDistance)
     {
         if (string.IsNullOrEmpty(message)) return;
+
+        float weight = Mathf.Max(MESSAGE_DISTANCE_REF - pathDistance, 1f);
 
         if (messageAnchorGrp == null)
         {
@@ -435,34 +440,39 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
         TextMeshPro existing = anchor.GetComponentInChildren<TextMeshPro>();
 
-        if (existing != null && existing.text == message)
+        // ------------------------------------------------------------
+        // Message doesn't exist here yet - create it, fully transparent, so that this arrival and
+        // every later one contribute the same weighted increment below.
+        // ------------------------------------------------------------
+
+        if (existing == null || existing.text != message)
         {
-            Color color = existing.color;
-            color.a = Mathf.Min(color.a + changeAlpha, 1f);
-            existing.color = color;
-            existing.fontSize += changeSize;
-            return;
+            GameObject textObject = new GameObject("MessageText");
+            textObject.transform.SetParent(anchor.transform, false);
+
+            // Add the same camera-facing script
+            textObject.AddComponent<FaceCamera>();
+
+            existing = textObject.AddComponent<TextMeshPro>();
+            existing.text = message;
+            existing.fontSize = message_fontsize;   // SAME SIZE AS PARTICLE MESSAGE
+            existing.alignment = TextAlignmentOptions.Center;
+
+            Color textColor = Color.white;
+            textColor.a = 0f;
+            existing.color = textColor;
         }
 
         // ------------------------------------------------------------
-        // Message doesn't exist here yet - create it
+        // Reinforce the message by this arrival's weight
         // ------------------------------------------------------------
 
-        GameObject textObject = new GameObject("MessageText");
-        textObject.transform.SetParent(anchor.transform, false);
+        Color color = existing.color;
+        color.a = Mathf.Clamp01(color.a + weight * changeAlpha);
+        existing.color = color;
 
-        // Add the same camera-facing script
-        textObject.AddComponent<FaceCamera>();
-
-        TextMeshPro text = textObject.AddComponent<TextMeshPro>();
-        text.text = message;
-        text.fontSize = message_fontsize;   // SAME SIZE AS PARTICLE MESSAGE
-        text.alignment = TextAlignmentOptions.Center;
-
-        // Initial opacity
-        Color textColor = Color.white;
-        textColor.a = changeAlpha;
-        text.color = textColor;
+        // Guard the floor: a non-positive font size stops TextMeshPro rendering entirely.
+        existing.fontSize = Mathf.Max(existing.fontSize + weight * changeSize, 0.01f);
     }
 
     // Remove every arrived-message anchor (called when restarting or switching dataset).
@@ -1838,12 +1848,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     public void LogAnswer(string line)
     {
         answerLog += "\n" + line;
-        Debug.Log(line);
-        if (outputTextObj != null)
-        {
-            var t = outputTextObj.GetComponent<TextMeshProUGUI>();
-            if (t != null) t.text = answerLog;
-        }
+
     }
 
     // The answer buttons in the scene still carry stale persistent onClick calls (RayPlayPause).
@@ -1942,7 +1947,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         WireAnswerButtons();
         // Current order: Lesson 2, then the demo, then Lesson 1.
         // (TaskCommTestManager still exists but is not in the chain.)
-        CurrentTaskManager = new Task2Manager(this);
+        CurrentTaskManager = new DemoTaskManager(this);
         CurrentTaskManager.DoState();
         //MarkPathPositions_obj();
     }
@@ -2252,7 +2257,10 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                 // Mark particle as completed so it will not be added to Rx in next iteration
                 if (!completed_particles[i] && pathPositions != null && pathPositions.Count > 0)
                 {
-                    AddMessageToEndpoint(message, pathPositions[pathPositions.Count - 1]);
+                    AddMessageToEndpoint(
+                        message,
+                        pathPositions[pathPositions.Count - 1],
+                        (pathTotalLengths != null && i < pathTotalLengths.Length) ? pathTotalLengths[i] : 0f);
                 }
                 completed_particles[i] = true;
 
@@ -2567,10 +2575,16 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         // Task1Manager is last, so its completion matches neither case and it simply stays.
         if (CurrentTaskManager.IsComplete)
         {
-            if (CurrentTaskManager is Task2Manager || CurrentTaskManager is TaskCommTestManager)
-                CurrentTaskManager = new DemoTaskManager(this);
-            else if (CurrentTaskManager is DemoTaskManager)
+            // Can manually change ordering for debugging.
+            /*            if (CurrentTaskManager is Task2Manager || CurrentTaskManager is TaskCommTestManager)
+                            CurrentTaskManager = new DemoTaskManager(this);
+                        else if (CurrentTaskManager is DemoTaskManager)
+                            CurrentTaskManager = new Task1Manager(this);*/
+
+            if (CurrentTaskManager is DemoTaskManager)
                 CurrentTaskManager = new Task1Manager(this);
+            else if (CurrentTaskManager is Task1Manager)
+                CurrentTaskManager = new Task2Manager(this);
         }
 
         CurrentTaskManager.DoState();
