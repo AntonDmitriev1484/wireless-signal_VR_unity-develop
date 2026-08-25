@@ -78,6 +78,11 @@ public class Task2Manager : ITaskManager
     private MoveTempParticles tempYou;
     private MoveTempParticles tempFriend;
 
+    // One transparent option-coloured cube per candidate Friend location, shown during the MCQ.
+    private readonly GameObject[] candidateCubes = new GameObject[4];
+    private Material[] cubeMats;
+    private Material[] cubeSelectedMats;
+
     // answer button bookkeeping
     private readonly Button[] buttons = new Button[4];
     private readonly Image[] buttonImages = new Image[4];
@@ -99,6 +104,7 @@ public class Task2Manager : ITaskManager
             buttonOrigColors[i] = buttonImages[i] != null ? buttonImages[i].color : Color.white;
         }
 
+        BuildCubeMaterials();
         ValidateDatasets();
 
         // SetMessage must precede SetCurrentDataSet: the particle text objects are built during
@@ -231,7 +237,9 @@ public class Task2Manager : ITaskManager
                 SetText("You tell your friend to move to interfere less with your message. Where would you tell them to move?");
                 ShowButtons(4);
                 SetButtonLabels(new[] { "A", "B", "C", "D" });
+                SpawnCandidateCubes();          // show all four places the Friend could move to
                 ClearButtonHighlights();
+                HighlightCandidateCube(selected);
                 if (selected >= 0) HighlightButton(selected);
                 break;
 
@@ -244,6 +252,8 @@ public class Task2Manager : ITaskManager
 
             case State.T2_MoveHassle:
                 ShowButtons(0);
+                ClearCandidateCubes();      // the question is settled; drop the option markers
+                ClearButtonHighlights();
                 selected = -1;
                 SetText("Moving is a hassle, surely your friend doesn't want to move all the way to the other room " +
                         "just so you can send your text message.");
@@ -277,6 +287,7 @@ public class Task2Manager : ITaskManager
         selected = answerIdx;
         ClearButtonHighlights();
         HighlightButton(answerIdx);
+        HighlightCandidateCube(answerIdx);
 
         // Moving the Friend reloads the dataset, so rebuild and replay the interference example.
         LoadInterference(InterferenceCondition(LETTERS[answerIdx]));
@@ -400,6 +411,65 @@ public class Task2Manager : ITaskManager
     }
 
     // ------------------------------------------------------------------
+    // Candidate location cubes (MCQ options = where the Friend moves to)
+    // ------------------------------------------------------------------
+    private void BuildCubeMaterials()
+    {
+        Material[] src = m.OptionMaterials;
+
+        cubeMats = new Material[4];
+        cubeSelectedMats = new Material[4];
+
+        for (int i = 0; i < 4; i++)
+        {
+            Color c = CandidateMarkers.OptionColor(src[i]);
+            cubeMats[i] = CandidateMarkers.Tint(src[i], c, CandidateMarkers.ALPHA_NORMAL);
+            cubeSelectedMats[i] = CandidateMarkers.Tint(src[i], c, CandidateMarkers.ALPHA_SELECTED);
+        }
+    }
+
+    private Color OptionColor(int i) => CandidateMarkers.OptionColor(m.OptionMaterials[i]);
+
+    private void SpawnCandidateCubes()
+    {
+        ClearCandidateCubes();
+
+        for (int i = 0; i < 4; i++)
+        {
+            string cond = InterferenceCondition(LETTERS[i]);
+
+            // The Friend is Rx_Number 2; its endpoint is where that option would move them to.
+            if (!CandidateMarkers.TryReadRxPosition(cond, RX_FRIEND, out Vector3 pos))
+            {
+                Debug.LogError($"Task2Manager: could not read Friend position from {cond}");
+                continue;
+            }
+
+            candidateCubes[i] = CandidateMarkers.SpawnCube(pos, cubeMats[i], $"Candidate_{cond}");
+        }
+    }
+
+    private void HighlightCandidateCube(int sel)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            if (candidateCubes[i] == null) continue;
+
+            candidateCubes[i].GetComponent<MeshRenderer>().sharedMaterial =
+                i == sel ? cubeSelectedMats[i] : cubeMats[i];
+        }
+    }
+
+    private void ClearCandidateCubes()
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            if (candidateCubes[i] != null) Object.Destroy(candidateCubes[i]);
+            candidateCubes[i] = null;
+        }
+    }
+
+    // ------------------------------------------------------------------
     // Highlighting
     // ------------------------------------------------------------------
     private void HighlightBothPhones()
@@ -419,6 +489,8 @@ public class Task2Manager : ITaskManager
     {
         m.OnAllRaysCompleted -= HandleDownlinkComplete;
         StopTempAnimations();
+        ClearCandidateCubes();
+        ClearButtonHighlights();
 
         m.Highlighter?.ClearAllHighlights();
 
@@ -451,11 +523,12 @@ public class Task2Manager : ITaskManager
             if (buttonLabels[i] != null) buttonLabels[i].text = labels[i];
     }
 
+    // The selected option's button takes its cube's colour at full opacity.
     private void HighlightButton(int i)
     {
         if (buttonImages[i] == null) return;
 
-        Color c = buttonOrigColors[i];
+        Color c = OptionColor(i);
         c.a = 1f;
         buttonImages[i].color = c;
     }
@@ -463,6 +536,21 @@ public class Task2Manager : ITaskManager
     private void ClearButtonHighlights()
     {
         for (int i = 0; i < 4; i++)
-            if (buttonImages[i] != null) buttonImages[i].color = buttonOrigColors[i];
+        {
+            if (buttonImages[i] == null) continue;
+
+            // During the MCQ each button keeps a faint version of its option colour, so it reads as
+            // belonging to the cube of the same colour; elsewhere the buttons look normal again.
+            if (state == State.T2_MCQ)
+            {
+                Color c = OptionColor(i);
+                c.a = buttonOrigColors[i].a;
+                buttonImages[i].color = c;
+            }
+            else
+            {
+                buttonImages[i].color = buttonOrigColors[i];
+            }
+        }
     }
 }

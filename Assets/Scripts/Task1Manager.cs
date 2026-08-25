@@ -135,20 +135,14 @@ public class Task1Manager : ITaskManager
 
     private TaskDef Task => TASKS[taskIdx];
 
-    // Translucent option-coloured box drawn around each candidate receiver.
-    private const float BOX_PADDING = 0.12f;    // metres added on every side of the mesh bounds
-    private const float BOX_MIN_SIZE = 0.30f;   // keeps thin markers visible
-    private const float BOX_ALPHA = 0.15f;
-    private const float BOX_ALPHA_SELECTED = 0.45f;
-
-    // candidate objects shown for the current MCQ (index = option)
+    // Candidate objects shown for the current MCQ (index = option): a cabinet mesh where the
+    // furniture moves, or a transparent option-coloured cube where the receiver moves.
     private readonly GameObject[] candidates = new GameObject[4];
-    private readonly GameObject[] candidateBoxes = new GameObject[4];
     private bool candidatesSpawned;
     private Material[] normalMats;
     private Material[] activeMats;
-    private Material[] boxMats;
-    private Material[] boxSelectedMats;
+    private Material[] cubeMats;
+    private Material[] cubeSelectedMats;
 
     // answer button bookkeeping
     private readonly Button[] buttons = new Button[4];
@@ -184,25 +178,18 @@ public class Task1Manager : ITaskManager
         Material[] src = m.OptionMaterials;
         normalMats = new Material[4];
         activeMats = new Material[4];
-        boxMats = new Material[4];
-        boxSelectedMats = new Material[4];
+        cubeMats = new Material[4];
+        cubeSelectedMats = new Material[4];
         for (int i = 0; i < 4; i++)
         {
             normalMats[i] = src[i];
-            activeMats[i] = MakeTinted(src[i], OptionColor(i), 1f);
-            boxMats[i] = MakeTinted(src[i], OptionColor(i), BOX_ALPHA);
-            boxSelectedMats[i] = MakeTinted(src[i], OptionColor(i), BOX_ALPHA_SELECTED);
-        }
-    }
+            activeMats[i] = CandidateMarkers.Tint(src[i], OptionColor(i), 1f);
 
-    // Runtime copy of an option material at a given opacity (project assets are never mutated).
-    private static Material MakeTinted(Material src, Color color, float alpha)
-    {
-        Material mat = new Material(src);
-        Color c = color; c.a = alpha;
-        mat.color = c;
-        if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
-        return mat;
+            // Receiver-location cubes: same M_obj colour, kept translucent even when selected so
+            // the receiver marker inside stays visible.
+            cubeMats[i] = CandidateMarkers.Tint(src[i], OptionColor(i), CandidateMarkers.ALPHA_NORMAL);
+            cubeSelectedMats[i] = CandidateMarkers.Tint(src[i], OptionColor(i), CandidateMarkers.ALPHA_SELECTED);
+        }
     }
 
     private Color OptionColor(int i)
@@ -373,41 +360,29 @@ public class Task1Manager : ITaskManager
         for (int i = 0; i < 4; i++)
         {
             string cond = ConditionName(Task.name, currentSet, LETTERS[i]);
-            GameObject go = Task.hasCabinet ? SpawnCabinet(cond) : SpawnLocationMarker(cond);
-            if (go == null) continue;
-            go.name = $"Candidate_{cond}";
-            ApplyMaterial(go, normalMats[i]);
-            candidates[i] = go;
 
-            // Cabinets are already option-coloured box meshes; the small receiver markers get a
-            // translucent box around them so each candidate location is easy to spot and tell apart.
-            if (!Task.hasCabinet) candidateBoxes[i] = AddCandidateBox(go, i, cond);
+            if (Task.hasCabinet)
+            {
+                // The cabinet mesh itself carries the option colour.
+                GameObject cabinet = SpawnCabinet(cond);
+                if (cabinet == null) continue;
+
+                cabinet.name = $"Candidate_{cond}";
+                ApplyMaterial(cabinet, normalMats[i]);
+                candidates[i] = cabinet;
+            }
+            else
+            {
+                // Candidate phone locations get a transparent cube in the option's colour.
+                if (!CandidateMarkers.TryReadRxPosition(cond, 1, out Vector3 pos))
+                {
+                    Debug.LogError($"Task1Manager: could not read Rx position from {cond}");
+                    continue;
+                }
+
+                candidates[i] = CandidateMarkers.SpawnCube(pos, cubeMats[i], $"Candidate_{cond}");
+            }
         }
-    }
-
-    // Translucent option-coloured cube enclosing the candidate's mesh bounds.
-    // Kept as a separate root object so the marker's non-uniform scale cannot distort it.
-    private GameObject AddCandidateBox(GameObject target, int optionIdx, string cond)
-    {
-        Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
-        if (renderers.Length == 0) return null;
-
-        Bounds bounds = renderers[0].bounds;
-        for (int i = 1; i < renderers.Length; i++) bounds.Encapsulate(renderers[i].bounds);
-
-        Vector3 size = bounds.size + Vector3.one * (2f * BOX_PADDING);
-        size = new Vector3(Mathf.Max(size.x, BOX_MIN_SIZE), Mathf.Max(size.y, BOX_MIN_SIZE), Mathf.Max(size.z, BOX_MIN_SIZE));
-
-        GameObject box = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        box.name = $"CandidateBox_{cond}";
-        box.transform.position = bounds.center;
-        box.transform.localScale = size;
-
-        Collider col = box.GetComponent<Collider>();
-        if (col != null) col.enabled = false;
-
-        box.GetComponent<MeshRenderer>().sharedMaterial = boxMats[optionIdx];
-        return box;
     }
 
     private GameObject SpawnCabinet(string cond)
@@ -420,48 +395,6 @@ public class Task1Manager : ITaskManager
         }
         // OBJ is already in Unity coordinates after import; no transform applied.
         return UnityEngine.Object.Instantiate(prefab, Vector3.zero, Quaternion.identity);
-    }
-
-    // Phone location = Rx position = last coordinate of the first data row of the path CSV.
-    private GameObject SpawnLocationMarker(string cond)
-    {
-        if (!TryReadRxPosition(cond, out Vector3 pos))
-        {
-            Debug.LogError($"Task1Manager: could not read Rx position from {cond}");
-            return null;
-        }
-        // Slightly below and larger than the real Rx marker so the colour ring stays visible around it.
-        GameObject go = UnityEngine.Object.Instantiate(m.RxPrefab, pos + new Vector3(0, -0.02f, 0), Quaternion.identity);
-        go.transform.localScale = go.transform.localScale * 1.6f;
-        foreach (Transform child in go.transform) child.gameObject.SetActive(false); // no MessageDisplay on candidates
-        return go;
-    }
-
-    private static bool TryReadRxPosition(string cond, out Vector3 pos)
-    {
-        pos = Vector3.zero;
-        TextAsset ta = Resources.Load<TextAsset>(cond);
-        if (ta == null) return false;
-
-        string[] lines = ta.text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-        if (lines.Length < 2) return false;
-
-        // Same layout as LoadDataFromCSVLine: fields 0..4, then the quoted "x y z, x y z, ..." list.
-        string[] fields = lines[1].Split(',');
-        if (fields.Length < 6) return false;
-        string coords = string.Join(",", fields, 5, fields.Length - 5).Trim().Trim('"');
-        string[] points = coords.Split(',');
-        string[] xyz = points[points.Length - 1].Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-        if (xyz.Length < 3) return false;
-
-        var inv = System.Globalization.CultureInfo.InvariantCulture;
-        if (!float.TryParse(xyz[0], System.Globalization.NumberStyles.Float, inv, out float x) ||
-            !float.TryParse(xyz[1], System.Globalization.NumberStyles.Float, inv, out float y) ||
-            !float.TryParse(xyz[2], System.Globalization.NumberStyles.Float, inv, out float z))
-            return false;
-
-        pos = new Vector3(x, y, z);
-        return true;
     }
 
     private static void ApplyMaterial(GameObject go, Material mat)
@@ -480,9 +413,7 @@ public class Task1Manager : ITaskManager
         for (int i = 0; i < 4; i++)
         {
             if (candidates[i] != null) UnityEngine.Object.Destroy(candidates[i]);
-            if (candidateBoxes[i] != null) UnityEngine.Object.Destroy(candidateBoxes[i]);
             candidates[i] = null;
-            candidateBoxes[i] = null;
         }
     }
 
@@ -491,9 +422,11 @@ public class Task1Manager : ITaskManager
     {
         for (int i = 0; i < 4; i++)
         {
-            if (candidates[i] != null) ApplyMaterial(candidates[i], i == sel ? activeMats[i] : normalMats[i]);
-            if (candidateBoxes[i] != null)
-                candidateBoxes[i].GetComponent<MeshRenderer>().sharedMaterial = i == sel ? boxSelectedMats[i] : boxMats[i];
+            if (candidates[i] == null) continue;
+
+            ApplyMaterial(candidates[i], Task.hasCabinet
+                ? (i == sel ? activeMats[i] : normalMats[i])
+                : (i == sel ? cubeSelectedMats[i] : cubeMats[i]));
         }
 
         ClearButtonHighlights();
