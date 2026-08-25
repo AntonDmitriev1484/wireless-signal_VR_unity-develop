@@ -1,0 +1,99 @@
+{
+ "name": "interference_space_D",
+ "xml": "/home/saif/wireless_NeRF_experiments/SIONNA/xml_3d_models/Home Office With Doors xml/home_office_doorways.xml",
+ "tx": [
+  -6.0,
+  -5.6,
+  0.9
+ ],
+ "rxs": [
+  [
+   -3.0,
+   -3.0,
+   1.1
+  ],
+  [
+   6.5,
+   6.0,
+   1.1
+  ]
+ ],
+ "rss_rx_dbm": [
+  -47.268588433343155,
+  -82.5200979233391
+ ],
+ "ray_caps": {
+  "1": 6,
+  "2": 2
+ },
+ "raw": {
+  "1": {
+   "n_paths": 107,
+   "has_los": true,
+   "hist": {
+    "3": 33,
+    "2": 12,
+    "4": 55,
+    "0": 1,
+    "1": 6
+   },
+   "box_bounce_paths": 0,
+   "box_bounce_best_rel_db": null,
+   "strongest_type": "LoS"
+  },
+  "2": {
+   "n_paths": 21,
+   "has_los": false,
+   "hist": {
+    "4": 15,
+    "3": 5,
+    "2": 1
+   },
+   "box_bounce_paths": 0,
+   "box_bounce_best_rel_db": null,
+   "strongest_type": "3-bounce"
+  }
+ },
+ "final": {
+  "1": {
+   "n_paths": 6,
+   "has_los": true,
+   "hist": {
+    "0": 1,
+    "1": 4,
+    "2": 1
+   },
+   "box_bounce_paths": 0,
+   "box_bounce_best_rel_db": null,
+   "strongest_type": "LoS"
+  },
+  "2": {
+   "n_paths": 2,
+   "has_los": false,
+   "hist": {
+    "3": 1,
+    "4": 1
+   },
+   "box_bounce_paths": 0,
+   "box_bounce_best_rel_db": null,
+   "strongest_type": "3-bounce"
+  }
+ },
+ "heatmap": {
+  "cells": 3000,
+  "max_dbm": -37.954275618674146,
+  "p50_dbm": -62.85736764052051,
+  "clamped_cells": 5
+ },
+ "rx_labels": [
+  "PhoneA",
+  "PhoneB"
+ ],
+ "note": "Phone B moved: kitchen, far and behind two walls - interference effectively gone",
+ "correct": true,
+ "option": "D",
+ "sir_at_router_db": 35.25150948999594,
+ "seconds": 0.1,
+ "paths_csv": "interference_space_D.csv",
+ "heatmap_csv": "interference_space_D_heatmap.csv"
+}

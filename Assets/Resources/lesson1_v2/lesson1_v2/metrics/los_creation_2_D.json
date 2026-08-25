@@ -1,0 +1,84 @@
+{
+ "name": "los_creation_2_D",
+ "xml": "/home/saif/wireless_NeRF_experiments/SIONNA/WiViz_v2/lesson1_v2/scenes/los_creation_2_D/home_office_doorways.xml",
+ "tx": [
+  0.15,
+  -4.9,
+  1.1
+ ],
+ "rx": [
+  5.0,
+  -7.6,
+  2.0
+ ],
+ "rss_point": [
+  5.0,
+  -7.45
+ ],
+ "rss_mode": "rx_height",
+ "rss_rx_dbm": -71.04908407487791,
+ "floor_point": [
+  5.0,
+  -6.6
+ ],
+ "rss_floor_dbm": -69.96636340689547,
+ "raw": {
+  "n_paths": 23,
+  "has_los": false,
+  "hist": {
+   "3": 7,
+   "4": 16
+  },
+  "box_bounce_paths": 4,
+  "box_bounce_best_rel_db": -7.3841,
+  "strongest_type": "3-bounce"
+ },
+ "final": {
+  "n_paths": 7,
+  "has_los": false,
+  "hist": {
+   "3": 4,
+   "4": 3
+  },
+  "box_bounce_paths": 1,
+  "box_bounce_best_rel_db": -7.3841,
+  "strongest_type": "3-bounce"
+ },
+ "heatmap": {
+  "cells": 3000,
+  "max_dbm": -40.51009966884128,
+  "p50_dbm": -74.47334884652342,
+  "clamped_cells": 38
+ },
+ "task": "los_creation",
+ "set": 2,
+ "option": "D",
+ "correct": false,
+ "note": "on the direct line, 4.3 m from the TV (near the shelf) - blocks LoS",
+ "rx_label": "TV",
+ "boxes": [
+  {
+   "name": "Metal_Cabinet",
+   "size": [
+    1.2,
+    0.4,
+    2.2
+   ],
+   "center": [
+    1.24,
+    -5.51
+   ],
+   "yaw_deg": 60.9,
+   "z0": 0.0,
+   "material": "itu_metal"
+  }
+ ],
+ "geometry": {
+  "placement_problems": [],
+  "cabinet_cuts_los": true
+ },
+ "seconds": 1.4,
+ "paths_csv": "los_creation_2_D.csv",
+ "heatmap_csv": "los_creation_2_D_heatmap.csv",
+ "scene_xml": "scenes/los_creation_2_D/home_office_doorways.xml"
+}

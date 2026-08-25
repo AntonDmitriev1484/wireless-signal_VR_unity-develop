@@ -1,0 +1,89 @@
+{
+ "name": "los_creation_2_A",
+ "xml": "/home/saif/wireless_NeRF_experiments/SIONNA/WiViz_v2/lesson1_v2/scenes/los_creation_2_A/home_office_doorways.xml",
+ "tx": [
+  0.15,
+  -4.9,
+  1.1
+ ],
+ "rx": [
+  5.0,
+  -7.6,
+  2.0
+ ],
+ "rss_point": [
+  5.0,
+  -7.45
+ ],
+ "rss_mode": "rx_height",
+ "rss_rx_dbm": -49.595706313391766,
+ "floor_point": [
+  5.0,
+  -6.6
+ ],
+ "rss_floor_dbm": -49.324355488432104,
+ "raw": {
+  "n_paths": 84,
+  "has_los": true,
+  "hist": {
+   "4": 43,
+   "2": 11,
+   "3": 25,
+   "0": 1,
+   "1": 4
+  },
+  "box_bounce_paths": 4,
+  "box_bounce_best_rel_db": -28.5422,
+  "strongest_type": "LoS"
+ },
+ "final": {
+  "n_paths": 7,
+  "has_los": true,
+  "hist": {
+   "0": 1,
+   "1": 2,
+   "3": 2,
+   "2": 2
+  },
+  "box_bounce_paths": 1,
+  "box_bounce_best_rel_db": -28.5422,
+  "strongest_type": "LoS"
+ },
+ "heatmap": {
+  "cells": 3000,
+  "max_dbm": -42.43625894138303,
+  "p50_dbm": -76.13383381775117,
+  "clamped_cells": 43
+ },
+ "task": "los_creation",
+ "set": 2,
+ "option": "A",
+ "correct": true,
+ "note": "beside the TV stand along the south wall (east) - LoS kept",
+ "rx_label": "TV",
+ "boxes": [
+  {
+   "name": "Metal_Cabinet",
+   "size": [
+    1.2,
+    0.4,
+    2.2
+   ],
+   "center": [
+    6.9,
+    -7.5
+   ],
+   "yaw_deg": 0.0,
+   "z0": 0.0,
+   "material": "itu_metal"
+  }
+ ],
+ "geometry": {
+  "placement_problems": [],
+  "cabinet_cuts_los": false
+ },
+ "seconds": 1.5,
+ "paths_csv": "los_creation_2_A.csv",
+ "heatmap_csv": "los_creation_2_A_heatmap.csv",
+ "scene_xml": "scenes/los_creation_2_A/home_office_doorways.xml"
+}

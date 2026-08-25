@@ -1,0 +1,68 @@
+{
+ "name": "communication_single",
+ "xml": "/home/saif/wireless_NeRF_experiments/SIONNA/xml_3d_models/Home Office With Doors xml/home_office_doorways.xml",
+ "tx": [
+  -6.0,
+  -5.6,
+  0.9
+ ],
+ "rxs": [
+  [
+   -3.0,
+   -3.0,
+   1.1
+  ]
+ ],
+ "rss_rx_dbm": [
+  -47.268588433343155
+ ],
+ "ray_caps": {
+  "1": 6
+ },
+ "raw": {
+  "1": {
+   "n_paths": 108,
+   "has_los": true,
+   "hist": {
+    "3": 34,
+    "4": 55,
+    "2": 12,
+    "1": 6,
+    "0": 1
+   },
+   "box_bounce_paths": 0,
+   "box_bounce_best_rel_db": null,
+   "strongest_type": "LoS"
+  }
+ },
+ "final": {
+  "1": {
+   "n_paths": 6,
+   "has_los": true,
+   "hist": {
+    "0": 1,
+    "1": 4,
+    "2": 1
+   },
+   "box_bounce_paths": 0,
+   "box_bounce_best_rel_db": null,
+   "strongest_type": "LoS"
+  }
+ },
+ "heatmap": {
+  "cells": 3000,
+  "max_dbm": -37.954275618674146,
+  "p50_dbm": -62.85736764052051,
+  "clamped_cells": 5
+ },
+ "rx_labels": [
+  "PhoneA"
+ ],
+ "note": "baseline communication: router -> Phone A (Unity reverses for Phone A -> router)",
+ "correct": false,
+ "option": null,
+ "sir_at_router_db": null,
+ "seconds": 0.9,
+ "paths_csv": "communication_single.csv",
+ "heatmap_csv": "communication_single_heatmap.csv"
+}

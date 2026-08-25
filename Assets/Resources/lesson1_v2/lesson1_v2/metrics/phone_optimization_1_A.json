@@ -1,0 +1,66 @@
+{
+ "name": "phone_optimization_1_A",
+ "xml": "/home/saif/wireless_NeRF_experiments/SIONNA/WiViz_v2/lesson1_v2/scenes/phone_optimization_1_A/home_office_doorways.xml",
+ "tx": [
+  7.309,
+  2.938,
+  0.9
+ ],
+ "rx": [
+  1.5,
+  5.5,
+  1.1
+ ],
+ "rss_point": [
+  1.5,
+  5.5
+ ],
+ "rss_rx_dbm": -64.68786074164215,
+ "raw": {
+  "n_paths": 89,
+  "has_los": false,
+  "hist": {
+   "4": 31,
+   "3": 51,
+   "1": 2,
+   "2": 5
+  },
+  "box_bounce_paths": 0,
+  "box_bounce_best_rel_db": null,
+  "strongest_type": "1-bounce"
+ },
+ "final": {
+  "n_paths": 7,
+  "has_los": false,
+  "hist": {
+   "1": 2,
+   "3": 2,
+   "2": 1,
+   "4": 2
+  },
+  "box_bounce_paths": 0,
+  "box_bounce_best_rel_db": null,
+  "strongest_type": "1-bounce"
+ },
+ "heatmap": {
+  "cells": 3000,
+  "max_dbm": -35.85109348429157,
+  "p50_dbm": -64.06318566274484,
+  "clamped_cells": 39
+ },
+ "task": "phone_optimization",
+ "set": 1,
+ "option": "A",
+ "correct": false,
+ "note": "kitchen, behind the kitchen wall (close to the router but NLoS)",
+ "rx_label": "phone",
+ "boxes": [],
+ "geometry": {
+  "placement_problems": [],
+  "cabinet_cuts_los": false
+ },
+ "seconds": 2.5,
+ "paths_csv": "phone_optimization_1_A.csv",
+ "heatmap_csv": "phone_optimization_1_A_heatmap.csv",
+ "scene_xml": "scenes/phone_optimization_1_A/home_office_doorways.xml"
+}

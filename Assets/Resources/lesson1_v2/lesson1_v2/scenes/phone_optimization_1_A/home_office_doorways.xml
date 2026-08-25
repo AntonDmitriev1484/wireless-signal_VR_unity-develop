@@ -1,0 +1,212 @@
+<scene version="2.1.0">
+
+<!-- Defaults, these can be set via the command line: -Darg=value -->
+
+
+<!-- Camera and Rendering Parameters -->
+
+	<integrator type="path" id="elm__0" name="elm__0">
+		<integer name="max_depth" value="12"/>
+	</integrator>
+
+<!-- Materials -->
+
+	<bsdf type="diffuse" id="mat-itu_glass" name="mat-itu_glass">
+		<rgb value="0.800000 0.800000 0.800000" name="reflectance"/>
+	</bsdf>
+	<bsdf type="diffuse" id="mat-itu_metal" name="mat-itu_metal">
+		<rgb value="0.046665 0.046665 0.046665" name="reflectance"/>
+	</bsdf>
+	<bsdf type="twosided" id="mat-itu_wood" name="mat-itu_wood">
+		<bsdf type="principled" name="bsdf">
+			<rgb value="0.800000 0.800000 0.800000" name="base_color"/>
+			<rgb value="1.000000 1.000000 1.000000" name="spec_tint"/>
+			<float name="spec_trans" value="0.000000"/>
+			<float name="metallic" value="0.000000"/>
+			<float name="anisotropic" value="0.000000"/>
+			<float name="roughness" value="0.250000"/>
+			<float name="sheen" value="0.000000"/>
+			<rgb value="1.000000 1.000000 1.000000" name="sheen_tint"/>
+			<float name="clearcoat" value="0.000000"/>
+			<float name="clearcoat_gloss" value="0.000900"/>
+			<float name="specular" value="0.500000"/>
+		</bsdf>
+	</bsdf>
+	<bsdf type="diffuse" id="mat-itu_concrete" name="mat-itu_concrete">
+		<rgb value="0.779848 0.800266 0.759736" name="reflectance"/>
+	</bsdf>
+	<bsdf type="diffuse" id="mat-itu_brick" name="mat-itu_brick">
+		<rgb value="0.800000 0.800000 0.800000" name="reflectance"/>
+	</bsdf>
+	<bsdf type="diffuse" id="mat-itu_plywood" name="mat-itu_plywood">
+		<rgb value="0.800000 0.800000 0.800000" name="reflectance"/>
+	</bsdf>
+	<bsdf type="diffuse" id="mat-itu_marble" name="mat-itu_marble">
+		<rgb value="0.800000 0.800000 0.800000" name="reflectance"/>
+	</bsdf>
+	<bsdf type="diffuse" id="mat-itu_wet_ground" name="mat-itu_wet_ground">
+		<rgb value="0.800000 0.800000 0.800000" name="reflectance"/>
+	</bsdf>
+		<bsdf type="diffuse" id="mat-itu_chipboard" name="mat-itu_chipboard">
+		<rgb value="0.800000 0.800000 0.800000" name="reflectance"/>
+	</bsdf>
+
+<!-- Emitters -->
+
+
+<!-- Shapes -->
+
+	<shape type="ply" id="mesh-Chandelier_2__node0" name="mesh-Chandelier_2__node0">
+		<string name="filename" value="meshes/Chandelier_2__node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_glass" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Chandelier_node0" name="mesh-Chandelier_node0">
+		<string name="filename" value="meshes/Chandelier_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_glass" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Coffee_Machine_node0" name="mesh-Coffee_Machine_node0">
+		<string name="filename" value="meshes/Coffee_Machine_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_metal" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Conference_room_chair_node0" name="mesh-Conference_room_chair_node0">
+		<string name="filename" value="meshes/Conference_room_chair_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_wood" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Conference_room_table_node0" name="mesh-Conference_room_table_node0">
+		<string name="filename" value="meshes/Conference_room_table_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_wood" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Couch_node0" name="mesh-Couch_node0">
+		<string name="filename" value="meshes/Couch_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_concrete" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Floor_plan_node0" name="mesh-Floor_plan_node0">
+		<string name="filename" value="meshes/Floor_plan_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_concrete" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Fridge_node0" name="mesh-Fridge_node0">
+		<string name="filename" value="meshes/Fridge_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_metal" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-iMac_2__node0" name="mesh-iMac_2__node0">
+		<string name="filename" value="meshes/iMac_2__node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_metal" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-iMac_node0" name="mesh-iMac_node0">
+		<string name="filename" value="meshes/iMac_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_metal" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Kitchen_node0" name="mesh-Kitchen_node0">
+		<string name="filename" value="meshes/Kitchen_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_chipboard" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Lamp_2__node0" name="mesh-Lamp_2__node0">
+		<string name="filename" value="meshes/Lamp_2__node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_marble" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Lamp_node0" name="mesh-Lamp_node0">
+		<string name="filename" value="meshes/Lamp_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_marble" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Man_sitting_node0" name="mesh-Man_sitting_node0">
+		<string name="filename" value="meshes/Man_sitting_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_marble" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Man_standing_node0" name="mesh-Man_standing_node0">
+		<string name="filename" value="meshes/Man_standing_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_marble" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Microwave_node0" name="mesh-Microwave_node0">
+		<string name="filename" value="meshes/Microwave_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_metal" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Mini_Fridge_node0" name="mesh-Mini_Fridge_node0">
+		<string name="filename" value="meshes/Mini_Fridge_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_metal" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Office_Chair_2__node0" name="mesh-Office_Chair_2__node0">
+		<string name="filename" value="meshes/Office_Chair_2__node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_concrete" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Office_Chair_node0" name="mesh-Office_Chair_node0">
+		<string name="filename" value="meshes/Office_Chair_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_concrete" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Office_Desk_2__node0" name="mesh-Office_Desk_2__node0">
+		<string name="filename" value="meshes/Office_Desk_2__node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_glass" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Office_Desk_node0" name="mesh-Office_Desk_node0">
+		<string name="filename" value="meshes/Office_Desk_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_glass" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Projector_Stand_node0" name="mesh-Projector_Stand_node0">
+		<string name="filename" value="meshes/Projector_Stand_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_glass" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Projector_node0" name="mesh-Projector_node0">
+		<string name="filename" value="meshes/Projector_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_marble" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-PS4_node0" name="mesh-PS4_node0">
+		<string name="filename" value="meshes/PS4_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_marble" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Record_Player_node0" name="mesh-Record_Player_node0">
+		<string name="filename" value="meshes/Record_Player_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_marble" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Table_2__node0" name="mesh-Table_2__node0">
+		<string name="filename" value="meshes/Table_2__node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_wood" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Table_node0" name="mesh-Table_node0">
+		<string name="filename" value="meshes/Table_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_wood" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-TV_Stand_node0" name="mesh-TV_Stand_node0">
+		<string name="filename" value="meshes/TV_Stand_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_wood" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-Wall_shelf_node0" name="mesh-Wall_shelf_node0">
+		<string name="filename" value="meshes/Wall_shelf_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_wood" name="bsdf"/>
+	</shape>
+	<shape type="ply" id="mesh-XBox_One_node0" name="mesh-XBox_One_node0">
+		<string name="filename" value="meshes/XBox_One_node0.ply"/>
+		<boolean name="face_normals" value="true"/>
+		<ref id="mat-itu_marble" name="bsdf"/>
+	</shape>
+
+<!-- Volumes -->
+
+</scene>

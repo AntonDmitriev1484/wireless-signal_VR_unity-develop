@@ -1,0 +1,86 @@
+{
+ "name": "los_creation_2_C",
+ "xml": "/home/saif/wireless_NeRF_experiments/SIONNA/WiViz_v2/lesson1_v2/scenes/los_creation_2_C/home_office_doorways.xml",
+ "tx": [
+  0.15,
+  -4.9,
+  1.1
+ ],
+ "rx": [
+  5.0,
+  -7.6,
+  2.0
+ ],
+ "rss_point": [
+  5.0,
+  -7.45
+ ],
+ "rss_mode": "rx_height",
+ "rss_rx_dbm": -65.33825292770061,
+ "floor_point": [
+  5.0,
+  -6.6
+ ],
+ "rss_floor_dbm": -59.00578845177733,
+ "raw": {
+  "n_paths": 47,
+  "has_los": false,
+  "hist": {
+   "4": 29,
+   "2": 3,
+   "3": 15
+  },
+  "box_bounce_paths": 7,
+  "box_bounce_best_rel_db": -7.2722,
+  "strongest_type": "3-bounce"
+ },
+ "final": {
+  "n_paths": 7,
+  "has_los": false,
+  "hist": {
+   "3": 3,
+   "2": 1,
+   "4": 3
+  },
+  "box_bounce_paths": 1,
+  "box_bounce_best_rel_db": -7.2722,
+  "strongest_type": "3-bounce"
+ },
+ "heatmap": {
+  "cells": 3000,
+  "max_dbm": -41.29906147433351,
+  "p50_dbm": -74.72063304603626,
+  "clamped_cells": 40
+ },
+ "task": "los_creation",
+ "set": 2,
+ "option": "C",
+ "correct": false,
+ "note": "on the direct line, 3.3 m from the TV - blocks LoS",
+ "rx_label": "TV",
+ "boxes": [
+  {
+   "name": "Metal_Cabinet",
+   "size": [
+    1.2,
+    0.4,
+    2.2
+   ],
+   "center": [
+    2.12,
+    -6.0
+   ],
+   "yaw_deg": 60.9,
+   "z0": 0.0,
+   "material": "itu_metal"
+  }
+ ],
+ "geometry": {
+  "placement_problems": [],
+  "cabinet_cuts_los": true
+ },
+ "seconds": 1.4,
+ "paths_csv": "los_creation_2_C.csv",
+ "heatmap_csv": "los_creation_2_C_heatmap.csv",
+ "scene_xml": "scenes/los_creation_2_C/home_office_doorways.xml"
+}

@@ -1,0 +1,88 @@
+{
+ "name": "reflection_creation_2_B",
+ "xml": "/home/saif/wireless_NeRF_experiments/SIONNA/WiViz_v2/lesson1_v2/scenes/reflection_creation_2_B/home_office_doorways.xml",
+ "tx": [
+  -6.0,
+  -5.6,
+  0.9
+ ],
+ "rx": [
+  5.0,
+  -7.6,
+  2.0
+ ],
+ "rss_point": [
+  5.0,
+  -7.45
+ ],
+ "rss_mode": "rx_height",
+ "rss_rx_dbm": -61.53801111371745,
+ "floor_point": [
+  5.0,
+  -6.6
+ ],
+ "rss_floor_dbm": -65.48955943053527,
+ "raw": {
+  "n_paths": 53,
+  "has_los": false,
+  "hist": {
+   "4": 33,
+   "3": 13,
+   "1": 2,
+   "2": 5
+  },
+  "box_bounce_paths": 7,
+  "box_bounce_best_rel_db": 0.0,
+  "strongest_type": "1-bounce"
+ },
+ "final": {
+  "n_paths": 7,
+  "has_los": false,
+  "hist": {
+   "1": 2,
+   "2": 2,
+   "4": 2,
+   "3": 1
+  },
+  "box_bounce_paths": 6,
+  "box_bounce_best_rel_db": 0.0,
+  "strongest_type": "1-bounce"
+ },
+ "heatmap": {
+  "cells": 3000,
+  "max_dbm": -37.95426868275166,
+  "p50_dbm": -60.548649691555646,
+  "clamped_cells": 5
+ },
+ "task": "reflection_creation",
+ "set": 2,
+ "option": "B",
+ "correct": true,
+ "note": "living room, below the kitchen wall, face towards the doorway/TV - mirrors the router onto the TV",
+ "rx_label": "TV",
+ "boxes": [
+  {
+   "name": "Metal_Cabinet",
+   "size": [
+    1.2,
+    0.4,
+    2.2
+   ],
+   "center": [
+    1.3,
+    3.4
+   ],
+   "yaw_deg": -10.227412421027353,
+   "z0": 0.0,
+   "material": "itu_metal"
+  }
+ ],
+ "geometry": {
+  "placement_problems": [],
+  "cabinet_cuts_los": false
+ },
+ "seconds": 1.7,
+ "paths_csv": "reflection_creation_2_B.csv",
+ "heatmap_csv": "reflection_creation_2_B_heatmap.csv",
+ "scene_xml": "scenes/reflection_creation_2_B/home_office_doorways.xml"
+}
