@@ -49,6 +49,18 @@ public class MenuManager : MonoBehaviour
     private Button hoveredButton;
 
 
+    [Header("Backdrop")]
+    [SerializeField, Tooltip("Optional. Leave empty to build an opaque white material at runtime.")]
+    private Material backdropMaterial;
+
+    // Clear gap between the panels and the front face of the slab.
+    private const float BACKDROP_GAP = 0.01f;
+    private const float BACKDROP_THICKNESS = 0.005f;
+    private const float BACKDROP_PADDING = 0.02f;   // margin around the panels
+
+    private GameObject backdrop;
+
+
     // ========================================================================
     // START
     // ========================================================================
@@ -100,6 +112,12 @@ public class MenuManager : MonoBehaviour
         {
             selectItem.action.Disable();
         }
+
+        // The slab lives at the scene root, so it has to be cleaned up explicitly.
+        if (backdrop != null)
+        {
+            Destroy(backdrop);
+        }
     }
 
 
@@ -117,6 +135,11 @@ public class MenuManager : MonoBehaviour
         if (menuQA != null)
         {
             menuQA.SetActive(false);
+        }
+
+        if (backdrop != null)
+        {
+            backdrop.SetActive(false);
         }
 
         hoveredButton = null;
@@ -155,6 +178,132 @@ public class MenuManager : MonoBehaviour
         // ------------------------------------------------------------
 
         PositionQAPanel();
+
+
+        // ------------------------------------------------------------
+        // Fit the backdrop slab around whatever is now on screen
+        // ------------------------------------------------------------
+
+        UpdateBackdrop();
+    }
+
+
+    // ========================================================================
+    // BACKDROP SLAB
+    // ========================================================================
+
+    // A thin opaque slab sized to enclose the visible panels, sitting BACKDROP_GAP behind them.
+    // Refitted on every open, because the panels are repositioned relative to the camera each time.
+    private void UpdateBackdrop()
+    {
+        if (menuMain == null)
+            return;
+
+        // Both panels share PanelMain's rotation, so measure them in that frame. It is a
+        // rotation-only transform, so distances are preserved and the result maps straight back.
+        Quaternion rotation = menuMain.transform.rotation;
+        Quaternion inverse = Quaternion.Inverse(rotation);
+
+        bool anyCorner = false;
+        Vector3 min = Vector3.zero;
+        Vector3 max = Vector3.zero;
+
+        Vector3[] corners = new Vector3[4];
+
+        foreach (GameObject panel in new[] { menuMain, menuQA })
+        {
+            if (panel == null || !panel.activeInHierarchy)
+                continue;
+
+            RectTransform rect = panel.GetComponent<RectTransform>();
+
+            if (rect == null)
+                continue;
+
+            rect.GetWorldCorners(corners);
+
+            foreach (Vector3 corner in corners)
+            {
+                Vector3 local = inverse * corner;
+
+                if (!anyCorner)
+                {
+                    min = local;
+                    max = local;
+                    anyCorner = true;
+                }
+                else
+                {
+                    min = Vector3.Min(min, local);
+                    max = Vector3.Max(max, local);
+                }
+            }
+        }
+
+        if (!anyCorner)
+            return;
+
+        if (backdrop == null)
+            CreateBackdrop();
+
+        Vector3 center = (min + max) * 0.5f;
+
+        // A world-space canvas is read looking along its forward axis, so +z here is behind it.
+        // Offsetting by half the thickness as well keeps the visible gap exactly BACKDROP_GAP.
+        center.z = max.z + BACKDROP_GAP + BACKDROP_THICKNESS * 0.5f;
+
+        backdrop.SetActive(true);
+        backdrop.transform.rotation = rotation;
+        backdrop.transform.position = rotation * center;
+        backdrop.transform.localScale = new Vector3(
+            (max.x - min.x) + BACKDROP_PADDING * 2f,
+            (max.y - min.y) + BACKDROP_PADDING * 2f,
+            BACKDROP_THICKNESS
+        );
+    }
+
+
+    private void CreateBackdrop()
+    {
+        // Kept at the scene root: parenting it to a panel would inherit that canvas's scale.
+        backdrop = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        backdrop.name = "MenuBackdrop";
+
+        // Purely visual - it must never absorb a ray.
+        Collider collider = backdrop.GetComponent<Collider>();
+
+        if (collider != null)
+            collider.enabled = false;
+
+        MeshRenderer meshRenderer = backdrop.GetComponent<MeshRenderer>();
+
+        meshRenderer.sharedMaterial =
+            backdropMaterial != null
+                ? backdropMaterial
+                : CreateOpaqueWhiteMaterial();
+
+        meshRenderer.shadowCastingMode =
+            UnityEngine.Rendering.ShadowCastingMode.Off;
+
+        meshRenderer.receiveShadows = false;
+    }
+
+
+    private static Material CreateOpaqueWhiteMaterial()
+    {
+        // URP Lit is already used by the scene's materials, so it survives shader stripping.
+        Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+
+        if (shader == null)
+            shader = Shader.Find("Standard");
+
+        Material material = new Material(shader);
+        material.color = Color.white;
+
+        if (material.HasProperty("_BaseColor"))
+            material.SetColor("_BaseColor", Color.white);
+
+        return material;
     }
 
 
