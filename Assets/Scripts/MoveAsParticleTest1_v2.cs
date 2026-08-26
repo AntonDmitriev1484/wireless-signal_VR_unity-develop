@@ -335,6 +335,36 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         this.changeAlpha = changeAlpha;
         this.message = message;
         this.changeSize = changeSize;
+
+        // Give the particles labels for the new message straight away, so a state that only calls
+        // SetMessage and then waits for Play (e.g. the demo's D4) is still captioned.
+        RebuildParticleTexts();
+    }
+
+    // (Re)create the text riding on each particle at its current position. Created hidden - each is
+    // revealed by UpdateParticleText once its particle leaves the transmitter, so the labels never
+    // stack up on the emitter before playback.
+    private void RebuildParticleTexts()
+    {
+        if (particles == null) return;
+
+        if (particle_text_objs != null)
+        {
+            for (int i = 0; i < particle_text_objs.Length; i++)
+                if (particle_text_objs[i] != null) Destroy(particle_text_objs[i]);
+        }
+
+        particle_text_objs = new GameObject[particles.Length];
+
+        if (string.IsNullOrEmpty(message)) return;
+
+        for (int i = 0; i < particles.Length; i++)
+        {
+            // A ray that has already arrived has delivered its message; it needs no label.
+            if (completed_particles != null && i < completed_particles.Length && completed_particles[i]) continue;
+
+            particle_text_objs[i] = MakeMessageParticleText(particles[i], i);
+        }
     }
 
     private GameObject MakeMessageParticleText(ParticleSystem.Particle particle, int idx)
@@ -485,14 +515,10 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     // must not deliver their message a second time.
     public void ClearAllMessageText()
     {
-        if (particle_text_objs != null)
-        {
-            for (int i = 0; i < particle_text_objs.Length; i++)
-            {
-                if (particle_text_objs[i] != null) Destroy(particle_text_objs[i]);
-                particle_text_objs[i] = null;
-            }
-        }
+        // Rebuild rather than just destroy: the labels come back hidden and attached to the current
+        // particles, so whatever plays next is still captioned, while text left over from an
+        // interrupted run (and anything already delivered to an endpoint) is gone.
+        RebuildParticleTexts();
 
         ClearMessageAnchors();
         MoveTempParticles.ClearAllMessageText();
@@ -515,6 +541,14 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
     private void InitializeParticlePositions()
     {
+        // Destroy the previous dataset's labels before dropping the array, otherwise they are
+        // orphaned and hang in the scene forever.
+        if (particle_text_objs != null)
+        {
+            for (int i = 0; i < particle_text_objs.Length; i++)
+                if (particle_text_objs[i] != null) Destroy(particle_text_objs[i]);
+        }
+
         particle_text_objs = new GameObject[this.numRays];
 
         // Loop through each particle
@@ -2401,6 +2435,12 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
         if (heatmapWasShown) MakeHeatmap();
         if (raysWereShown) MarkPathLine_MultiPaths();
+
+        // Loading a dataset never starts playback. isRayMovementPaused is sticky - once the
+        // participant has pressed Play it stays false - so without this the freshly seeded
+        // particles would animate on their own as soon as the next task loaded its data.
+        isRayMovementPaused = true;
+        if (particleSystem1 != null) particleSystem1.Pause();
     }
 
     public class TaskNode {
@@ -2527,11 +2567,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                     m.highlighter.SetHighlighted(m.rx_obj, true);
                     m.qTextObj.GetComponent<TextMeshProUGUI>().text = 
                         HighlightSubstrings("Let's look at how the tx communicates with the rx. The router is going to say \"Hello\" to your TV!", highlights);
-                    m.NextButton.SetActive(false);
-                    // yield return new WaitForSeconds(2f);
                     m.SetMessage("Hello");
-                    m.RayPlayPause();
-                    m.NextButton.SetActive(true);
+                    // Playback is the participant's: they start it with Play/Pause or Restart.
                     next_state = State.D5;
                     break;
                 case State.D5:
@@ -2539,10 +2576,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                     m.highlighter.SetHighlighted(m.rx_obj, false);
                     m.qTextObj.GetComponent<TextMeshProUGUI>().text = "You can see that the signal contains the message, and it interacts with the entire room." +
                         "The signal moving through the environment like this is called propagation.";
-                    m.NextButton.SetActive(false);
-                    // yield return new WaitForSeconds(2f);
-                    m.RayPlayPause();
-                    m.NextButton.SetActive(true);
+                    // No toggle here either: this used to pause the run D4 had auto-started.
                     next_state = State.D6;
                     break;
                 case State.D6:

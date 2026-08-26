@@ -77,7 +77,7 @@ public class TaskCommTestManager : ITaskManager
         m.OnAllRaysCompleted += HandleForwardComplete;
 
         // RayPlayPause toggles; the rays start paused after a dataset load.
-        if (m.RaysPaused) m.RayPlayPause();
+        // Loaded paused; the participant starts it with Play/Pause or Restart.
     }
 
     private void HandleForwardComplete()
@@ -110,7 +110,7 @@ public class TaskCommTestManager : ITaskManager
         temp.SetMessage("Hi!");
 
         temp.OnComplete += HandleReverseComplete;
-        temp.Play();
+        // Built paused - press Play to send the reply.
     }
 
     private void HandleReverseComplete()

@@ -402,7 +402,9 @@ public class MoveTempParticles : MonoBehaviour
     // delivered to an endpoint. Safe mid-animation - the particles simply carry no label after it.
     public void ClearMessageText()
     {
-        DestroyParticleTexts();
+        // Rebuild rather than just destroy, so an animation that has not run yet (or is still
+        // going) keeps its labels - hidden until each particle moves - instead of ending up bare.
+        RebuildParticleTexts();
         ClearEndpointAnchors();
     }
 

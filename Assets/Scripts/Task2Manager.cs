@@ -226,7 +226,7 @@ public class Task2Manager : ITaskManager
 
             case State.T2_BothTransmit:
                 SetText("What if both your phones transmit at the same time?");
-                PlayInterference();
+                PrepareInterference();
                 break;
 
             case State.T2_Garbled:
@@ -267,7 +267,7 @@ public class Task2Manager : ITaskManager
 
             case State.T2_TurnsPlaying:
                 SetText("Your phone goes first, then your friend's.");
-                PlayTurnTaking();
+                PrepareTurnTaking();
                 break;
 
             case State.T2_TurnsDone:
@@ -292,7 +292,7 @@ public class Task2Manager : ITaskManager
 
         // Moving the Friend reloads the dataset, so rebuild and replay the interference example.
         LoadInterference(InterferenceCondition(LETTERS[answerIdx]));
-        PlayInterference();
+        PrepareInterference();
     }
 
     private void SetState(State s)
@@ -307,7 +307,7 @@ public class Task2Manager : ITaskManager
     private void StartConversation()
     {
         m.OnAllRaysCompleted += HandleDownlinkComplete;
-        if (m.RaysPaused) m.RayPlayPause();
+        // The dataset is loaded and paused; the participant starts it with Play/Pause or Restart.
     }
 
     private void HandleDownlinkComplete()
@@ -319,7 +319,7 @@ public class Task2Manager : ITaskManager
         if (tempYou == null) return;
 
         tempYou.SetMessage("Yeah sure, lets hang out at 8?");
-        tempYou.Play();
+        // Built paused - press Play to send the reply.
 
         SetText("Your phone texts back: \"Yeah sure, lets hang out at 8?\"");
     }
@@ -368,17 +368,15 @@ public class Task2Manager : ITaskManager
     }
 
     // Both phones transmit at once - the messages pile up on the router and become unreadable.
-    private void PlayInterference()
+    // Built paused; Play starts both together (TogglePlayPauseAll drives every live instance).
+    private void PrepareInterference()
     {
         BuildPhoneAnimations(raiseFriendText: false);
-
-        tempYou?.Play();
-        tempFriend?.Play();
     }
 
-    // Turn taking: You transmits, and only once it has arrived does the Friend start.
-    // The Friend's animation is created lazily so the transport buttons can never start it early.
-    private void PlayTurnTaking()
+    // Turn taking: You transmits, and only once it has arrived is the Friend's animation built.
+    // Creating the Friend lazily keeps the transport buttons from starting it early.
+    private void PrepareTurnTaking()
     {
         StopTempAnimations();
 
@@ -387,7 +385,6 @@ public class Task2Manager : ITaskManager
 
         tempYou.SetMessage(MSG_YOU);
         tempYou.OnComplete += HandleYourTurnComplete;
-        tempYou.Play();
     }
 
     private void HandleYourTurnComplete()
@@ -399,7 +396,7 @@ public class Task2Manager : ITaskManager
 
         tempFriend.SetMessage(MSG_FRIEND);
         tempFriend.EndpointTextOffset = FRIEND_TEXT_OFFSET;   // stack above the message already there
-        tempFriend.Play();
+        // Built paused - press Play to take the second turn.
     }
 
     private void StopTempAnimations()
