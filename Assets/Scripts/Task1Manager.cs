@@ -28,6 +28,7 @@ public class Task1Manager : ITaskManager
         public string prompt;
         public string intro;            // optional intro screen before the MCQ
         public bool hasCabinet;         // true -> show 4 cabinet models, false -> 4 phone-location markers
+        public bool phoneReceiver;      // true -> the receiver is the participant's phone, not the TV antenna
         public Dictionary<int, char> correct = new();                 // set -> correct letter
         public Dictionary<int, string> correctText = new();           // set -> explanation
         public Dictionary<(int set, char opt), string> wrongText = new(); // (set, letter) -> explanation
@@ -42,6 +43,7 @@ public class Task1Manager : ITaskManager
             name = "phone_optimization",
             prompt = "You're using your phone. Which one of these locations will give you the best signal strength?",
             hasCabinet = false,
+            phoneReceiver = true,       // the receiver being moved is the phone; los/reflection use the TV
             correct = { { 1, 'B' }, { 2, 'D' } },
             correctText =
             {
@@ -352,6 +354,11 @@ public class Task1Manager : ITaskManager
         // marker, so its button and object must be emphasised to match.
         char preview = PreviewOption(Task, currentSet);
         selected = Array.IndexOf(LETTERS, preview);
+
+        // Choose the receiver prefab before loading: the markers are spawned during the load.
+        m.SetReceiverModel(Task.phoneReceiver
+            ? MoveAsParticleTest1_v2.ReceiverModel.Phone
+            : MoveAsParticleTest1_v2.ReceiverModel.Antenna);
 
         m.SetCurrentDataSet(ConditionName(Task.name, currentSet, preview));
         SetState(string.IsNullOrEmpty(Task.intro) ? State.MCQ : State.Intro);

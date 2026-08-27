@@ -18832,7 +18832,9 @@ MonoBehaviour:
   case1button: {fileID: 0}
   case2button: {fileID: 0}
   TxObj: {fileID: 6507594055690754941, guid: d42d51ba655fbdf41b01953753dafdb5, type: 3}
-  RxObj: {fileID: 3569645100760575924, guid: 841b8cae37e0274428ec742fa6a4dc83, type: 3}
+  AntennaObj: {fileID: 3569645100760575924, guid: 841b8cae37e0274428ec742fa6a4dc83, type: 3}
+  PhoneObj: {fileID: 2738412699873461195, guid: 4a9bdd5240b8aa14cabb496374d50d4c, type: 3}
+  phoneMaterial: {fileID: 2100000, guid: 708a1340f5190c24eb40fe7fec1bf0d8, type: 2}
   objToMark: {fileID: 8393753577389970397, guid: 26f10b2788f13ce4cb01e892664cc2b8, type: 3}
   RaySpeed: 2
   raySize: 0.08
@@ -20580,7 +20582,7 @@ Transform:
   m_GameObject: {fileID: 2077286637}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.09079187, y: 3.04, z: -0.19914772}
+  m_LocalPosition: {x: -0.09079187, y: 3.21, z: -0.19914772}
   m_LocalScale: {x: 20, y: 0.1, z: 18}
   m_ConstrainProportionsScale: 0
   m_Children: []

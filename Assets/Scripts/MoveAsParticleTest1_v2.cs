@@ -105,7 +105,17 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
 
     [SerializeField] private GameObject TxObj; // The object to instantiate for Transmiter
-    [SerializeField] private GameObject RxObj; // The object to instantiate for Receiver
+    [SerializeField] private GameObject AntennaObj; // The object to instantiate for Receiver
+    [SerializeField] private GameObject PhoneObj; // The object to instantiate for Receiver
+    private GameObject RxObj; // set via SetReceiverModel(); defaults to AntennaObj in Start()
+
+    // The phone comes out of a shared FBX, so it needs the asset pack's palette material applied
+    // and is small next to the antenna marker.
+    [SerializeField, Tooltip("Material applied to the phone receiver (ToonTastic ColorPalette_128_URP).")]
+    private Material phoneMaterial;
+
+    private const float PHONE_RECEIVER_SCALE = 2f;
+
     [SerializeField, Tooltip("a GameObject to mark the path")]
     private GameObject objToMark; // The intersection mark to instantiate
     [SerializeField] private float RaySpeed;
@@ -1212,6 +1222,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
                 // Instantiate the RxObj at the end position as a child of RxObjGrp
                 GameObject endMarker = Instantiate(RxObj, endPosition, Quaternion.identity, RxObjGrp.transform);
+                StyleReceiverMarker(endMarker);
 
                 // Bookkeeping for highlighting
                 this.rx_obj = endMarker;
@@ -1293,6 +1304,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
                 // Instantiate the RxObj at the end position as a child of RxObjGrp
                 GameObject endMarker = Instantiate(RxObj, endPosition, Quaternion.identity, RxObjGrp.transform);
+                StyleReceiverMarker(endMarker);
 
                 // Bookkeeping for highlighting
                 this.rx_obj = endMarker;
@@ -2047,8 +2059,59 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     private GameObject rx_obj;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
+    // Which prefab MarkEndPoints_Rx spawns at the end of each ray path.
+    public enum ReceiverModel { Antenna, Phone }
+
+    // Must be set BEFORE SetCurrentDataSet: the Rx markers are built during the dataset load, so a
+    // change made afterwards would not show until the next load.
+    public void SetReceiverModel(ReceiverModel model)
+    {
+        GameObject prefab = model == ReceiverModel.Phone ? PhoneObj : AntennaObj;
+
+        if (prefab == null)
+        {
+            Debug.LogError($"MoveAsParticleTest1_v2: {model} receiver prefab is not assigned in the Inspector.");
+            return;
+        }
+
+        RxObj = prefab;
+        currentReceiverModel = model;
+    }
+
+    private ReceiverModel currentReceiverModel = ReceiverModel.Antenna;
+
+    // Adjust a freshly spawned Rx marker. Only the phone needs it - the antenna prefab is already
+    // authored the way it should look.
+    private void StyleReceiverMarker(GameObject marker)
+    {
+        if (marker == null || currentReceiverModel != ReceiverModel.Phone) return;
+
+        marker.transform.localScale *= PHONE_RECEIVER_SCALE;
+
+        if (phoneMaterial == null)
+        {
+            Debug.LogWarning("MoveAsParticleTest1_v2: phoneMaterial is not assigned; " +
+                             "the phone will render with whatever material the FBX imported.");
+            return;
+        }
+
+        // The model is one object out of a multi-mesh FBX, so the renderers may sit on children.
+        foreach (Renderer renderer in marker.GetComponentsInChildren<Renderer>(true))
+        {
+            // Never shrink the array to zero - a renderer with no materials draws nothing.
+            Material[] mats = new Material[Mathf.Max(renderer.sharedMaterials.Length, 1)];
+
+            for (int i = 0; i < mats.Length; i++) mats[i] = phoneMaterial;
+
+            renderer.sharedMaterials = mats;
+        }
+    }
+
     void Start()
     {
+        // Antenna is the default receiver; the task managers switch to the phone where they need it.
+        SetReceiverModel(ReceiverModel.Antenna);
+
         GetData(csvFile_Demo, false);
         GetData(csvFile_Demo +"_heatmap", true);
 
@@ -2120,7 +2183,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
         // Current order: Lesson 2, then the demo, then Lesson 1.
         // (TaskCommTestManager still exists but is not in the chain.)
-        CurrentTaskManager = new DemoTaskManager(this);
+        /*        CurrentTaskManager = new DemoTaskManager(this);*/
+        CurrentTaskManager = new Task2Manager(this);
         CurrentTaskManager.DoState();
         //MarkPathPositions_obj();
     }
@@ -2640,6 +2704,10 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
             state = State.D1;
             next_state = State.D1;
 
+            // The demo's receiver is the TV antenna. Stated explicitly rather than relying on the
+            // Start() default, so the demo is correct wherever it sits in the manager chain.
+            m.SetReceiverModel(ReceiverModel.Antenna);
+
             // SetCurrentDataset calls InitParticle functions, that need to make the message text, so message text must be defined beforehhand
             m.SetCurrentDataSet(m.csvFile_Demo);
         }
@@ -2701,7 +2769,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
                     m.qTextObj.GetComponent<TextMeshProUGUI>().text = 
                         HighlightSubstrings("Your router turns the video into a signal, and transmits (tx) it." +
-                        "\nYour TV has a receiver (rx) that lets it hear that signal.", highlights);
+                        "\n\nYour TV has a receiver (rx) that lets it hear that signal.", highlights);
 
                     m.highlighter.SetHighlighted(m.tv_obj, false);
                     m.highlighter.SetHighlighted(m.tx_obj, true); 
@@ -2772,7 +2840,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                     m.highlighter.SetHighlighted(m.rx_obj, false);
                     m.qTextObj.GetComponent<TextMeshProUGUI>().text = 
                                                                 "The signal only moves through parts of the room, so some places might get lower signal strength than others" +
-                                                                    "\n\n Press the \'Heatmap\' button to see the signal strength in each location.";
+                                                                    "\n\nPress the \'Heatmap\' button to see the signal strength in each location.";
 
                     next_state = State.END;
                     break;
@@ -2809,15 +2877,15 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         if (CurrentTaskManager.IsComplete)
         {
             // Can manually change ordering for debugging.
-            /*            if (CurrentTaskManager is Task2Manager || CurrentTaskManager is TaskCommTestManager)
-                            CurrentTaskManager = new DemoTaskManager(this);
-                        else if (CurrentTaskManager is DemoTaskManager)
-                            CurrentTaskManager = new Task1Manager(this);*/
-
-            if (CurrentTaskManager is DemoTaskManager)
+            if (CurrentTaskManager is Task2Manager)
                 CurrentTaskManager = new Task1Manager(this);
             else if (CurrentTaskManager is Task1Manager)
-                CurrentTaskManager = new Task2Manager(this);
+                CurrentTaskManager = new DemoTaskManager(this);
+
+            /*            if (CurrentTaskManager is DemoTaskManager)
+                            CurrentTaskManager = new Task1Manager(this);
+                        else if (CurrentTaskManager is Task1Manager)
+                            CurrentTaskManager = new Task2Manager(this);*/
         }
 
         CurrentTaskManager.DoState();

@@ -107,6 +107,10 @@ public class Task2Manager : ITaskManager
         BuildCubeMaterials();
         ValidateDatasets();
 
+        // Every receiver in Lesson 2 is a phone. Set before SetCurrentDataSet: the Rx markers are
+        // spawned during the load.
+        m.SetReceiverModel(MoveAsParticleTest1_v2.ReceiverModel.Phone);
+
         // SetMessage must precede SetCurrentDataSet: the particle text objects are built during
         // particle initialisation.
         m.SetMessage("Hey want to hang out tonight?");
