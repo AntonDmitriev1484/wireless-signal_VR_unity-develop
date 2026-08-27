@@ -347,7 +347,20 @@ public class MenuManager : MonoBehaviour
         }
 
         if (forward.sqrMagnitude > 0.000001f)
-            root.rotation = Quaternion.LookRotation(forward.normalized, Vector3.up);
+        {
+            // A world-space canvas is read looking along its forward axis, so this is the rotation
+            // the PANEL needs in order to face the user.
+            Quaternion panelFacing = Quaternion.LookRotation(forward.normalized, Vector3.up);
+
+            // The panels sit at an angle inside the group - PanelMain is turned 90 degrees about Y
+            // relative to the root - so aligning the root would leave the panels edge-on. Cancel
+            // that offset out, and it is the panel that ends up square to the user. Measured live
+            // rather than hardcoded, so it stays correct if the layout is re-authored.
+            Quaternion panelRelativeToRoot =
+                Quaternion.Inverse(root.rotation) * menuMain.transform.rotation;
+
+            root.rotation = panelFacing * Quaternion.Inverse(panelRelativeToRoot);
+        }
 
 
         // ------------------------------------------------------------
