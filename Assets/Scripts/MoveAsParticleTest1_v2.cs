@@ -171,6 +171,9 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     private GameObject RxObjGrp; // Group to hold all Rx objects
     private GameObject TxObjGrp;
 
+    [SerializeField]
+    public GameObject tv_obj;
+
     // Init totalNumOfIntersectionMarks by counting all intersection points except start and end for each path
     private void InitTotalNumOfIntersectionMarks()
     {
@@ -1907,6 +1910,118 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
     }
 
+    // ------------------------------------------------------------------
+    // WaitPlay - hold the lesson until the participant plays the animation
+    // ------------------------------------------------------------------
+    // Highlights Play/Pause and Restart and locks Next (and the QA answer buttons) until one of
+    // them is pressed, so a state cannot be skipped past before its animation has been watched.
+
+    private readonly List<UnityEngine.UI.Button> transportButtons = new List<UnityEngine.UI.Button>();
+    private readonly List<Color> transportSavedColors = new List<Color>();
+    private bool waitingForPlay;
+
+    public bool WaitingForPlay => waitingForPlay;
+
+    // Discover the menu buttons wired to RayPlayPause / Restart, so this needs no Inspector setup.
+    // Runs after WireAnswerButtons(): the answer buttons carry stale RayPlayPause calls which that
+    // method switches off, and disabled listeners are skipped here.
+    private void FindTransportButtons()
+    {
+        transportButtons.Clear();
+
+        UnityEngine.UI.Button[] all = FindObjectsByType<UnityEngine.UI.Button>(
+            FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        foreach (UnityEngine.UI.Button button in all)
+        {
+            for (int i = 0; i < button.onClick.GetPersistentEventCount(); i++)
+            {
+                if (button.onClick.GetPersistentListenerState(i) == UnityEngine.Events.UnityEventCallState.Off)
+                    continue;
+
+                if (!ReferenceEquals(button.onClick.GetPersistentTarget(i), this)) continue;
+
+                string method = button.onClick.GetPersistentMethodName(i);
+
+                if (method == nameof(RayPlayPause) || method == nameof(Restart))
+                {
+                    transportButtons.Add(button);
+                    break;
+                }
+            }
+        }
+
+        Debug.Log($"Transport buttons found: {transportButtons.Count}");
+    }
+
+    // Buttons locked while waiting. Everything in the QA panel, minus anything we are waiting on -
+    // locking a transport button would make the wait impossible to satisfy.
+    private List<UnityEngine.UI.Button> GatedQAButtons()
+    {
+        List<UnityEngine.UI.Button> gated = new List<UnityEngine.UI.Button>();
+
+        Transform panel = a1TextObj != null ? a1TextObj.transform.parent : null;
+        if (panel == null) return gated;
+
+        foreach (UnityEngine.UI.Button button in panel.GetComponentsInChildren<UnityEngine.UI.Button>(true))
+            if (!transportButtons.Contains(button))
+                gated.Add(button);
+
+        return gated;
+    }
+
+    public void WaitPlay()
+    {
+        if (transportButtons.Count == 0) FindTransportButtons();
+
+        // Re-entrant: a second call before the first is satisfied must not overwrite the saved
+        // colours with the highlight colours already applied.
+        if (!waitingForPlay)
+        {
+            transportSavedColors.Clear();
+
+            foreach (UnityEngine.UI.Button button in transportButtons)
+                transportSavedColors.Add(button.targetGraphic != null
+                    ? button.targetGraphic.color
+                    : Color.white);
+        }
+
+        waitingForPlay = true;
+
+        ApplyTransportHighlight();
+
+        foreach (UnityEngine.UI.Button button in GatedQAButtons())
+            button.interactable = false;
+    }
+
+    // Called the first time Play/Pause or Restart is pressed.
+    private void EndWaitPlay()
+    {
+        if (!waitingForPlay) return;
+
+        waitingForPlay = false;
+
+        for (int i = 0; i < transportButtons.Count; i++)
+        {
+            UnityEngine.UI.Button button = transportButtons[i];
+
+            if (button != null && button.targetGraphic != null && i < transportSavedColors.Count)
+                button.targetGraphic.color = transportSavedColors[i];
+        }
+
+        foreach (UnityEngine.UI.Button button in GatedQAButtons())
+            button.interactable = true;
+    }
+
+    // Re-applied every frame while waiting: MenuManager's look-to-hover handling drives the Button's
+    // own colour transitions, which would otherwise wipe the highlight as soon as one is glanced at.
+    private void ApplyTransportHighlight()
+    {
+        foreach (UnityEngine.UI.Button button in transportButtons)
+            if (button != null && button.targetGraphic != null)
+                button.targetGraphic.color = button.colors.highlightedColor;
+    }
+
     // The answer buttons in the scene still carry stale persistent onClick calls (RayPlayPause).
     // Turn those off and route the buttons to ButtonAnswer(idx) instead, without editing the scene.
     private void WireAnswerButtons()
@@ -2001,6 +2116,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
 
         WireAnswerButtons();
+        FindTransportButtons();     // must follow WireAnswerButtons - see that method's note
+
         // Current order: Lesson 2, then the demo, then Lesson 1.
         // (TaskCommTestManager still exists but is not in the chain.)
         CurrentTaskManager = new DemoTaskManager(this);
@@ -2012,11 +2129,16 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     void Update()
     {
         UpdateParticles();
+
+        if (waitingForPlay) ApplyTransportHighlight();
     }
 
     // toggle play/pause state of entire rays movement
     public void RayPlayPause()
     {
+        // The participant has started the animation; release anything WaitPlay() locked.
+        EndWaitPlay();
+
         // Temporary animations take over the transport controls while any are alive.
         if (MoveTempParticles.TogglePlayPauseAll()) return;
 
@@ -2099,6 +2221,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     // Reset all rays to their initial positions
     public void Restart()
     {
+        EndWaitPlay();
+
         if (MoveTempParticles.RestartAll()) return;
 
         Debug.Log("Restarting rays...");
@@ -2494,9 +2618,10 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
     public class DemoTaskManager : ITaskManager
     {
+        // Listed and handled in the order they run: D1 -> D2 -> ... -> D9 -> END.
         private enum State
         {
-            D1, D2, D3, D4, D5, D6, D7, D8, D9, END
+            D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, END
         }
 
         private State state, next_state;
@@ -2515,7 +2640,6 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
             state = State.D1;
             next_state = State.D1;
 
-            m.SetMessage("Hello");
             // SetCurrentDataset calls InitParticle functions, that need to make the message text, so message text must be defined beforehhand
             m.SetCurrentDataSet(m.csvFile_Demo);
         }
@@ -2531,33 +2655,56 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
             switch (state)
             {
                 case State.D1:
-                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "How does your Smart TV stream videos from the internet?";
-                    // Maybe add the SerializeField highlightable object in this class.
+                    highlights = new List<string>
+                        {
+                            "TV"
+                        };
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = HighlightSubstrings("You're in your living room watching YouTube right now." +
+                        "\n\nHow does your TV use WiFi to stream videos from the internet? Press Next to find out!", highlights);
+
+                    // Maybe remove mention of 'The wave' and just refere to it as a signal only
+
+                    // Add a highlight on the TV mesh.
+                    m.highlighter.SetHighlighted(m.tv_obj, true); // Can access these, even though they are private??
+
                     next_state = State.D2;
                     break;
                 case State.D2:
+
                     highlights = new List<string>
                         {
-                            "transmitter (tx)"
+                            "router"
                         };
 
                     m.qTextObj.GetComponent<TextMeshProUGUI>().text = 
-                        HighlightSubstrings("Your router has a cable that connects it to the internet. It has a transmitter (tx) that can send signals!", highlights);
-                    Debug.Log(m);
-                    Debug.Log(m.highlighter);
+                        HighlightSubstrings("" +
+                        "Your WiFi router has a cable that connects it to the internet. " +
+                        "It turns the video data into a signal, and sends it out into the environment." +
+                        "\n\nPress Play/Pause to see what this wave looks like.", highlights);
+
+                    m.highlighter.SetHighlighted(m.tv_obj, false); // Can access these, even though they are private??
                     m.highlighter.SetHighlighted(m.tx_obj, true); // Can access these, even though they are private??
                     m.highlighter.SetHighlighted(m.rx_obj, false);
+
+                    m.WaitPlay();
+                    // Halt here
                     next_state = State.D3;
                     break;
+
                 case State.D3:
                     highlights = new List<string>
                         {
+                            "transmits (tx)",
                             "receiver (rx)"
                         };
 
+
                     m.qTextObj.GetComponent<TextMeshProUGUI>().text = 
-                        HighlightSubstrings("Your TV has a receiver (rx) that lets it hear signals!", highlights);
-                    m.highlighter.SetHighlighted(m.tx_obj, false); 
+                        HighlightSubstrings("Your router turns the video into a signal, and transmits (tx) it." +
+                        "\nYour TV has a receiver (rx) that lets it hear that signal.", highlights);
+
+                    m.highlighter.SetHighlighted(m.tv_obj, false);
+                    m.highlighter.SetHighlighted(m.tx_obj, true); 
                     m.highlighter.SetHighlighted(m.rx_obj, true);
                     next_state = State.D4;
                     break;
@@ -2565,47 +2712,67 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                     highlights = new List<string>{"rx", "tx"};
                     m.highlighter.SetHighlighted(m.tx_obj, true);
                     m.highlighter.SetHighlighted(m.rx_obj, true);
-                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = 
-                        HighlightSubstrings("Let's look at how the tx communicates with the rx. The router is going to say \"Hello\" to your TV!", highlights);
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text =
+                        HighlightSubstrings("Let's look at how the tx sends a signal to the rx. " +
+                        "\n\nWhen you press Play, the router is going to say \"Hello\" to your TV!", highlights);
                     m.SetMessage("Hello");
                     // Playback is the participant's: they start it with Play/Pause or Restart.
-                    next_state = State.D5;
-                    break;
-                case State.D5:
-                    m.highlighter.SetHighlighted(m.tx_obj, false);
-                    m.highlighter.SetHighlighted(m.rx_obj, false);
-                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "You can see that the signal contains the message, and it interacts with the entire room." +
-                        "The signal moving through the environment like this is called propagation.";
-                    // No toggle here either: this used to pause the run D4 had auto-started.
+
+                    m.WaitPlay();
                     next_state = State.D6;
                     break;
-                case State.D6:
-                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "You can Play, Pause, and Re-start the signal using the menu. " +
-                        "If you want to see the paths the signal takes through the room . Press the \'Rays\' button in the menu.";
-                    m.highlighter.SetHighlighted(m.tx_obj, false);
-                    m.highlighter.SetHighlighted(m.rx_obj, false);
-                    next_state = State.D7;
-                    break;
-                case State.D7:
+/*                case State.D5:
+
                     highlights = new List<string> { "rx"};
                     m.highlighter.SetHighlighted(m.tx_obj, false);
                     m.highlighter.SetHighlighted(m.rx_obj, true);
-                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = 
-                        HighlightSubstrings("Go ahead and play the signal using the menu and take a look at the rx."
-                        + "You can see that the message becomes clearer to read as more paths arrive.", highlights);
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text =
+                        HighlightSubstrings("Play the signal using the menu and take a look at the rx."
+                        + "You can see that the message becomes clearer to read as more of the signal arrives.", highlights);
+                    next_state = State.D6;
+                    break;*/
+                case State.D6:
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text =
+                       HighlightSubstrings("This is how wireless communication works!" +
+                       "\n\nWiFi is a kind of wireless communication where devices can access the internet by communicating with your router.", highlights);
+
+                    next_state = State.D7;
+                    break;
+                case State.D7:
+                    m.highlighter.SetHighlighted(m.tx_obj, false);
+                    m.highlighter.SetHighlighted(m.rx_obj, false);
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "If you press 'Rays' you can see that the signal takes multiple paths through the entire room." +
+                        "\n\nIf you press Re-start, you can see how each path moves on its own through the environment.";
+                    m.WaitPlay();
+
                     next_state = State.D8;
                     break;
                 case State.D8:
+
+                    highlights = new List<string> { "above the receiver" };
+
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = HighlightSubstrings("To the receiver, the signal gets stronger as more paths arrive." +
+                        "\n\nWhen you play the signal, you can see how the message gets clearer and easier to read above the receiver.", highlights);
                     m.highlighter.SetHighlighted(m.tx_obj, false);
-                    m.highlighter.SetHighlighted(m.rx_obj, false);
-                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "The signal gets stronger the more paths arrive. A higher signal strength can help the rx better understand the message."
-                        + " A high received signal strength is like someone talking loudly. The louder you hear someone speak - the easier it is for you to understand them.";
+                    m.highlighter.SetHighlighted(m.rx_obj, true);
+
+
                     next_state = State.D9;
                     break;
+
+                //+ " A high received signal strength is like someone talking loudly. The louder you hear someone speak - the easier it is for you to understand them.";
                 case State.D9:
 
-                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "The final signal strength is shown by the color of the receiver." +
-                                                                    " Just like the signal is impacted by the environment, so is its signal strength. Press the \'Heatmap\' button to see how the signal strength varies across the room. ";
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "Receiving a strong signal is like hearing someone talking loudly." +
+                        "\n\nThe louder you hear someone speak - the easier it is for you to understand them.";
+                    next_state = State.D10;
+                    break;
+                case State.D10:
+                    m.highlighter.SetHighlighted(m.tx_obj, false);
+                    m.highlighter.SetHighlighted(m.rx_obj, false);
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = 
+                                                                "The signal only moves through parts of the room, so some places might get lower signal strength than others" +
+                                                                    "\n\n Press the \'Heatmap\' button to see the signal strength in each location.";
 
                     next_state = State.END;
                     break;
