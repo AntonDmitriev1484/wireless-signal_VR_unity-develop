@@ -13,12 +13,16 @@ public class MenuManager : MonoBehaviour
     [SerializeField]
     private GameObject menuQA;
 
+    [SerializeField, Tooltip("Shared parent of the panels (the Menus canvas). Leave empty to use PanelMain's parent.")]
+    private Transform menuRoot;
+
     [Header("Panel Positions")]
-    [SerializeField]
+    [SerializeField, Tooltip("How far in front of the camera PanelMain is placed. Every other element " +
+                             "keeps the position it has relative to PanelMain in the editor.")]
     private float mainMenuDistanceFromCamera = 2f;
 
-    [SerializeField]
-    private float qaPanelDistanceFromMain = 0.6f;
+    [SerializeField, Tooltip("Vertical nudge applied after placing the menu.")]
+    private float menuVerticalOffset = 0f;
 
     [Header("Camera")]
     [SerializeField]
@@ -50,7 +54,8 @@ public class MenuManager : MonoBehaviour
 
 
     [Header("Backdrop")]
-    [SerializeField, Tooltip("Optional. Leave empty to build an opaque white material at runtime.")]
+    [SerializeField, Tooltip("Optional. Leave empty to build a flat unlit white material at runtime. " +
+                             "If you assign one, use an Unlit shader - a Lit material will be shaded by the scene lights.")]
     private Material backdropMaterial;
 
     // Clear gap between the panels and the front face of the slab.
@@ -164,20 +169,10 @@ public class MenuManager : MonoBehaviour
 
 
         // ------------------------------------------------------------
-        // Position PanelMain in front of camera
+        // Move the whole group in front of the camera, as one rigid unit
         // ------------------------------------------------------------
 
-        SetMenuInFrontOfCamera(
-            menuMain,
-            mainMenuDistanceFromCamera
-        );
-
-
-        // ------------------------------------------------------------
-        // Position PanelQA to the left of PanelMain
-        // ------------------------------------------------------------
-
-        PositionQAPanel();
+        PositionMenuInFrontOfCamera();
 
 
         // ------------------------------------------------------------
@@ -215,27 +210,27 @@ public class MenuManager : MonoBehaviour
             if (panel == null || !panel.activeInHierarchy)
                 continue;
 
-            RectTransform rect = panel.GetComponent<RectTransform>();
-
-            if (rect == null)
-                continue;
-
-            rect.GetWorldCorners(corners);
-
-            foreach (Vector3 corner in corners)
+            // Include the panel's children (PanelHeatmap sits well below PanelMain's own rect), so
+            // the slab really does bound everything on screen. Inactive elements are skipped.
+            foreach (RectTransform rect in panel.GetComponentsInChildren<RectTransform>(false))
             {
-                Vector3 local = inverse * corner;
+                rect.GetWorldCorners(corners);
 
-                if (!anyCorner)
+                foreach (Vector3 corner in corners)
                 {
-                    min = local;
-                    max = local;
-                    anyCorner = true;
-                }
-                else
-                {
-                    min = Vector3.Min(min, local);
-                    max = Vector3.Max(max, local);
+                    Vector3 local = inverse * corner;
+
+                    if (!anyCorner)
+                    {
+                        min = local;
+                        max = local;
+                        anyCorner = true;
+                    }
+                    else
+                    {
+                        min = Vector3.Min(min, local);
+                        max = Vector3.Max(max, local);
+                    }
                 }
             }
         }
@@ -289,15 +284,26 @@ public class MenuManager : MonoBehaviour
     }
 
 
+    // Deliberately UNLIT: the backdrop must read as one flat white everywhere, unaffected by the
+    // scene's lighting, so it never shades darker on one side or picks up the room's tint.
     private static Material CreateOpaqueWhiteMaterial()
     {
-        // URP Lit is already used by the scene's materials, so it survives shader stripping.
-        Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+        // Fallbacks in order of preference - all unlit. Sprites/Default is a built-in shader and is
+        // already relied on elsewhere in this project (the ray LineRenderers), so it always resolves.
+        Shader shader =
+            Shader.Find("Universal Render Pipeline/Unlit") ??
+            Shader.Find("Unlit/Color") ??
+            Shader.Find("Sprites/Default");
 
         if (shader == null)
-            shader = Shader.Find("Standard");
+        {
+            Debug.LogWarning("MenuManager: no unlit shader found for the menu backdrop.");
+            return null;
+        }
 
         Material material = new Material(shader);
+
+        // URP Unlit drives _BaseColor; the built-in unlit shaders drive _Color. Set whichever exists.
         material.color = Color.white;
 
         if (material.HasProperty("_BaseColor"))
@@ -308,98 +314,58 @@ public class MenuManager : MonoBehaviour
 
 
     // ========================================================================
-    // POSITION MAIN MENU IN FRONT OF CAMERA
+    // POSITION MENU IN FRONT OF CAMERA
     // ========================================================================
 
-    public void SetMenuInFrontOfCamera(
-        GameObject menu,
-        float distanceFromCamera)
+    // The shared parent of the panels. Everything is moved by this one transform, so the layout
+    // authored in the editor - panel to panel, and every child within them - is carried across
+    // untouched. Nothing writes to a panel's own transform any more.
+    private Transform MenuRoot =>
+        menuRoot != null
+            ? menuRoot
+            : (menuMain != null ? menuMain.transform.parent : null);
+
+    public void PositionMenuInFrontOfCamera()
     {
-        if (playerCamera == null || menu == null)
+        Transform root = MenuRoot;
+
+        if (playerCamera == null || root == null || menuMain == null)
             return;
 
-        float yOffset = -0.3f;
-
-        Vector3 menuPosition =
-            playerCamera.transform.position +
-            playerCamera.transform.forward *
-            distanceFromCamera;
-
-        menuPosition.y += yOffset;
-
-        menu.transform.position = menuPosition;
-
-
         // ------------------------------------------------------------
-        // Make menu face the camera
+        // Face the camera, kept upright
         // ------------------------------------------------------------
 
-        Vector3 directionToCamera =
-            playerCamera.transform.position -
-            menu.transform.position;
+        Vector3 forward = playerCamera.transform.forward;
+        forward.y = 0f;     // upright: ignore the camera's pitch
 
-        // Keep menu upright
-        directionToCamera.y = 0f;
-
-        if (directionToCamera.magnitude > 0.001f)
+        // Degenerate only when looking straight up or down.
+        if (forward.sqrMagnitude < 0.000001f)
         {
-            menu.transform.rotation =
-                Quaternion.LookRotation(
-                    -directionToCamera,
-                    Vector3.up
-                );
-        }
-        else
-        {
-            Vector3 forward =
-                playerCamera.transform.forward;
-
+            forward = playerCamera.transform.right;
             forward.y = 0f;
-
-            if (forward.magnitude < 0.001f)
-            {
-                forward = playerCamera.transform.right;
-            }
-
-            menu.transform.rotation =
-                Quaternion.LookRotation(
-                    forward,
-                    Vector3.up
-                );
         }
-    }
 
+        if (forward.sqrMagnitude > 0.000001f)
+            root.rotation = Quaternion.LookRotation(forward.normalized, Vector3.up);
 
-    // ========================================================================
-    // POSITION QA PANEL
-    // ========================================================================
-
-    private void PositionQAPanel()
-    {
-        if (menuMain == null || menuQA == null)
-            return;
 
         // ------------------------------------------------------------
-        // Put QA to the LEFT of PanelMain
+        // Slide the whole group so PanelMain lands in front of the camera
+        // ------------------------------------------------------------
         //
-        // PanelMain's local right direction is used so that the
-        // relationship remains correct regardless of rotation.
-        // ------------------------------------------------------------
+        // The root is offset from the panels in the editor, so placing the root itself would put
+        // the menu metres away. Translating by the delta keeps every relative offset intact while
+        // anchoring the group on PanelMain, which is where the menu used to be placed directly.
 
-        Vector3 qaPosition =
-            menuMain.transform.position -
-            menuMain.transform.right *
-            qaPanelDistanceFromMain;
+        Vector3 target =
+            playerCamera.transform.position +
+            playerCamera.transform.forward * mainMenuDistanceFromCamera;
 
-        menuQA.transform.position = qaPosition;
+        target.y += menuVerticalOffset;
 
-
-        // ------------------------------------------------------------
-        // Give QA the same rotation as PanelMain
-        // ------------------------------------------------------------
-
-        menuQA.transform.rotation =
-            menuMain.transform.rotation;
+        // menuMain's world position already reflects the rotation set above.
+        root.position += target - menuMain.transform.position;
     }
 
 

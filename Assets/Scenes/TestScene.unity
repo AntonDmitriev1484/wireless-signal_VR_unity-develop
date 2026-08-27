@@ -146,7 +146,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8675741}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 10.888206}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -156,7 +156,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -5.219, y: -1.6655365}
+  m_AnchoredPosition: {x: -8.03, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &8675743
@@ -173,8 +173,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   menuMain: {fileID: 189945552}
   menuQA: {fileID: 1035884519}
+  menuRoot: {fileID: 0}
   mainMenuDistanceFromCamera: 2
-  qaPanelDistanceFromMain: 0.6
+  menuVerticalOffset: 0
   playerCamera: {fileID: 1513577512}
   mainGraphicRaycaster: {fileID: 189945556}
   qaGraphicRaycaster: {fileID: 1035884523}
@@ -182,6 +183,7 @@ MonoBehaviour:
   openMenuClick: {fileID: -5787468495250035994, guid: 53a6c8961b71cfa4f9ad9953bf6ca6d0, type: 3}
   selectItem: {fileID: -2599918310532712011, guid: 53a6c8961b71cfa4f9ad9953bf6ca6d0, type: 3}
   raycastDistance: 100
+  backdropMaterial: {fileID: 0}
 --- !u!223 &8675745
 Canvas:
   m_ObjectHideFlags: 0
@@ -902,7 +904,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 189945552}
   m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: -8.132}
+  m_LocalPosition: {x: 0, y: 0, z: -8.148}
   m_LocalScale: {x: 0.009999999, y: 0.005, z: 0.009999999}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -916,7 +918,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -5.4850006, y: 2.73}
+  m_AnchoredPosition: {x: -5.4850006, y: 2.966}
   m_SizeDelta: {x: -55, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &189945554
@@ -3249,7 +3251,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 32.1, y: -14.9}
+  m_AnchoredPosition: {x: -6.8, y: -122.5}
   m_SizeDelta: {x: 6, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1152279298
@@ -20430,7 +20432,7 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 1
-  m_HorizontalAlignment: 1
+  m_HorizontalAlignment: 2
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
