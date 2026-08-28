@@ -272,12 +272,17 @@ public class Task2Manager : ITaskManager
                 break;
 
             case State.T2_BothTransmit:
-                SetText("What if both your phones transmit at the same time?" +
-                    "\n\nYou send \"Hello\", your friend sends \"Goodbye\"");
+                
+                SetText(MoveAsParticleTest1_v2.HighlightSubstrings(
+                    "What if both your phones transmit at the same time?" +
+                    "\n\nYou send \"Hello\", your friend sends \"Goodbye\"",
+                    new List<string> { "friend" },
+                    COLOR_FRIEND));
                 PrepareInterference();
                 break;
 
             case State.T2_Garbled:
+
                 SetText("You can see that the message is much harder to read. This is called interference, " +
                         "and happens when transmitters send signals at the same time.");
                 break;
@@ -422,9 +427,24 @@ public class Task2Manager : ITaskManager
         // is what stops Play from falling through to the main router -> phone animation: without it
         // there is a window (T2_SameRoom) where pressing Play would run that downlink instead.
         BuildPhoneAnimations(raiseFriendText: false);
+        SyncRaysToPhoneAnimations();
     }
 
     // Build one reversed animation per phone. Nothing plays until the caller says so.
+    // The main static rays are drawn in viz_color (red) for whatever dataset is loaded, and
+    // SetCurrentDataSet rebuilds them on every load. Once the phone animations exist, swap those
+    // red lines for the per-phone rays so each set of paths matches the colour of its message.
+    //
+    // A no-op while rays are switched off, so the participant's own Rays choice is preserved: if
+    // they turn rays on later, ToggleRays() already delegates to the live animations.
+    private void SyncRaysToPhoneAnimations()
+    {
+        if (!m.AreRaysShown) return;
+
+        m.HideMainRays();
+        MoveTempParticles.ShowRaysAll();
+    }
+
     private void BuildPhoneAnimations(bool raiseFriendText)
     {
         StopTempAnimations();
@@ -468,6 +488,8 @@ public class Task2Manager : ITaskManager
         // Next must stay locked until the message has actually landed, not merely until Play is
         // pressed - otherwise the turn can be skipped mid-flight. HandleYourTurnComplete opens it.
         tempYou.OnComplete += HandleYourTurnComplete;
+
+        SyncRaysToPhoneAnimations();
         m.WaitPlay(releaseOnPlayPress: false);
     }
 
@@ -492,6 +514,8 @@ public class Task2Manager : ITaskManager
         // No raised offset any more - with the router reset between turns there is nothing below to
         // stack above, so both turns deliver their text at the same height.
         tempFriend.SetMessage(MSG_FRIEND);
+
+        SyncRaysToPhoneAnimations();
         m.WaitPlay();
     }
 

@@ -82,6 +82,12 @@ public class MoveTempParticles : MonoBehaviour
         return true;
     }
 
+    // Draw the static rays of every live instance, each in its own viz_color.
+    public static void ShowRaysAll()
+    {
+        foreach (MoveTempParticles t in ActiveInstances()) t.ShowRays();
+    }
+
     public static bool ToggleRaysAll()
     {
         List<MoveTempParticles> all = ActiveInstances();

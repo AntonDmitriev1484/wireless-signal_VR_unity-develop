@@ -1881,6 +1881,15 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     public GameObject RxMarker => rx_obj;
     public bool IsHeatmapShown => heatmap_obj != null;
     public bool AreRaysShown => ray_objects != null;
+
+    // Clear the main static rays directly, without the MoveTempParticles delegation that
+    // ToggleRays() applies. Used when a lesson replaces them with its own per-animation rays:
+    // SetCurrentDataSet rebuilds these in viz_color for whatever dataset was just loaded, so they
+    // have to be taken down explicitly rather than toggled.
+    public void HideMainRays()
+    {
+        ClearPathLine_MultiPaths();
+    }
     public bool RaysPaused => isRayMovementPaused;
     public string DemoCsvFile => csvFile_Demo;
     public List<RayPathSet_v2> LoadedRaysPath => loadedRaysPath;
@@ -2213,8 +2222,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
         // Current order: Lesson 2, then the demo, then Lesson 1.
         // (TaskCommTestManager still exists but is not in the chain.)
-        //        CurrentTaskManager = new DemoTaskManager(this);
-        CurrentTaskManager = new Task2Manager(this);
+                CurrentTaskManager = new DemoTaskManager(this);
+        //CurrentTaskManager = new Task2Manager(this);
         CurrentTaskManager.DoState();
         //MarkPathPositions_obj();
     }
@@ -2919,15 +2928,15 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         if (CurrentTaskManager.IsComplete)
         {
             // Can manually change ordering for debugging.
-            if (CurrentTaskManager is Task2Manager)
-                CurrentTaskManager = new Task1Manager(this);
-            else if (CurrentTaskManager is Task1Manager)
-                CurrentTaskManager = new DemoTaskManager(this);
-
-            /*            if (CurrentTaskManager is DemoTaskManager)
+            /*            if (CurrentTaskManager is Task2Manager)
                             CurrentTaskManager = new Task1Manager(this);
                         else if (CurrentTaskManager is Task1Manager)
-                            CurrentTaskManager = new Task2Manager(this);*/
+                            CurrentTaskManager = new DemoTaskManager(this);*/
+
+            if (CurrentTaskManager is DemoTaskManager)
+                CurrentTaskManager = new Task1Manager(this);
+            else if (CurrentTaskManager is Task1Manager)
+                CurrentTaskManager = new Task2Manager(this);
         }
 
         CurrentTaskManager.DoState();
