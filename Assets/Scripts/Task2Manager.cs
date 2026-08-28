@@ -215,11 +215,14 @@ public class Task2Manager : ITaskManager
                 break;
 
             case State.T1_Texting:
-                SetText("Your phone is able to transmit and receive signal. This is what happens when you're texting your friends!");
+                SetText("When you're texting someone over the internet, your phone sends and receives signals from the router!");
                 break;
 
             case State.T1_Conversation:
-                SetText("The router is texting your phone: \"Hey want to hang out tonight?\"");
+                SetText("Your friend texts you: \"Hey want to hang out tonight?\"" +
+                    "\n\n Your router sends that text in a signal.");
+                m.WaitPlay(); // Wait play twice?
+
                 StartConversation();
                 break;
 
@@ -321,11 +324,12 @@ public class Task2Manager : ITaskManager
         // The phone replies: same paths, reversed, in blue.
         tempYou = m.SpawnTempParticles(MoveTempParticles.ReversePaths(m.LoadedRaysPath), COLOR_YOU);
         if (tempYou == null) return;
-
-        tempYou.SetMessage("Yeah sure, lets hang out at 8?");
+            // Bugged? Seems to be double halting?
+        tempYou.SetMessage("You respond: \"Yeah sure, lets hang out at 8?\"" +
+            "\n\n Your phone sends a signal back to the router.");
         // Built paused - press Play to send the reply.
 
-        SetText("Your phone texts back: \"Yeah sure, lets hang out at 8?\"");
+        //m.WaitPlay();///**/
     }
 
     // ------------------------------------------------------------------
