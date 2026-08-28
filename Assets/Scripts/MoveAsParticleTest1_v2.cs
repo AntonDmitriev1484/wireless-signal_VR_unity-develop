@@ -1986,6 +1986,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     {
         if (transportButtons.Count == 0) FindTransportButtons();
 
+        Debug.Log("In waitplay");
+
         // Re-entrant: a second call before the first is satisfied must not overwrite the saved
         // colours with the highlight colours already applied.
         if (!waitingForPlay)

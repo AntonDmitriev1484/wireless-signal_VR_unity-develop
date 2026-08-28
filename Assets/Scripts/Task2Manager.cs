@@ -60,7 +60,7 @@ public class Task2Manager : ITaskManager
     // ------------------------------------------------------------------
     private enum State
     {
-        T1_Antennas, T1_Texting, T1_Conversation,
+        T1_Antennas, T1_Texting, T1_FriendTexts, T1_YouText,
         T2_SameRoom, T2_BothTransmit, T2_Garbled, T2_MCQ, T2_Explain,
         T2_MoveHassle, T2_TakeTurns, T2_TurnsPlaying, T2_TurnsDone,
         Complete
@@ -142,10 +142,14 @@ public class Task2Manager : ITaskManager
                 break;
 
             case State.T1_Texting:
-                SetState(State.T1_Conversation);
+                SetState(State.T1_FriendTexts);
                 break;
 
-            case State.T1_Conversation:
+            case State.T1_FriendTexts:
+                SetState(State.T1_YouText);
+                break;
+
+            case State.T1_YouText:
                 StopTempAnimations();
                 EnterInterference();
                 break;
@@ -218,12 +222,27 @@ public class Task2Manager : ITaskManager
                 SetText("When you're texting someone over the internet, your phone sends and receives signals from the router!");
                 break;
 
-            case State.T1_Conversation:
+            case State.T1_FriendTexts:
                 SetText("Your friend texts you: \"Hey want to hang out tonight?\"" +
                     "\n\n Your router sends that text in a signal.");
-                m.WaitPlay(); // Wait play twice?
-
                 StartConversation();
+                break;
+
+            case State.T1_YouText:
+                SetText("You respond: \"Yeah sure, lets hang out at 8?\"" +
+                    "\n\n Your phone sends a signal back to the router.");
+                StartReply();
+
+                /*// The phone replies: same paths, reversed, in blue.
+                tempYou = m.SpawnTempParticles(MoveTempParticles.ReversePaths(m.LoadedRaysPath), COLOR_YOU);
+                if (tempYou == null) return;
+                // Bugged? Seems to be double halting?
+                tempYou.SetMessage("You respond: \"Yeah sure, lets hang out at 8?\"" +
+                    "\n\n Your phone sends a signal back to the router.");
+                // Built paused - press Play to send the reply.
+
+                m.WaitPlay();///*/
+
                 break;
 
             case State.T2_SameRoom:
@@ -311,25 +330,33 @@ public class Task2Manager : ITaskManager
     // ------------------------------------------------------------------
     // T1 - one phone, both directions
     // ------------------------------------------------------------------
+    // Beat 1 - the router delivers your friend's text to your phone, on the main animation.
+    //
+    // Nothing plays on its own: WaitPlay() highlights Play/Restart and locks Next until one is
+    // pressed, so the participant starts it, watches it, then presses Next when ready.
+    //
+    // The reply is deliberately NOT chained off OnAllRaysCompleted any more. Doing that called
+    // WaitPlay() a second time inside this same state, re-locking Next after it had already been
+    // released - the "double halting". Each direction is now its own state.
     private void StartConversation()
     {
-        m.OnAllRaysCompleted += HandleDownlinkComplete;
-        // The dataset is loaded and paused; the participant starts it with Play/Pause or Restart.
+        StopTempAnimations();
+
+        m.SetMessage("Hey want to hang out tonight?");
+        m.WaitPlay();
     }
 
-    private void HandleDownlinkComplete()
+    // Beat 2 - your phone answers, so the same paths run in reverse. Gated the same way.
+    private void StartReply()
     {
-        m.OnAllRaysCompleted -= HandleDownlinkComplete;
+        StopTempAnimations();
 
-        // The phone replies: same paths, reversed, in blue.
         tempYou = m.SpawnTempParticles(MoveTempParticles.ReversePaths(m.LoadedRaysPath), COLOR_YOU);
         if (tempYou == null) return;
-            // Bugged? Seems to be double halting?
-        tempYou.SetMessage("You respond: \"Yeah sure, lets hang out at 8?\"" +
-            "\n\n Your phone sends a signal back to the router.");
-        // Built paused - press Play to send the reply.
 
-        //m.WaitPlay();///**/
+        // This is the text the particles carry - the narration lives in the QA panel instead.
+        tempYou.SetMessage("Yeah sure, lets hang out at 8?");
+        m.WaitPlay();
     }
 
     // ------------------------------------------------------------------
@@ -337,7 +364,6 @@ public class Task2Manager : ITaskManager
     // ------------------------------------------------------------------
     private void EnterInterference()
     {
-        m.OnAllRaysCompleted -= HandleDownlinkComplete;
 
         // T2 only shows the reversed phone -> router animations; park the main particles.
         m.HideAllMovingRays();
@@ -493,7 +519,6 @@ public class Task2Manager : ITaskManager
     // ------------------------------------------------------------------
     private void Cleanup()
     {
-        m.OnAllRaysCompleted -= HandleDownlinkComplete;
         StopTempAnimations();
         ClearCandidateCubes();
         ClearButtonHighlights();
