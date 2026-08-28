@@ -62,7 +62,7 @@ public class Task2Manager : ITaskManager
     {
         T1_Antennas, T1_Texting, T1_FriendTexts, T1_YouText,
         T2_SameRoom, T2_BothTransmit, T2_Garbled, T2_MCQ, T2_Explain,
-        T2_MoveHassle, T2_TakeTurns, T2_TurnsPlaying, T2_TurnsDone,
+        T2_MoveHassle, T2_TakeTurns, T2_TurnsPlaying, T2_TurnsFriend, T2_TurnsDone,
         Complete
     }
 
@@ -192,6 +192,10 @@ public class Task2Manager : ITaskManager
                 break;
 
             case State.T2_TurnsPlaying:
+                SetState(State.T2_TurnsFriend);
+                break;
+
+            case State.T2_TurnsFriend:
                 SetState(State.T2_TurnsDone);
                 break;
 
@@ -210,6 +214,8 @@ public class Task2Manager : ITaskManager
         if (!pendingRender) return;
         pendingRender = false;
 
+        ObjectHighlighter h;
+
         switch (state)
         {
             case State.T1_Antennas:
@@ -219,10 +225,24 @@ public class Task2Manager : ITaskManager
                 break;
 
             case State.T1_Texting:
-                SetText("When you're texting someone over the internet, your phone sends and receives signals from the router!");
+                SetText(MoveAsParticleTest1_v2.HighlightSubstrings(
+                            "When you're texting your friend over the internet, your phone sends and receives signals from the router!",
+                            new List<string> { "friend", "internet", "router" },
+                            COLOR_FRIEND));
+
+                h = m.Highlighter;
+                if (h == null) return;
+
+                h.ClearAllHighlights();
+                h.SetHighlighted(m.TxMarker, true);
+
                 break;
 
             case State.T1_FriendTexts:
+                h = m.Highlighter;
+                if (h == null) return;
+
+                h.ClearAllHighlights();
                 SetText("Your friend texts you: \"Hey want to hang out tonight?\"" +
                     "\n\n Your router sends that text in a signal.");
                 StartConversation();
@@ -233,35 +253,37 @@ public class Task2Manager : ITaskManager
                     "\n\n Your phone sends a signal back to the router.");
                 StartReply();
 
-                /*// The phone replies: same paths, reversed, in blue.
-                tempYou = m.SpawnTempParticles(MoveTempParticles.ReversePaths(m.LoadedRaysPath), COLOR_YOU);
-                if (tempYou == null) return;
-                // Bugged? Seems to be double halting?
-                tempYou.SetMessage("You respond: \"Yeah sure, lets hang out at 8?\"" +
-                    "\n\n Your phone sends a signal back to the router.");
-                // Built paused - press Play to send the reply.
-
-                m.WaitPlay();///*/
-
                 break;
 
             case State.T2_SameRoom:
-                SetText("What happens when you and your friend are both texting while in the same room?");
-                HighlightBothPhones();
+
+                // "friend" is tinted to match the green their signal is drawn in.
+                SetText(MoveAsParticleTest1_v2.HighlightSubstrings(
+                    "What happens when you and your friend are both texting while in the same room?",
+                    new List<string> { "friend" },
+                    COLOR_FRIEND));
+                
+                h = m.Highlighter;
+                if (h == null) return;
+
+                h.ClearAllHighlights();
+                h.SetHighlighted(m.RxMarkerFor(RX_FRIEND), true);
+
                 break;
 
             case State.T2_BothTransmit:
-                SetText("What if both your phones transmit at the same time?");
+                SetText("What if both your phones transmit at the same time?" +
+                    "\n\nYou send \"Hello\", your friend sends \"Goodbye\"");
                 PrepareInterference();
                 break;
 
             case State.T2_Garbled:
                 SetText("You can see that the message is much harder to read. This is called interference, " +
-                        "and happens when transmitters send waves at the same time.");
+                        "and happens when transmitters send signals at the same time.");
                 break;
 
             case State.T2_MCQ:
-                SetText("You tell your friend to move to interfere less with your message. Where would you tell them to move?");
+                SetText("You tell your friend to move to interfere less with your message. You want \"Hello\" to appear as clearly as possible.\n\nWhere would you tell them to move?");
                 ShowButtons(4);
                 SetButtonLabels(new[] { "A", "B", "C", "D" });
                 SpawnCandidateCubes();          // show all four places the Friend could move to
@@ -282,8 +304,15 @@ public class Task2Manager : ITaskManager
                 ClearCandidateCubes();      // the question is settled; drop the option markers
                 ClearButtonHighlights();
                 selected = -1;
-                SetText("Moving is a hassle, surely your friend doesn't want to move all the way to the other room " +
+                SetText("Correct! But, moving is a hassle, surely your friend doesn't want to move all the way to the other room " +
                         "just so you can send your text message.");
+
+                // Put the friend back where they started - the same dataset T2_BothTransmit used -
+                // so the turn-taking beat that follows solves the original crowded case in time
+                // rather than in space. Must precede HighlightBothPhones(): loading the dataset
+                // destroys and respawns the Rx markers the highlights are keyed on.
+                LoadInterference(INTERFERENCE_BASELINE);
+
                 HighlightBothPhones();
                 break;
 
@@ -296,9 +325,14 @@ public class Task2Manager : ITaskManager
                 PrepareTurnTaking();
                 break;
 
+            case State.T2_TurnsFriend:
+                SetText("Now your friend's phone takes its turn.");
+                PrepareFriendTurn();
+                break;
+
             case State.T2_TurnsDone:
                 SetText("You can see that this makes the messages clear, but this takes longer! " +
-                        "This kind of turn-taking slows down your internet speed.");
+                        "This kind of turn-taking slows down your wireless communication, making your connection slower.");
                 break;
 
             case State.Complete:
@@ -316,9 +350,8 @@ public class Task2Manager : ITaskManager
         HighlightButton(answerIdx);
         HighlightCandidateCube(answerIdx);
 
-        // Moving the Friend reloads the dataset, so rebuild and replay the interference example.
+        // Moving the Friend reloads the dataset; LoadInterference rebuilds both uplink animations.
         LoadInterference(InterferenceCondition(LETTERS[answerIdx]));
-        PrepareInterference();
     }
 
     private void SetState(State s)
@@ -383,6 +416,12 @@ public class Task2Manager : ITaskManager
         if (!m.RaysPaused) m.RayPlayPause();   // keep the (hidden) main animation idle
         m.SetCurrentDataSet(condition);
         m.HideAllMovingRays();
+
+        // Build the two uplink animations immediately, so a live MoveTempParticles instance exists
+        // for the whole of T2. The transport buttons drive the temps whenever any are alive, so this
+        // is what stops Play from falling through to the main router -> phone animation: without it
+        // there is a window (T2_SameRoom) where pressing Play would run that downlink instead.
+        BuildPhoneAnimations(raiseFriendText: false);
     }
 
     // Build one reversed animation per phone. Nothing plays until the caller says so.
@@ -406,10 +445,17 @@ public class Task2Manager : ITaskManager
     private void PrepareInterference()
     {
         BuildPhoneAnimations(raiseFriendText: false);
+
+        // Both phones are built paused. WaitPlay highlights Play/Restart and locks Next until one is
+        // pressed, so nobody can skip past "What if both your phones transmit at the same time?"
+        // without actually watching the two messages collide.
+        m.WaitPlay();
     }
 
-    // Turn taking: You transmits, and only once it has arrived is the Friend's animation built.
-    // Creating the Friend lazily keeps the transport buttons from starting it early.
+    // Turn taking, turn 1 - your phone transmits. Built paused and gated by WaitPlay, so Play sends
+    // it and Next stays locked until then. The message it delivers is left on the router: turn 2 is
+    // reached by pressing Next, not by the animation finishing, so the participant can look at the
+    // result for as long as they like.
     private void PrepareTurnTaking()
     {
         StopTempAnimations();
@@ -418,19 +464,35 @@ public class Task2Manager : ITaskManager
         if (tempYou == null) return;
 
         tempYou.SetMessage(MSG_YOU);
+
+        // Next must stay locked until the message has actually landed, not merely until Play is
+        // pressed - otherwise the turn can be skipped mid-flight. HandleYourTurnComplete opens it.
         tempYou.OnComplete += HandleYourTurnComplete;
+        m.WaitPlay(releaseOnPlayPress: false);
     }
 
+    // Your phone's message has arrived; let the participant move on to the friend's turn.
     private void HandleYourTurnComplete()
     {
         if (tempYou != null) tempYou.OnComplete -= HandleYourTurnComplete;
 
+        m.ReleaseWaitPlay();
+    }
+
+    // Turn taking, turn 2 - the friend's phone transmits, entered on Next.
+    private void PrepareFriendTurn()
+    {
+        // Tearing down turn 1 also removes the message it delivered, so the friend's turn starts
+        // from a clean router.
+        StopTempAnimations();
+
         tempFriend = m.SpawnTempParticles(MoveTempParticles.ReversePaths(m.PathsForRx(RX_FRIEND)), COLOR_FRIEND);
         if (tempFriend == null) return;
 
+        // No raised offset any more - with the router reset between turns there is nothing below to
+        // stack above, so both turns deliver their text at the same height.
         tempFriend.SetMessage(MSG_FRIEND);
-        tempFriend.EndpointTextOffset = FRIEND_TEXT_OFFSET;   // stack above the message already there
-        // Built paused - press Play to take the second turn.
+        m.WaitPlay();
     }
 
     private void StopTempAnimations()

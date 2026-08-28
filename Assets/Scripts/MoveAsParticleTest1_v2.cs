@@ -1930,9 +1930,11 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
     private readonly List<UnityEngine.UI.Button> transportButtons = new List<UnityEngine.UI.Button>();
     private readonly List<Color> transportSavedColors = new List<Color>();
-    private bool waitingForPlay;
+    private bool highlightingTransport;   // drives the per-frame re-apply of the highlight
+    private bool qaLocked;                // Next and the answer buttons are held non-selectable
+    private bool releaseOnPlayPress = true;
 
-    public bool WaitingForPlay => waitingForPlay;
+    public bool WaitingForPlay => qaLocked;
 
     // Discover the menu buttons wired to RayPlayPause / Restart, so this needs no Inspector setup.
     // Runs after WireAnswerButtons(): the answer buttons carry stale RayPlayPause calls which that
@@ -1982,15 +1984,16 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         return gated;
     }
 
-    public void WaitPlay()
+    // releaseOnPlayPress: true  - Next unlocks as soon as Play/Restart is pressed (the usual gate).
+    //                     false - Next stays locked after the press; the caller must call
+    //                             ReleaseWaitPlay() itself, e.g. when the animation has finished.
+    public void WaitPlay(bool releaseOnPlayPress = true)
     {
         if (transportButtons.Count == 0) FindTransportButtons();
 
-        Debug.Log("In waitplay");
-
         // Re-entrant: a second call before the first is satisfied must not overwrite the saved
         // colours with the highlight colours already applied.
-        if (!waitingForPlay)
+        if (!highlightingTransport)
         {
             transportSavedColors.Clear();
 
@@ -2000,7 +2003,10 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                     : Color.white);
         }
 
-        waitingForPlay = true;
+        this.releaseOnPlayPress = releaseOnPlayPress;
+
+        highlightingTransport = true;
+        qaLocked = true;
 
         ApplyTransportHighlight();
 
@@ -2008,12 +2014,27 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
             button.interactable = false;
     }
 
-    // Called the first time Play/Pause or Restart is pressed.
+    // Called the first time Play/Pause or Restart is pressed. The highlight has done its job either
+    // way; whether Next unlocks now depends on how the gate was opened.
     private void EndWaitPlay()
     {
-        if (!waitingForPlay) return;
+        StopTransportHighlight();
 
-        waitingForPlay = false;
+        if (releaseOnPlayPress) ReleaseQAButtons();
+    }
+
+    // Open a gate that was set with releaseOnPlayPress: false.
+    public void ReleaseWaitPlay()
+    {
+        StopTransportHighlight();
+        ReleaseQAButtons();
+    }
+
+    private void StopTransportHighlight()
+    {
+        if (!highlightingTransport) return;
+
+        highlightingTransport = false;
 
         for (int i = 0; i < transportButtons.Count; i++)
         {
@@ -2022,6 +2043,13 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
             if (button != null && button.targetGraphic != null && i < transportSavedColors.Count)
                 button.targetGraphic.color = transportSavedColors[i];
         }
+    }
+
+    private void ReleaseQAButtons()
+    {
+        if (!qaLocked) return;
+
+        qaLocked = false;
 
         foreach (UnityEngine.UI.Button button in GatedQAButtons())
             button.interactable = true;
@@ -2185,7 +2213,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
         // Current order: Lesson 2, then the demo, then Lesson 1.
         // (TaskCommTestManager still exists but is not in the chain.)
-        /*        CurrentTaskManager = new DemoTaskManager(this);*/
+        //        CurrentTaskManager = new DemoTaskManager(this);
         CurrentTaskManager = new Task2Manager(this);
         CurrentTaskManager.DoState();
         //MarkPathPositions_obj();
@@ -2196,7 +2224,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     {
         UpdateParticles();
 
-        if (waitingForPlay) ApplyTransportHighlight();
+        if (highlightingTransport) ApplyTransportHighlight();
     }
 
     // toggle play/pause state of entire rays movement
@@ -2657,9 +2685,12 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
     }
 
-    private static string HighlightSubstrings(
+    // Wrap each substring in a TextMeshPro colour tag. Public so managers that are not nested in
+    // this class (Task1Manager, Task2Manager) can use the same wording treatment as the demo.
+    public static string HighlightSubstrings(
         string text,
-        List<string> substrings)
+        List<string> substrings,
+        string colorHex = "#00FF00")
     {
         if (string.IsNullOrEmpty(text) ||
             substrings == null ||
@@ -2675,11 +2706,20 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
             text = text.Replace(
                 substring,
-                "<color=#00FF00>" + substring + "</color>"
+                "<color=" + colorHex + ">" + substring + "</color>"
             );
         }
 
         return text;
+    }
+
+    // Same, taking the colour the thing is drawn in - so the wording matches its signal on screen.
+    public static string HighlightSubstrings(
+        string text,
+        List<string> substrings,
+        Color color)
+    {
+        return HighlightSubstrings(text, substrings, "#" + ColorUtility.ToHtmlStringRGB(color));
     }
 
     public class DemoTaskManager : ITaskManager
