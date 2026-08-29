@@ -60,7 +60,7 @@ public class Task2Manager : ITaskManager
     // ------------------------------------------------------------------
     private enum State
     {
-        T1_Antennas, T1_Texting, T1_FriendTexts, T1_YouText,
+        T1_Start, T1_Antennas, T1_Texting, T1_FriendTexts, T1_YouText,
         T2_SameRoom, T2_BothTransmit, T2_Garbled, T2_MCQ, T2_Explain,
         T2_MoveHassle, T2_TakeTurns, T2_TurnsPlaying, T2_TurnsFriend, T2_TurnsDone,
         Complete
@@ -68,7 +68,7 @@ public class Task2Manager : ITaskManager
 
     private readonly MoveAsParticleTest1_v2 m;
 
-    private State state = State.T1_Antennas;
+    private State state = State.T1_Start;
     private bool pendingRender = true;
     private bool complete;
 
@@ -219,6 +219,11 @@ public class Task2Manager : ITaskManager
 
         switch (state)
         {
+            case State.T1_Start:
+                ShowButtons(0);
+                SetText("You've finished the first task. Move to the dining room area for the next.");
+                break;
+
             case State.T1_Antennas:
                 ShowButtons(0);
                 SetText("Like we showed in the earlier example. Your phone and TV have antennas that let them receive signal. " +

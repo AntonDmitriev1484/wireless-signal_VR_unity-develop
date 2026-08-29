@@ -2834,7 +2834,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         // Listed and handled in the order they run: D1 -> D2 -> ... -> D9 -> END.
         private enum State
         {
-            D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, END
+            D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, END
         }
 
         private State state, next_state;
@@ -2991,8 +2991,14 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                                                                 "The signal only moves through parts of the room, so some places might get lower signal strength than others" +
                                                                     "\n\nPress the \'Heatmap\' button to see the signal strength in each location.";
                     m.WaitPlay(m.heatmapButton);
+                    next_state = State.D11;
+                    break;
+                case State.D11:
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text = "To see the signal strength of a color, check the color bar at the bottom right-hand side of this menu." +
+                        "\n\nex. Red indicates a strong signal, blue indicates a weak signal.";
                     next_state = State.END;
                     break;
+                    //  "To see the signal strength of a color, check the color bar at the bottom right-hand side of this menu."
             }
 
         }
