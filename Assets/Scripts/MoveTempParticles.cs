@@ -45,6 +45,21 @@ public class MoveTempParticles : MonoBehaviour
 
     public static bool AnyActive => Current != null;
 
+    // True if any live instance is currently running. Allocation-free, so it is cheap to poll
+    // every frame for the Play/Pause label.
+    public static bool AnyPlaying
+    {
+        get
+        {
+            for (int i = active.Count - 1; i >= 0; i--)
+            {
+                if (active[i] == null) { active.RemoveAt(i); continue; }
+                if (active[i].IsPlaying) return true;
+            }
+            return false;
+        }
+    }
+
     // Every live instance, with destroyed ones pruned.
     public static List<MoveTempParticles> ActiveInstances()
     {

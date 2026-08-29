@@ -1944,6 +1944,10 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     private UnityEngine.UI.Button heatmapButton;
     private UnityEngine.UI.Button raysButton;
 
+    // Labels on the Play/Pause button(s). Kept in sync with whether anything is actually animating,
+    // so the button always reads as the action it will perform.
+    private readonly List<TextMeshProUGUI> playPauseLabels = new List<TextMeshProUGUI>();
+
     // The buttons this gate is currently highlighting and waiting on - the transport pair, or a
     // specific button such as Heatmap or Rays.
     private readonly List<UnityEngine.UI.Button> awaitedButtons = new List<UnityEngine.UI.Button>();
@@ -1960,12 +1964,31 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
     public bool WaitingForPlay => qaLocked;
 
+    // True when something is animating right now - the temporary animations if any are alive,
+    // otherwise the main one. Mirrors the delegation in RayPlayPause(), so the label always
+    // describes what pressing the button would actually do.
+    public bool IsAnyAnimationPlaying =>
+        MoveTempParticles.AnyActive
+            ? MoveTempParticles.AnyPlaying
+            : !isRayMovementPaused;
+
+    private void UpdatePlayPauseLabel()
+    {
+        if (playPauseLabels.Count == 0) return;
+
+        string wanted = IsAnyAnimationPlaying ? "Pause" : "Play";
+
+        foreach (TextMeshProUGUI label in playPauseLabels)
+            if (label != null && label.text != wanted) label.text = wanted;
+    }
+
     // Discover the menu buttons wired to RayPlayPause / Restart, so this needs no Inspector setup.
     // Runs after WireAnswerButtons(): the answer buttons carry stale RayPlayPause calls which that
     // method switches off, and disabled listeners are skipped here.
     private void FindAllButtons()
     {
         transportButtons.Clear();
+        playPauseLabels.Clear();
 
         UnityEngine.UI.Button[] all = FindObjectsByType<UnityEngine.UI.Button>(
             FindObjectsInactive.Include, FindObjectsSortMode.None);
@@ -1984,6 +2007,15 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                 if (method == nameof(RayPlayPause) || method == nameof(Restart))
                 {
                     transportButtons.Add(button);
+
+                    // Every Play/Pause button in the scene, not just the first - there is more than
+                    // one, and they must all read the same.
+                    if (method == nameof(RayPlayPause))
+                    {
+                        TextMeshProUGUI label = button.GetComponentInChildren<TextMeshProUGUI>(true);
+                        if (label != null) playPauseLabels.Add(label);
+                    }
+
                     break;
                 }
 
@@ -2331,6 +2363,10 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         UpdateParticles();
 
         if (highlightingAwaited) ApplyAwaitedHighlight();
+
+        // Polled rather than pushed: an animation can also stop on its own when its last particle
+        // arrives, which no button press would tell us about.
+        UpdatePlayPauseLabel();
     }
 
     // toggle play/pause state of entire rays movement

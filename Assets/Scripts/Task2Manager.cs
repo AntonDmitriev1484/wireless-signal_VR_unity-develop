@@ -137,6 +137,10 @@ public class Task2Manager : ITaskManager
     {
         switch (state)
         {
+            case State.T1_Start:
+                SetState(State.T1_Antennas);
+                break;
+
             case State.T1_Antennas:
                 SetState(State.T1_Texting);
                 break;
