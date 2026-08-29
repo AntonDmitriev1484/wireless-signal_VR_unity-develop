@@ -1937,18 +1937,32 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     // Highlights Play/Pause and Restart and locks Next (and the QA answer buttons) until one of
     // them is pressed, so a state cannot be skipped past before its animation has been watched.
 
+    // The Play/Pause and Restart pair, discovered once. The default thing to wait on.
     private readonly List<UnityEngine.UI.Button> transportButtons = new List<UnityEngine.UI.Button>();
-    private readonly List<Color> transportSavedColors = new List<Color>();
-    private bool highlightingTransport;   // drives the per-frame re-apply of the highlight
+
+    private UnityEngine.UI.Button heatmapButton;
+    private UnityEngine.UI.Button raysButton;
+
+    // The buttons this gate is currently highlighting and waiting on - the transport pair, or a
+    // specific button such as Heatmap or Rays.
+    private readonly List<UnityEngine.UI.Button> awaitedButtons = new List<UnityEngine.UI.Button>();
+    private readonly List<Color> awaitedSavedColors = new List<Color>();
+
+    private bool awaitingTransport;       // true when the gate is the default Play/Restart pair
+    private bool highlightingAwaited;     // drives the per-frame re-apply of the highlight
     private bool qaLocked;                // Next and the answer buttons are held non-selectable
     private bool releaseOnPlayPress = true;
+
+    // Runtime onClick hook used when waiting on a button we cannot intercept in code.
+    private UnityEngine.UI.Button hookedButton;
+    private UnityEngine.Events.UnityAction hookedListener;
 
     public bool WaitingForPlay => qaLocked;
 
     // Discover the menu buttons wired to RayPlayPause / Restart, so this needs no Inspector setup.
     // Runs after WireAnswerButtons(): the answer buttons carry stale RayPlayPause calls which that
     // method switches off, and disabled listeners are skipped here.
-    private void FindTransportButtons()
+    private void FindAllButtons()
     {
         transportButtons.Clear();
 
@@ -1971,10 +1985,20 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                     transportButtons.Add(button);
                     break;
                 }
+
+                else if (method == nameof(ToggleRays))
+                {
+                    raysButton = button;
+                }
+                else if (method == nameof(ToggleHeatmap)) {
+                    heatmapButton = button;
+                }
             }
         }
 
         Debug.Log($"Transport buttons found: {transportButtons.Count}");
+
+
     }
 
     // Buttons locked while waiting. Everything in the QA panel, minus anything we are waiting on -
@@ -1987,71 +2011,143 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         if (panel == null) return gated;
 
         foreach (UnityEngine.UI.Button button in panel.GetComponentsInChildren<UnityEngine.UI.Button>(true))
-            if (!transportButtons.Contains(button))
+            if (!transportButtons.Contains(button) && !awaitedButtons.Contains(button))
                 gated.Add(button);
 
         return gated;
     }
 
-    // releaseOnPlayPress: true  - Next unlocks as soon as Play/Restart is pressed (the usual gate).
+    // Find the menu button wired to a given method on this component, e.g. nameof(ToggleHeatmap)
+    // or nameof(ToggleRays), so callers can pass one to WaitPlay without any Inspector wiring.
+    public UnityEngine.UI.Button FindMenuButton(string methodName)
+    {
+        UnityEngine.UI.Button[] all = FindObjectsByType<UnityEngine.UI.Button>(
+            FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        foreach (UnityEngine.UI.Button button in all)
+        {
+            for (int i = 0; i < button.onClick.GetPersistentEventCount(); i++)
+            {
+                if (button.onClick.GetPersistentListenerState(i) == UnityEngine.Events.UnityEventCallState.Off)
+                    continue;
+
+                if (!ReferenceEquals(button.onClick.GetPersistentTarget(i), this)) continue;
+
+                if (button.onClick.GetPersistentMethodName(i) == methodName) return button;
+            }
+        }
+
+        Debug.LogWarning($"MoveAsParticleTest1_v2: no menu button found for {methodName}.");
+        return null;
+    }
+
+    // Wait on Play/Pause or Restart (the default gate).
+    //
+    // releaseOnPlayPress: true  - Next unlocks as soon as one is pressed.
     //                     false - Next stays locked after the press; the caller must call
     //                             ReleaseWaitPlay() itself, e.g. when the animation has finished.
     public void WaitPlay(bool releaseOnPlayPress = true)
     {
-        if (transportButtons.Count == 0) FindTransportButtons();
+        BeginWait(null, releaseOnPlayPress);
+    }
 
-        // Re-entrant: a second call before the first is satisfied must not overwrite the saved
-        // colours with the highlight colours already applied.
-        if (!highlightingTransport)
+    // Wait on some other menu button instead - Heatmap, Rays, anything with a Button on it. Only
+    // that button satisfies the gate; pressing Play will not. Passing null falls back to the
+    // transport pair, so WaitPlay(null) behaves like WaitPlay().
+    public void WaitPlay(UnityEngine.UI.Button awaitedButton, bool releaseOnPress = true)
+    {
+        BeginWait(awaitedButton, releaseOnPress);
+    }
+
+    private void BeginWait(UnityEngine.UI.Button awaitedButton, bool releaseOnPress)
+    {
+        if (transportButtons.Count == 0) FindAllButtons();
+
+        // Drop any hook from a previous gate before re-targeting.
+        UnhookAwaitedButton();
+
+        awaitedButtons.Clear();
+
+        if (awaitedButton != null)
         {
-            transportSavedColors.Clear();
+            awaitedButtons.Add(awaitedButton);
+            awaitingTransport = false;
 
-            foreach (UnityEngine.UI.Button button in transportButtons)
-                transportSavedColors.Add(button.targetGraphic != null
+            // Play/Restart are released from inside RayPlayPause()/Restart(); anything else has to
+            // be observed through its own onClick.
+            hookedButton = awaitedButton;
+            hookedListener = EndWaitPlay;
+            hookedButton.onClick.AddListener(hookedListener);
+        }
+        else
+        {
+            awaitedButtons.AddRange(transportButtons);
+            awaitingTransport = true;
+        }
+
+        // Saved after the target is chosen, and only when not already highlighting, so a second
+        // call cannot store the highlight colours as if they were the originals.
+        if (!highlightingAwaited)
+        {
+            awaitedSavedColors.Clear();
+
+            foreach (UnityEngine.UI.Button button in awaitedButtons)
+                awaitedSavedColors.Add(button.targetGraphic != null
                     ? button.targetGraphic.color
                     : Color.white);
         }
 
-        this.releaseOnPlayPress = releaseOnPlayPress;
+        this.releaseOnPlayPress = releaseOnPress;
 
-        highlightingTransport = true;
+        highlightingAwaited = true;
         qaLocked = true;
 
-        ApplyTransportHighlight();
+        ApplyAwaitedHighlight();
 
         foreach (UnityEngine.UI.Button button in GatedQAButtons())
             button.interactable = false;
     }
 
-    // Called the first time Play/Pause or Restart is pressed. The highlight has done its job either
-    // way; whether Next unlocks now depends on how the gate was opened.
+    // Called when the awaited button is pressed. The highlight has done its job either way; whether
+    // Next unlocks now depends on how the gate was opened.
     private void EndWaitPlay()
     {
-        StopTransportHighlight();
+        StopAwaitedHighlight();
 
         if (releaseOnPlayPress) ReleaseQAButtons();
     }
 
-    // Open a gate that was set with releaseOnPlayPress: false.
+    // Open a gate that was set with releaseOnPress: false.
     public void ReleaseWaitPlay()
     {
-        StopTransportHighlight();
+        StopAwaitedHighlight();
         ReleaseQAButtons();
     }
 
-    private void StopTransportHighlight()
+    private void StopAwaitedHighlight()
     {
-        if (!highlightingTransport) return;
+        if (!highlightingAwaited) return;
 
-        highlightingTransport = false;
+        highlightingAwaited = false;
 
-        for (int i = 0; i < transportButtons.Count; i++)
+        for (int i = 0; i < awaitedButtons.Count; i++)
         {
-            UnityEngine.UI.Button button = transportButtons[i];
+            UnityEngine.UI.Button button = awaitedButtons[i];
 
-            if (button != null && button.targetGraphic != null && i < transportSavedColors.Count)
-                button.targetGraphic.color = transportSavedColors[i];
+            if (button != null && button.targetGraphic != null && i < awaitedSavedColors.Count)
+                button.targetGraphic.color = awaitedSavedColors[i];
         }
+
+        UnhookAwaitedButton();
+    }
+
+    private void UnhookAwaitedButton()
+    {
+        if (hookedButton != null && hookedListener != null)
+            hookedButton.onClick.RemoveListener(hookedListener);
+
+        hookedButton = null;
+        hookedListener = null;
     }
 
     private void ReleaseQAButtons()
@@ -2066,9 +2162,9 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
     // Re-applied every frame while waiting: MenuManager's look-to-hover handling drives the Button's
     // own colour transitions, which would otherwise wipe the highlight as soon as one is glanced at.
-    private void ApplyTransportHighlight()
+    private void ApplyAwaitedHighlight()
     {
-        foreach (UnityEngine.UI.Button button in transportButtons)
+        foreach (UnityEngine.UI.Button button in awaitedButtons)
             if (button != null && button.targetGraphic != null)
                 button.targetGraphic.color = button.colors.highlightedColor;
     }
@@ -2218,7 +2314,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
 
         WireAnswerButtons();
-        FindTransportButtons();     // must follow WireAnswerButtons - see that method's note
+        FindAllButtons();     // must follow WireAnswerButtons - see that method's note
 
         // Current order: Lesson 2, then the demo, then Lesson 1.
         // (TaskCommTestManager still exists but is not in the chain.)
@@ -2233,14 +2329,15 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     {
         UpdateParticles();
 
-        if (highlightingTransport) ApplyTransportHighlight();
+        if (highlightingAwaited) ApplyAwaitedHighlight();
     }
 
     // toggle play/pause state of entire rays movement
     public void RayPlayPause()
     {
-        // The participant has started the animation; release anything WaitPlay() locked.
-        EndWaitPlay();
+        // The participant has started the animation; release the gate, but only if it was Play or
+        // Restart it was waiting on. A gate set on Heatmap or Rays is not satisfied by pressing Play.
+        if (awaitingTransport) EndWaitPlay();
 
         // Temporary animations take over the transport controls while any are alive.
         if (MoveTempParticles.TogglePlayPauseAll()) return;
@@ -2324,7 +2421,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     // Reset all rays to their initial positions
     public void Restart()
     {
-        EndWaitPlay();
+        if (awaitingTransport) EndWaitPlay();
 
         if (MoveTempParticles.RestartAll()) return;
 
@@ -2862,7 +2959,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                     m.highlighter.SetHighlighted(m.rx_obj, false);
                     m.qTextObj.GetComponent<TextMeshProUGUI>().text = "If you press 'Rays' you can see that the signal takes multiple paths through the entire room." +
                         "\n\nIf you press Re-start, you can see how each path moves on its own through the environment.";
-                    m.WaitPlay();
+                    m.WaitPlay(m.raysButton);
 
                     next_state = State.D8;
                     break;
@@ -2892,7 +2989,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                     m.qTextObj.GetComponent<TextMeshProUGUI>().text = 
                                                                 "The signal only moves through parts of the room, so some places might get lower signal strength than others" +
                                                                     "\n\nPress the \'Heatmap\' button to see the signal strength in each location.";
-
+                    m.WaitPlay(m.heatmapButton);
                     next_state = State.END;
                     break;
             }
