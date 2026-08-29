@@ -1445,6 +1445,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
     public void ClearHeatmap()
     {
+        Debug.Log("Clearing heatmap");
         if (heatmap_obj == null) return;
         Destroy(heatmap_obj);
         heatmap_obj = null;

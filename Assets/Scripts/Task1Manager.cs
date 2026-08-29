@@ -41,7 +41,8 @@ public class Task1Manager : ITaskManager
         new TaskDef
         {
             name = "phone_optimization",
-            prompt = "You're using your phone. Which one of these locations will give you the best signal strength?",
+            prompt = "You're using your phone. Which one of these locations will give you the best signal strength?" +
+            "\n\n(Each colored cube is a possible answer)",
             hasCabinet = false,
             phoneReceiver = true,       // the receiver being moved is the phone; los/reflection use the TV
             correct = { { 1, 'B' }, { 2, 'D' } },
@@ -66,7 +67,8 @@ public class Task1Manager : ITaskManager
         {
             name = "los_creation",
             prompt = "The TV isn't getting a very strong signal - the furniture and walls are all impacting it. " +
-                     "Where can you put this cabinet so that the TV gets the strongest signal?",
+                     "Where can you put this cabinet so that the TV gets the strongest signal?" +
+                    "\n\n(Each colored cabinet is a possible answer)",
             hasCabinet = true,
             correct = { { 1, 'C' }, { 2, 'A' } },
             correctText =
@@ -91,8 +93,9 @@ public class Task1Manager : ITaskManager
             name = "reflection_creation",
             intro = "Someone glued your router to the table in the other room, so now you're getting a bad signal again. " +
                     "You can't move it back, but you might not need to in order to get a good signal.",
-            prompt = "Some materials, like metal, can actually reflect signals! It seems like placing this metal cabinet somewhere actually improves the signal strength at the TV. " +
-                     "Can you place the cabinet so that the TV gets the best signal strength?",
+            prompt = "Some materials, like metal, can actually reflect signals! It seems like placing this metal cabinet somewhere can improve the signal strength at the TV. " +
+                     "Can you place the cabinet so that the TV gets the best signal strength?" +
+                    "\n\n(Each colored cabinet is a possible answer)",
             hasCabinet = true,
             correct = { { 1, 'D' }, { 2, 'B' } },
             correctText =
@@ -236,6 +239,7 @@ public class Task1Manager : ITaskManager
                 break;
 
             case State.Intro:
+                m.ClearHeatmap(); // Before entering an MCQ clear the heatmap
                 SetState(State.MCQ);
                 break;
 
@@ -359,6 +363,12 @@ public class Task1Manager : ITaskManager
         m.SetReceiverModel(Task.phoneReceiver
             ? MoveAsParticleTest1_v2.ReceiverModel.Phone
             : MoveAsParticleTest1_v2.ReceiverModel.Antenna);
+
+        // Start each task with the heatmap down. This has to happen BEFORE the load:
+        // SetCurrentDataSet snapshots whether the heatmap is showing and re-creates it afterwards,
+        // so a clear placed after this line would simply be undone. Leaving a correct/wrong
+        // response with the heatmap on would otherwise carry it into the next task's question.
+        m.ClearHeatmap();
 
         m.SetCurrentDataSet(ConditionName(Task.name, currentSet, preview));
         SetState(string.IsNullOrEmpty(Task.intro) ? State.MCQ : State.Intro);
