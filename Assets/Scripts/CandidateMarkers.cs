@@ -94,6 +94,35 @@ public static class CandidateMarkers
         return badge;
     }
 
+    // The same badge, placed BADGE_HEIGHT above the top of an object's rendered bounds. Used for the
+    // cabinets, whose meshes carry their own baked world coordinates - the GameObject sits at the
+    // origin, so its transform says nothing about where the model actually is.
+    public static GameObject SpawnBadgeAbove(
+        GameObject target,
+        char letter,
+        Color color,
+        Material template,
+        string name)
+    {
+        if (target == null) return null;
+
+        Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
+
+        if (renderers.Length == 0)
+        {
+            Debug.LogWarning($"CandidateMarkers: {target.name} has no renderers to place a badge above.");
+            return null;
+        }
+
+        Bounds bounds = renderers[0].bounds;
+        for (int i = 1; i < renderers.Length; i++) bounds.Encapsulate(renderers[i].bounds);
+
+        // SpawnBadge adds BADGE_HEIGHT itself, so hand it the centre of the top face.
+        Vector3 top = new Vector3(bounds.center.x, bounds.max.y, bounds.center.z);
+
+        return SpawnBadge(top, letter, color, template, name);
+    }
+
     // Runtime copy of a material at a given colour and opacity. Project assets are never mutated.
     public static Material Tint(Material src, Color color, float alpha)
     {

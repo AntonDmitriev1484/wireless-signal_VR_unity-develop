@@ -395,6 +395,12 @@ public class Task1Manager : ITaskManager
                 cabinet.name = $"Candidate_{cond}";
                 ApplyMaterial(cabinet, normalMats[i]);
                 candidates[i] = cabinet;
+
+                // Letter above the cabinet's top face. Spawned as a separate root object, not a
+                // child - ApplyMaterial() walks children, and would otherwise repaint the badge
+                // with the cabinet's translucent material every time the selection changes.
+                candidateBadges[i] = CandidateMarkers.SpawnBadgeAbove(
+                    cabinet, LETTERS[i], OptionColor(i), m.OptionMaterials[i], $"Badge_{cond}");
             }
             else
             {
