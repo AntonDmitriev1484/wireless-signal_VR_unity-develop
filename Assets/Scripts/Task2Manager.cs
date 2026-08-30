@@ -80,6 +80,7 @@ public class Task2Manager : ITaskManager
 
     // One transparent option-coloured cube per candidate Friend location, shown during the MCQ.
     private readonly GameObject[] candidateCubes = new GameObject[4];
+    private readonly GameObject[] candidateBadges = new GameObject[4];   // coloured letter above each cube
     private Material[] cubeMats;
     private Material[] cubeSelectedMats;
 
@@ -552,9 +553,10 @@ public class Task2Manager : ITaskManager
 
         for (int i = 0; i < 4; i++)
         {
-            Color c = CandidateMarkers.OptionColor(src[i]);
-            cubeMats[i] = CandidateMarkers.Tint(src[i], c, CandidateMarkers.ALPHA_NORMAL);
-            cubeSelectedMats[i] = CandidateMarkers.Tint(src[i], c, CandidateMarkers.ALPHA_SELECTED);
+            // Plain white and very faint for every option - the colour is carried by the letter
+            // badge above each cube. src[i] is only borrowed for its transparent shader settings.
+            cubeMats[i] = CandidateMarkers.Tint(src[i], CandidateMarkers.CUBE_COLOR, CandidateMarkers.ALPHA_NORMAL);
+            cubeSelectedMats[i] = CandidateMarkers.Tint(src[i], CandidateMarkers.CUBE_COLOR, CandidateMarkers.ALPHA_SELECTED);
         }
     }
 
@@ -576,6 +578,9 @@ public class Task2Manager : ITaskManager
             }
 
             candidateCubes[i] = CandidateMarkers.SpawnCube(pos, cubeMats[i], $"Candidate_{cond}");
+
+            candidateBadges[i] = CandidateMarkers.SpawnBadge(
+                pos, LETTERS[i], OptionColor(i), m.OptionMaterials[i], $"Badge_{cond}");
         }
     }
 
@@ -595,7 +600,10 @@ public class Task2Manager : ITaskManager
         for (int i = 0; i < 4; i++)
         {
             if (candidateCubes[i] != null) Object.Destroy(candidateCubes[i]);
+            if (candidateBadges[i] != null) Object.Destroy(candidateBadges[i]);
+
             candidateCubes[i] = null;
+            candidateBadges[i] = null;
         }
     }
 

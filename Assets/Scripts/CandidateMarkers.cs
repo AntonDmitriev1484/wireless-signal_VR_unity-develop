@@ -8,6 +8,7 @@
  */
 
 using System;
+using TMPro;
 using UnityEngine;
 
 public static class CandidateMarkers
@@ -15,10 +16,20 @@ public static class CandidateMarkers
     // Edge length of the cube dropped on a candidate receiver location.
     public const float CUBE_SIZE = 0.5f;
 
+    // The cube is plain white and barely there - it only marks WHERE the option is. Which option it
+    // is comes from the coloured letter badge above it, so the cube carries no colour of its own.
+    public static readonly Color CUBE_COLOR = Color.white;
+
     // Opacity of a candidate cube, unselected and selected. The selected cube stays translucent so
     // the receiver marker inside it remains visible.
-    public const float ALPHA_NORMAL = 0.25f;
-    public const float ALPHA_SELECTED = 0.60f;
+    public const float ALPHA_NORMAL = 0.08f;
+    public const float ALPHA_SELECTED = 0.22f;
+
+    // Letter badge floating above each cube.
+    public const float BADGE_HEIGHT = 0.4f;      // above the candidate location
+    public const float BADGE_SIZE = 0.3f;
+    public const float BADGE_THICKNESS = 0.02f;
+    public const float BADGE_FONT_SIZE = 3f;
 
     // A transparent cube marking one option's receiver location.
     public static GameObject SpawnCube(Vector3 position, Material material, string name)
@@ -34,6 +45,53 @@ public static class CandidateMarkers
 
         cube.GetComponent<MeshRenderer>().sharedMaterial = material;
         return cube;
+    }
+
+    // A label floating BADGE_HEIGHT above a candidate location: the option's letter in black on a
+    // thin slab in that option's colour, tying the marker on the floor to the button of the same
+    // colour. The whole badge turns to face the user via FaceCamera.
+    //
+    // A slab rather than a sprite: it is closed geometry, so it reads from any angle without
+    // worrying about backface culling, and it needs no sprite asset.
+    public static GameObject SpawnBadge(
+        Vector3 position,
+        char letter,
+        Color color,
+        Material template,
+        string name)
+    {
+        GameObject badge = new GameObject(name);
+        badge.transform.position = position + Vector3.up * BADGE_HEIGHT;
+
+        // Same camera-facing treatment the message text uses.
+        badge.AddComponent<FaceCamera>();
+
+        GameObject backdrop = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        backdrop.name = "Backdrop";
+        backdrop.transform.SetParent(badge.transform, false);
+        backdrop.transform.localScale = new Vector3(BADGE_SIZE, BADGE_SIZE, BADGE_THICKNESS);
+
+        Collider col = backdrop.GetComponent<Collider>();
+        if (col != null) col.enabled = false;
+
+        // Fully opaque, so the black letter stays legible over whatever is behind the badge.
+        backdrop.GetComponent<MeshRenderer>().sharedMaterial = Tint(template, color, 1f);
+
+        GameObject letterObject = new GameObject("Letter");
+        letterObject.transform.SetParent(badge.transform, false);
+
+        // FaceCamera points the badge's forward AWAY from the viewer, so -Z is the side they see:
+        // put the letter just clear of the slab's front face on that side.
+        letterObject.transform.localPosition =
+            new Vector3(0f, 0f, -(BADGE_THICKNESS * 0.5f + 0.005f));
+
+        TextMeshPro text = letterObject.AddComponent<TextMeshPro>();
+        text.text = letter.ToString();
+        text.fontSize = BADGE_FONT_SIZE;
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = Color.black;
+
+        return badge;
     }
 
     // Runtime copy of a material at a given colour and opacity. Project assets are never mutated.

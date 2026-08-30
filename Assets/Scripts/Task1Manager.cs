@@ -143,6 +143,7 @@ public class Task1Manager : ITaskManager
     // Candidate objects shown for the current MCQ (index = option): a cabinet mesh where the
     // furniture moves, or a transparent option-coloured cube where the receiver moves.
     private readonly GameObject[] candidates = new GameObject[4];
+    private readonly GameObject[] candidateBadges = new GameObject[4];   // coloured letter above each cube
     private bool candidatesSpawned;
     private Material[] normalMats;
     private Material[] activeMats;
@@ -190,10 +191,11 @@ public class Task1Manager : ITaskManager
             normalMats[i] = src[i];
             activeMats[i] = CandidateMarkers.Tint(src[i], OptionColor(i), 1f);
 
-            // Receiver-location cubes: same M_obj colour, kept translucent even when selected so
-            // the receiver marker inside stays visible.
-            cubeMats[i] = CandidateMarkers.Tint(src[i], OptionColor(i), CandidateMarkers.ALPHA_NORMAL);
-            cubeSelectedMats[i] = CandidateMarkers.Tint(src[i], OptionColor(i), CandidateMarkers.ALPHA_SELECTED);
+            // Receiver-location cubes are plain white and very faint for every option - the colour
+            // is carried by the letter badge above them instead. src[i] is only borrowed for its
+            // transparent shader settings; the colour is overridden.
+            cubeMats[i] = CandidateMarkers.Tint(src[i], CandidateMarkers.CUBE_COLOR, CandidateMarkers.ALPHA_NORMAL);
+            cubeSelectedMats[i] = CandidateMarkers.Tint(src[i], CandidateMarkers.CUBE_COLOR, CandidateMarkers.ALPHA_SELECTED);
         }
     }
 
@@ -404,6 +406,9 @@ public class Task1Manager : ITaskManager
                 }
 
                 candidates[i] = CandidateMarkers.SpawnCube(pos, cubeMats[i], $"Candidate_{cond}");
+
+                candidateBadges[i] = CandidateMarkers.SpawnBadge(
+                    pos, LETTERS[i], OptionColor(i), m.OptionMaterials[i], $"Badge_{cond}");
             }
         }
     }
@@ -436,7 +441,10 @@ public class Task1Manager : ITaskManager
         for (int i = 0; i < 4; i++)
         {
             if (candidates[i] != null) UnityEngine.Object.Destroy(candidates[i]);
+            if (candidateBadges[i] != null) UnityEngine.Object.Destroy(candidateBadges[i]);
+
             candidates[i] = null;
+            candidateBadges[i] = null;
         }
     }
 
