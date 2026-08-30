@@ -2351,8 +2351,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
         // Current order: Lesson 2, then the demo, then Lesson 1.
         // (TaskCommTestManager still exists but is not in the chain.)
-                CurrentTaskManager = new DemoTaskManager(this);
-        //CurrentTaskManager = new Task2Manager(this);
+            //    CurrentTaskManager = new DemoTaskManager(this);
+        CurrentTaskManager = new Task2Manager(this);
         CurrentTaskManager.DoState();
         //MarkPathPositions_obj();
     }

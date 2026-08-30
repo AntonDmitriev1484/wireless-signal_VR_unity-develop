@@ -53,13 +53,24 @@ public class ObjectHighlighter : MonoBehaviour
         GameObject target,
         bool highlighted)
     {
+        SetHighlighted(target, highlighted, Color.yellow);
+    }
+
+    // Same, in a given colour - e.g. black to ring the receiver an MCQ option currently refers to.
+    public void SetHighlighted(
+        GameObject target,
+        bool highlighted,
+        Color color)
+    {
         if (target == null)
             return;
 
         if (highlighted)
         {
             if (!highlights.ContainsKey(target))
-                CreateHighlight(target);
+                CreateHighlight(target, color);
+            else
+                highlights[target].color = color;   // already ringed: just retint it
         }
         else
         {
@@ -67,7 +78,7 @@ public class ObjectHighlighter : MonoBehaviour
         }
     }
 
-    private void CreateHighlight(GameObject target)
+    private void CreateHighlight(GameObject target, Color color)
     {
         if (highlightSprite == null)
         {
@@ -88,9 +99,7 @@ public class ObjectHighlighter : MonoBehaviour
         }
 
         GameObject highlightObject =
-            new GameObject(
-                target.name + "_Highlight"
-            );
+            new GameObject("Highlight Sprite");
 
         highlightObject.transform.SetParent(
             highlightCanvas.transform,
@@ -103,7 +112,7 @@ public class ObjectHighlighter : MonoBehaviour
         highlight.sprite = highlightSprite;
         highlight.preserveAspect = true;
 
-        highlight.color = Color.yellow;
+        highlight.color = color;
 
         highlightObject.SetActive(true);
 

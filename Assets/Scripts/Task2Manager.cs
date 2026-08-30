@@ -317,7 +317,8 @@ public class Task2Manager : ITaskManager
                 SpawnCandidateCubes();          // show all four places the Friend could move to
                 ClearButtonHighlights();
                 selected = 0; // Force it to select A as default, because sometimes it ends up with D. NOTE: Hardcoded!!!!
-                HighlightCandidateCube(selected);
+                //HighlightCandidateCube(selected);
+                HighlightActiveReceiver();
                 if (selected >= 0) HighlightButton(selected);
                 break;
 
@@ -381,6 +382,18 @@ public class Task2Manager : ITaskManager
 
         // Moving the Friend reloads the dataset; LoadInterference rebuilds both uplink animations.
         LoadInterference(InterferenceCondition(LETTERS[answerIdx]));
+        HighlightActiveReceiver();
+    }
+
+    // Ring the phone the selected option is currently moving - the Friend's. LoadInterference
+    // has already dropped the previous answer's ring: the marker it was keyed on no longer exists.
+    private void HighlightActiveReceiver()
+    {
+        ObjectHighlighter h = m.Highlighter;
+        if (h == null) return;
+
+        h.ClearAllHighlights();
+        h.SetHighlighted(m.RxMarkerFor(RX_FRIEND), true, Color.black);
     }
 
     private void SetState(State s)
@@ -588,7 +601,7 @@ public class Task2Manager : ITaskManager
                 continue;
             }
 
-            candidateCubes[i] = CandidateMarkers.SpawnCube(pos, cubeMats[i], $"Candidate_{cond}");
+            //candidateCubes[i] = CandidateMarkers.SpawnCube(pos, cubeMats[i], $"Candidate_{cond}");
 
             candidateBadges[i] = CandidateMarkers.SpawnBadge(
                 pos, LETTERS[i], OptionColor(i), m.OptionMaterials[i], $"Badge_{cond}");
@@ -674,6 +687,8 @@ public class Task2Manager : ITaskManager
     // The selected option's button takes its cube's colour at full opacity.
     private void HighlightButton(int i)
     {
+
+        Debug.Log("Highlhting " + i);
         if (buttonImages[i] == null) return;
 
         Color c = OptionColor(i);

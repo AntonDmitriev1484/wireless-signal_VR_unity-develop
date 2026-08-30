@@ -36,6 +36,9 @@ public class Task1Manager : ITaskManager
 
     private static readonly char[] LETTERS = { 'A', 'B', 'C', 'D' };
 
+    // Rx_Number of the phone in phone_optimization - the receiver the options move.
+    private const int PHONE_RX = 1;
+
     private static readonly TaskDef[] TASKS =
     {
         new TaskDef
@@ -301,6 +304,8 @@ public class Task1Manager : ITaskManager
                 ClearButtonHighlights();
                 if (!candidatesSpawned) SpawnCandidates();
                 if (selected >= 0) HighlightOption(selected);
+
+                HighlightActiveReceiver();
                 break;
 
             case State.ExplainCorrect:
@@ -338,8 +343,30 @@ public class Task1Manager : ITaskManager
         if (state != State.MCQ) return;
 
         selected = answerIdx;
+
+        // Drop the ring before the load: SetCurrentDataSet destroys and respawns the Rx markers,
+        // and ObjectHighlighter keys its circles on those GameObjects - a stale key would leave the
+        // previous answer's circle frozen on screen next to the new one.
+        m.Highlighter?.ClearAllHighlights();
+
         m.SetCurrentDataSet(ConditionName(Task.name, currentSet, LETTERS[answerIdx]));
+
         HighlightOption(answerIdx);
+        HighlightActiveReceiver();
+    }
+
+    // Ring the receiver the selected option currently places, so the phone on the floor is tied to
+    // the chosen answer. Only the phone-placement task moves a receiver; in the cabinet tasks the
+    // receiver is the fixed TV, so there is nothing to point at.
+    private void HighlightActiveReceiver()
+    {
+        if (Task.hasCabinet) return;
+
+        ObjectHighlighter h = m.Highlighter;
+        if (h == null) return;
+
+        h.ClearAllHighlights();
+        h.SetHighlighted(m.RxMarkerFor(PHONE_RX), true, Color.black);
     }
 
     // ------------------------------------------------------------------
@@ -354,6 +381,9 @@ public class Task1Manager : ITaskManager
     private void GoToTaskStart()
     {
         attempt = 0;
+        // Rings belong to the outgoing task's markers, which the load below destroys.
+        m.Highlighter?.ClearAllHighlights();
+
 
         // Start on an incorrect option so there is something to look at without giving the answer
         // away, and present it as the current choice: the receiver is standing in that option's
@@ -411,7 +441,7 @@ public class Task1Manager : ITaskManager
                     continue;
                 }
 
-                candidates[i] = CandidateMarkers.SpawnCube(pos, cubeMats[i], $"Candidate_{cond}");
+                //candidates[i] = CandidateMarkers.SpawnCube(pos, cubeMats[i], $"Candidate_{cond}");
 
                 candidateBadges[i] = CandidateMarkers.SpawnBadge(
                     pos, LETTERS[i], OptionColor(i), m.OptionMaterials[i], $"Badge_{cond}");
