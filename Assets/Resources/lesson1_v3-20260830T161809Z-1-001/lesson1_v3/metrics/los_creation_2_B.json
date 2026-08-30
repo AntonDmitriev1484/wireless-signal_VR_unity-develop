@@ -1,0 +1,86 @@
+{
+ "name": "los_creation_2_B",
+ "xml": "/home/saif/wireless_NeRF_experiments/SIONNA/WiViz_v2/lesson1_v3/scenes/los_creation_2_B/home_office_doorways.xml",
+ "tx": [
+  0.15,
+  -4.9,
+  1.1
+ ],
+ "rx": [
+  5.0,
+  -7.6,
+  2.0
+ ],
+ "rss_point": [
+  5.0,
+  -7.45
+ ],
+ "rss_mode": "rx_height",
+ "rss_rx_dbm": -78.0038924196628,
+ "floor_point": [
+  5.0,
+  -6.6
+ ],
+ "rss_floor_dbm": -77.28957634292313,
+ "raw": {
+  "n_paths": 8,
+  "has_los": false,
+  "hist": {
+   "4": 7,
+   "3": 1
+  },
+  "box_bounce_paths": 2,
+  "box_bounce_best_rel_db": 0.0,
+  "strongest_type": "4-bounce",
+  "n_through_wall": 7
+ },
+ "final": {
+  "n_paths": 1,
+  "has_los": false,
+  "hist": {
+   "4": 1
+  },
+  "box_bounce_paths": 1,
+  "box_bounce_best_rel_db": 0.0,
+  "strongest_type": "4-bounce",
+  "n_through_wall": 0
+ },
+ "heatmap": {
+  "cells": 3000,
+  "max_dbm": -40.97846228807751,
+  "p50_dbm": -77.4457124518118,
+  "clamped_cells": 151
+ },
+ "task": "los_creation",
+ "set": 2,
+ "option": "B",
+ "correct": false,
+ "note": "tall cabinet placed right in front of the shelf - blocks LoS",
+ "rx_label": "TV",
+ "boxes": [
+  {
+   "name": "Metal_Cabinet",
+   "size": [
+    1.6,
+    0.4,
+    2.2
+   ],
+   "center": [
+    0.55,
+    -5.3
+   ],
+   "yaw_deg": 90.0,
+   "z0": 0.0,
+   "material": "itu_metal"
+  }
+ ],
+ "geometry": {
+  "placement_problems": [],
+  "cabinet_cuts_los": true
+ },
+ "seconds": 1.1,
+ "data_source": "simulated (v3)",
+ "paths_csv": "los_creation_2_B.csv",
+ "heatmap_csv": "los_creation_2_B_heatmap.csv",
+ "scene_xml": "scenes/los_creation_2_B/home_office_doorways.xml"
+}

@@ -1,0 +1,90 @@
+{
+ "name": "los_creation_1_D",
+ "xml": "/home/saif/wireless_NeRF_experiments/SIONNA/WiViz_v2/lesson1_v3/scenes/los_creation_1_D/home_office_doorways.xml",
+ "tx": [
+  7.309,
+  2.938,
+  0.9
+ ],
+ "rx": [
+  5.0,
+  -7.6,
+  2.0
+ ],
+ "rss_point": [
+  5.0,
+  -7.45
+ ],
+ "rss_mode": "rx_height",
+ "rss_rx_dbm": -60.81155293648057,
+ "floor_point": [
+  5.0,
+  -6.6
+ ],
+ "rss_floor_dbm": -71.6152082015939,
+ "raw": {
+  "n_paths": 119,
+  "has_los": false,
+  "hist": {
+   "4": 97,
+   "3": 15,
+   "1": 1,
+   "2": 6
+  },
+  "box_bounce_paths": 16,
+  "box_bounce_best_rel_db": 0.0,
+  "strongest_type": "2-bounce",
+  "n_through_wall": 14
+ },
+ "final": {
+  "n_paths": 7,
+  "has_los": false,
+  "hist": {
+   "2": 4,
+   "3": 2,
+   "1": 1
+  },
+  "box_bounce_paths": 3,
+  "box_bounce_best_rel_db": 0.0,
+  "strongest_type": "2-bounce",
+  "n_through_wall": 0
+ },
+ "heatmap": {
+  "cells": 3000,
+  "max_dbm": -35.848485991762786,
+  "p50_dbm": -64.08960801575238,
+  "clamped_cells": 39
+ },
+ "task": "los_creation",
+ "set": 1,
+ "option": "D",
+ "correct": false,
+ "note": "tall cabinet standing in front of the TV stand's east end, beside the screen - on the line, blocks LoS",
+ "rx_label": "TV",
+ "boxes": [
+  {
+   "name": "Metal_Cabinet",
+   "size": [
+    1.6,
+    0.4,
+    2.2
+   ],
+   "center": [
+    5.3,
+    -6.0
+   ],
+   "yaw_deg": 90.0,
+   "z0": 0.0,
+   "material": "itu_metal"
+  }
+ ],
+ "geometry": {
+  "placement_problems": [],
+  "cabinet_cuts_los": true
+ },
+ "seconds": 1.7,
+ "data_source": "simulated (v3)",
+ "paths_csv": "los_creation_1_D.csv",
+ "heatmap_csv": "los_creation_1_D_heatmap.csv",
+ "scene_xml": "scenes/los_creation_1_D/home_office_doorways.xml"
+}

@@ -1,0 +1,89 @@
+{
+ "name": "los_creation_1_B",
+ "xml": "/home/saif/wireless_NeRF_experiments/SIONNA/WiViz_v2/lesson1_v3/scenes/los_creation_1_B/home_office_doorways.xml",
+ "tx": [
+  7.309,
+  2.938,
+  0.9
+ ],
+ "rx": [
+  5.0,
+  -7.6,
+  2.0
+ ],
+ "rss_point": [
+  5.0,
+  -7.45
+ ],
+ "rss_mode": "rx_height",
+ "rss_rx_dbm": -63.894633109407124,
+ "floor_point": [
+  5.0,
+  -6.6
+ ],
+ "rss_floor_dbm": -72.16267901255786,
+ "raw": {
+  "n_paths": 108,
+  "has_los": false,
+  "hist": {
+   "4": 96,
+   "3": 10,
+   "2": 2
+  },
+  "box_bounce_paths": 16,
+  "box_bounce_best_rel_db": 0.0,
+  "strongest_type": "2-bounce",
+  "n_through_wall": 16
+ },
+ "final": {
+  "n_paths": 7,
+  "has_los": false,
+  "hist": {
+   "2": 2,
+   "3": 4,
+   "4": 1
+  },
+  "box_bounce_paths": 6,
+  "box_bounce_best_rel_db": 0.0,
+  "strongest_type": "2-bounce",
+  "n_through_wall": 0
+ },
+ "heatmap": {
+  "cells": 3000,
+  "max_dbm": -35.82880923418692,
+  "p50_dbm": -66.1752818569289,
+  "clamped_cells": 41
+ },
+ "task": "los_creation",
+ "set": 1,
+ "option": "B",
+ "correct": false,
+ "note": "wardrobe at the foot of the desk, butted against the east wall, right in front of the router - blocks LoS",
+ "rx_label": "TV",
+ "boxes": [
+  {
+   "name": "Metal_Cabinet",
+   "size": [
+    1.6,
+    0.4,
+    2.2
+   ],
+   "center": [
+    7.2,
+    0.95
+   ],
+   "yaw_deg": 0.0,
+   "z0": 0.0,
+   "material": "itu_metal"
+  }
+ ],
+ "geometry": {
+  "placement_problems": [],
+  "cabinet_cuts_los": true
+ },
+ "seconds": 1.8,
+ "data_source": "simulated (v3)",
+ "paths_csv": "los_creation_1_B.csv",
+ "heatmap_csv": "los_creation_1_B_heatmap.csv",
+ "scene_xml": "scenes/los_creation_1_B/home_office_doorways.xml"
+}

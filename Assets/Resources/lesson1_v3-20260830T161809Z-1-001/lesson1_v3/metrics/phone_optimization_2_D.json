@@ -1,0 +1,68 @@
+{
+ "name": "phone_optimization_2_D",
+ "xml": "/home/saif/wireless_NeRF_experiments/SIONNA/WiViz_v2/lesson1_v2/scenes/phone_optimization_2_D/home_office_doorways.xml",
+ "tx": [
+  -3.9,
+  0.8,
+  1.0
+ ],
+ "rx": [
+  -4.0,
+  -4.0,
+  1.1
+ ],
+ "rss_point": [
+  -4.0,
+  -4.0
+ ],
+ "rss_rx_dbm": -58.578709670144505,
+ "raw": {
+  "n_paths": 170,
+  "has_los": true,
+  "hist": {
+   "3": 80,
+   "4": 70,
+   "1": 9,
+   "2": 10,
+   "0": 1
+  },
+  "box_bounce_paths": 0,
+  "box_bounce_best_rel_db": null,
+  "strongest_type": "LoS",
+  "n_through_wall": 59
+ },
+ "final": {
+  "n_paths": 7,
+  "has_los": true,
+  "hist": {
+   "0": 1,
+   "1": 6
+  },
+  "box_bounce_paths": 0,
+  "box_bounce_best_rel_db": null,
+  "strongest_type": "LoS",
+  "n_through_wall": 0
+ },
+ "heatmap": {
+  "cells": 3000,
+  "max_dbm": -44.10957767864264,
+  "p50_dbm": -57.01468753427558,
+  "clamped_cells": 6
+ },
+ "task": "phone_optimization",
+ "set": 2,
+ "option": "D",
+ "correct": true,
+ "note": "office, open floor south of the conference table, line of sight",
+ "rx_label": "phone",
+ "boxes": [],
+ "geometry": {
+  "placement_problems": [],
+  "cabinet_cuts_los": false
+ },
+ "seconds": 0.9,
+ "paths_csv": "phone_optimization_2_D.csv",
+ "heatmap_csv": "phone_optimization_2_D_heatmap.csv",
+ "scene_xml": "scenes/phone_optimization_2_D/home_office_doorways.xml",
+ "data_source": "simulated in lesson1_v2, rays re-selected with the v3 rule"
+}

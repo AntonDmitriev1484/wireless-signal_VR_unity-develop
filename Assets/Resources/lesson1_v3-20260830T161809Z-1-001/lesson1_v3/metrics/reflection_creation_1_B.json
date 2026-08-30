@@ -1,0 +1,89 @@
+{
+ "name": "reflection_creation_1_B",
+ "xml": "/home/saif/wireless_NeRF_experiments/SIONNA/WiViz_v2/lesson1_v2/scenes/reflection_creation_1_B/home_office_doorways.xml",
+ "tx": [
+  -3.9,
+  0.8,
+  1.0
+ ],
+ "rx": [
+  5.0,
+  -7.6,
+  2.0
+ ],
+ "rss_point": [
+  5.0,
+  -7.45
+ ],
+ "rss_mode": "rx_height",
+ "rss_rx_dbm": -77.64355596747302,
+ "floor_point": [
+  5.0,
+  -6.6
+ ],
+ "rss_floor_dbm": -82.70072507960725,
+ "raw": {
+  "n_paths": 46,
+  "has_los": false,
+  "hist": {
+   "3": 10,
+   "4": 32,
+   "1": 1,
+   "2": 3
+  },
+  "box_bounce_paths": 0,
+  "box_bounce_best_rel_db": null,
+  "strongest_type": "1-bounce",
+  "n_through_wall": 41
+ },
+ "final": {
+  "n_paths": 5,
+  "has_los": false,
+  "hist": {
+   "1": 1,
+   "4": 4
+  },
+  "box_bounce_paths": 0,
+  "box_bounce_best_rel_db": null,
+  "strongest_type": "1-bounce",
+  "n_through_wall": 1
+ },
+ "heatmap": {
+  "cells": 3000,
+  "max_dbm": -44.123222708626116,
+  "p50_dbm": -57.96122026053985,
+  "clamped_cells": 10
+ },
+ "task": "reflection_creation",
+ "set": 1,
+ "option": "B",
+ "correct": false,
+ "note": "living-room side of the doorway - obstructs the doorway instead",
+ "rx_label": "TV",
+ "boxes": [
+  {
+   "name": "Metal_Cabinet",
+   "size": [
+    1.2,
+    0.4,
+    2.2
+   ],
+   "center": [
+    0.9,
+    2.2
+   ],
+   "yaw_deg": 90.0,
+   "z0": 0.0,
+   "material": "itu_metal"
+  }
+ ],
+ "geometry": {
+  "placement_problems": [],
+  "cabinet_cuts_los": false
+ },
+ "seconds": 1.7,
+ "paths_csv": "reflection_creation_1_B.csv",
+ "heatmap_csv": "reflection_creation_1_B_heatmap.csv",
+ "scene_xml": "scenes/reflection_creation_1_B/home_office_doorways.xml",
+ "data_source": "simulated in lesson1_v2, rays re-selected with the v3 rule"
+}

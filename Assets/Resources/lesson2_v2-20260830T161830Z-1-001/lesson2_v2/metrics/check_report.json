@@ -1,0 +1,97 @@
+{
+ "failures": [],
+ "warnings": [],
+ "info": {
+  "communication_single": {
+   "rx": [
+    {
+     "rss": -47.2686,
+     "rows": 6,
+     "los": true
+    }
+   ],
+   "correct": false,
+   "option": null
+  },
+  "interference_baseline": {
+   "rx": [
+    {
+     "rss": -47.2686,
+     "rows": 6,
+     "los": true
+    },
+    {
+     "rss": -48.3678,
+     "rows": 6,
+     "los": true
+    }
+   ],
+   "correct": false,
+   "option": null
+  },
+  "interference_space_A": {
+   "rx": [
+    {
+     "rss": -47.2686,
+     "rows": 6,
+     "los": true
+    },
+    {
+     "rss": -51.4558,
+     "rows": 6,
+     "los": true
+    }
+   ],
+   "correct": false,
+   "option": "A"
+  },
+  "interference_space_B": {
+   "rx": [
+    {
+     "rss": -47.2686,
+     "rows": 6,
+     "los": true
+    },
+    {
+     "rss": -51.8914,
+     "rows": 6,
+     "los": true
+    }
+   ],
+   "correct": false,
+   "option": "B"
+  },
+  "interference_space_C": {
+   "rx": [
+    {
+     "rss": -47.2686,
+     "rows": 6,
+     "los": true
+    },
+    {
+     "rss": -65.8531,
+     "rows": 4,
+     "los": false
+    }
+   ],
+   "correct": false,
+   "option": "C"
+  },
+  "interference_space_D": {
+   "rx": [
+    {
+     "rss": -47.2686,
+     "rows": 6,
+     "los": true
+    },
+    {
+     "rss": -82.5201,
+     "rows": 2,
+     "los": false
+    }
+   ],
+   "correct": true,
+   "option": "D"
+  }
+ }
+}

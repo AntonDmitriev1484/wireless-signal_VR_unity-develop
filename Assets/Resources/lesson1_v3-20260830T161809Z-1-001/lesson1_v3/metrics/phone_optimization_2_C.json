@@ -1,0 +1,66 @@
+{
+ "name": "phone_optimization_2_C",
+ "xml": "/home/saif/wireless_NeRF_experiments/SIONNA/WiViz_v2/lesson1_v2/scenes/phone_optimization_2_C/home_office_doorways.xml",
+ "tx": [
+  -3.9,
+  0.8,
+  1.0
+ ],
+ "rx": [
+  6.5,
+  -1.5,
+  1.1
+ ],
+ "rss_point": [
+  6.5,
+  -1.5
+ ],
+ "rss_rx_dbm": -69.97953795606281,
+ "raw": {
+  "n_paths": 53,
+  "has_los": false,
+  "hist": {
+   "3": 17,
+   "4": 29,
+   "2": 7
+  },
+  "box_bounce_paths": 0,
+  "box_bounce_best_rel_db": null,
+  "strongest_type": "2-bounce",
+  "n_through_wall": 34
+ },
+ "final": {
+  "n_paths": 7,
+  "has_los": false,
+  "hist": {
+   "2": 3,
+   "3": 4
+  },
+  "box_bounce_paths": 0,
+  "box_bounce_best_rel_db": null,
+  "strongest_type": "2-bounce",
+  "n_through_wall": 1
+ },
+ "heatmap": {
+  "cells": 3000,
+  "max_dbm": -44.10957926851536,
+  "p50_dbm": -57.00966370663355,
+  "clamped_cells": 6
+ },
+ "task": "phone_optimization",
+ "set": 2,
+ "option": "C",
+ "correct": false,
+ "note": "living room east side, far and behind the dividing wall",
+ "rx_label": "phone",
+ "boxes": [],
+ "geometry": {
+  "placement_problems": [],
+  "cabinet_cuts_los": false
+ },
+ "seconds": 0.9,
+ "paths_csv": "phone_optimization_2_C.csv",
+ "heatmap_csv": "phone_optimization_2_C_heatmap.csv",
+ "scene_xml": "scenes/phone_optimization_2_C/home_office_doorways.xml",
+ "data_source": "simulated in lesson1_v2, rays re-selected with the v3 rule"
+}
