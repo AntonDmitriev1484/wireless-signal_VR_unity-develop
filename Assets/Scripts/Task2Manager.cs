@@ -168,7 +168,17 @@ public class Task2Manager : ITaskManager
                 break;
 
             case State.T2_Garbled:
+                // Clear before the load: SetCurrentDataSet snapshots the heatmap and would put it
+                // straight back otherwise.
                 m.ClearHeatmap();
+
+                // Enter the question on option A. Loading its dataset is what actually moves the
+                // Friend's phone to A's location - MarkEndPoints_Rx respawns the Rx markers from
+                // the new CSV - so the highlighted button, the highlighted cube and the phone on
+                // the floor all agree from the first frame of the question.
+                selected = 0;
+                LoadInterference(InterferenceCondition(LETTERS[0]));
+
                 SetState(State.T2_MCQ);
                 break;
 
@@ -306,6 +316,7 @@ public class Task2Manager : ITaskManager
                 SetButtonLabels(new[] { "A", "B", "C", "D" });
                 SpawnCandidateCubes();          // show all four places the Friend could move to
                 ClearButtonHighlights();
+                selected = 0; // Force it to select A as default, because sometimes it ends up with D. NOTE: Hardcoded!!!!
                 HighlightCandidateCube(selected);
                 if (selected >= 0) HighlightButton(selected);
                 break;
