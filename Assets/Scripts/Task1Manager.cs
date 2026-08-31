@@ -44,8 +44,7 @@ public class Task1Manager : ITaskManager
         new TaskDef
         {
             name = "phone_optimization",
-            prompt = "You're using your phone. Which one of these locations will give you the best signal strength?" +
-            "\n\n(Each colored cube is a possible answer)",
+            prompt = "You're using your phone. Which one of these locations will give you the best signal strength?",
             hasCabinet = false,
             phoneReceiver = true,       // the receiver being moved is the phone; los/reflection use the TV
             correct = { { 1, 'B' }, { 2, 'D' } },
@@ -70,8 +69,7 @@ public class Task1Manager : ITaskManager
         {
             name = "los_creation",
             prompt = "The TV isn't getting a very strong signal - the furniture and walls are all impacting it. " +
-                     "Where can you put this cabinet so that the TV gets the strongest signal?" +
-                    "\n\n(Each colored cabinet is a possible answer)",
+                     "Where can you put this cabinet so that the TV gets the strongest signal?",
             hasCabinet = true,
             correct = { { 1, 'C' }, { 2, 'A' } },
             correctText =
@@ -96,9 +94,9 @@ public class Task1Manager : ITaskManager
             name = "reflection_creation",
             intro = "Someone glued your router to the table in the other room, so now you're getting a bad signal again. " +
                     "You can't move it back, but you might not need to in order to get a good signal.",
-            prompt = "Some materials, like metal, can actually reflect signals! It seems like placing this metal cabinet somewhere can improve the signal strength at the TV. " +
-                     "Can you place the cabinet so that the TV gets the best signal strength?" +
-                    "\n\n(Each colored cabinet is a possible answer)",
+            prompt = "Some materials, like metal, can reflect signals! It seems like placing this metal cabinet somewhere can improve the signal strength at the TV. " +
+                     "Can you place the cabinet so that the TV gets the best signal strength?" 
+                    ,
             hasCabinet = true,
             correct = { { 1, 'D' }, { 2, 'B' } },
 
@@ -351,8 +349,7 @@ public class Task1Manager : ITaskManager
                 m.QuestionText.text =
                     MoveAsParticleTest1_v2.HighlightSubstrings(
                     "Some materials like walls, can let signal through, but absorb part of it, and weaken it substantially. " +
-                    "This wall absorbs a lot of the signal, and only has a single strong path that passes directly through it." +
-                    "\n\nIts much easier for the signal to travel around the wall, with the help of the cabinet you just placed!",
+                    "This wall absorbs a lot of the signal, and only has a single strong path that passes directly through it.",
                     new List<string> { "single strong path", "directly" }
                     );
 

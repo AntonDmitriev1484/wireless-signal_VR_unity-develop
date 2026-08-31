@@ -310,8 +310,7 @@ public class Task2Manager : ITaskManager
 
             case State.T2_MCQ:
                 SetText("You tell your friend to move to interfere less with your message. You want \"Hello\" to appear as clearly as possible." +
-                    "\n\nWhere would you tell them to move?" +
-                    "\n\n(Each colored cube is a possible answer)");
+                    "\n\nWhere would you tell them to move?");
                 ShowButtons(4);
                 SetButtonLabels(new[] { "A", "B", "C", "D" });
                 SpawnCandidateCubes();          // show all four places the Friend could move to
