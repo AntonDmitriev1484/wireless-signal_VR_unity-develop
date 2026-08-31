@@ -101,12 +101,13 @@ public class Task1Manager : ITaskManager
                     "\n\n(Each colored cabinet is a possible answer)",
             hasCabinet = true,
             correct = { { 1, 'D' }, { 2, 'B' } },
+
             correctText =
             {
-                { 1, "Correct! The metal cabinet acts like a mirror: the signal from the router bounces off it, travels through the doorway and reaches the TV. " +
-                     "That reflected path is now the strongest one arriving at the TV, which is why the signal improves so much." },
-                { 2, "Correct! The metal cabinet acts like a mirror: the signal from the router bounces off it, travels through the doorway and reaches the TV. " +
-                     "That reflected path is now the strongest one arriving at the TV, which is why the signal improves so much." },
+                { 1,  MoveAsParticleTest1_v2.HighlightSubstrings("Correct! The metal cabinet acts like a mirror: the signal from the router bounces off it, travels through the doorway and reaches the TV. " +
+                     "That reflected path is now the strongest one arriving at the TV, which is why the signal improves so much.", new List<string> { "reflected path" }) },
+                { 2, MoveAsParticleTest1_v2.HighlightSubstrings("Correct! The metal cabinet acts like a mirror: the signal from the router bounces off it, travels through the doorway and reaches the TV. " +
+                     "That reflected path is now the strongest one arriving at the TV, which is why the signal improves so much.", new List<string> { "reflected path" }) }
             },
             wrongText =
             {
@@ -129,7 +130,7 @@ public class Task1Manager : ITaskManager
     // ------------------------------------------------------------------
     // State
     // ------------------------------------------------------------------
-    private enum State { SetSelect, Intro, MCQ, ExplainCorrect, ExplainWrong, Complete }
+    private enum State { SetSelect, Intro, MCQ, ExplainCorrect, ExplainTransmission, ExplainWrong, Complete }
 
     private State state;
     private bool pendingRender;     // DoState() only re-renders after a state change
@@ -260,11 +261,22 @@ public class Task1Manager : ITaskManager
                 break;
 
             case State.ExplainCorrect:
-                ClearCandidates();
-                taskIdx++;
-                if (taskIdx >= TASKS.Length) SetState(State.Complete);
-                else GoToTaskStart();
+                // reflection_creation has one more screen to show before it hands on, and its text
+                // points at the cabinet the participant just placed - so the candidates stay on
+                // screen and the task is not advanced until that screen is done.
+                if (Task.name == "reflection_creation")
+                {
+                    SetState(State.ExplainTransmission);
+                    break;
+                }
+
+                GoToNextTask();
                 break;
+
+            case State.ExplainTransmission:
+                GoToNextTask();
+                break;
+
 
             case State.ExplainWrong:
                 // Retry the same MCQ. The dataset still shows the option that was just rejected, so
@@ -306,11 +318,37 @@ public class Task1Manager : ITaskManager
                 if (selected >= 0) HighlightOption(selected);
 
                 HighlightActiveReceiver();
-                break;
 
+                break;
             case State.ExplainCorrect:
                 m.QuestionText.text = Task.correctText[currentSet];
                 ShowButtons(0);
+
+                // Clear the room down to the placement being explained: the three rejected cabinets
+                // would otherwise still be standing there while the text talks about the one that works.
+                ShowOnlyCorrectCandidate();
+
+                // The explanation is about the paths, so they have to be on screen. Already-on stays on.
+                m.ShowMainRays();
+                HighlightReflectionRays_CreateReflection();
+                break;
+
+            case State.ExplainTransmission:
+
+                m.QuestionText.text =
+                    MoveAsParticleTest1_v2.HighlightSubstrings(
+                    "Some materials like walls, can let signal through, but absorb part of it, and weaken it substantially. " +
+                    "This wall absorbs a lot of the signal, and only has a single strong path that passes directly through it." +
+                    "\n\nIts much easier for the signal to travel around the wall, with the help of the cabinet you just placed!",
+                    new List<string> { "single strong path", "directly" }
+                    );
+
+                ShowButtons(0);
+
+                // Drop the cabinet reflections ExplainCorrect highlighted, so the only thing picked
+                // out here is the straight router-to-TV line: the route the signal cannot take.
+                m.ClearRayHighlights();
+                HighlightLoS_CreateReflection();
                 break;
 
             case State.ExplainWrong:
@@ -370,12 +408,118 @@ public class Task1Manager : ITaskManager
     }
 
     // ------------------------------------------------------------------
+    // reflection_creation ray highlights
+    // ------------------------------------------------------------------
+    // Both draw over the correct option's dataset, so call them once that dataset is loaded - the
+    // explanation screen after a correct answer. Both work for either set and do nothing on the
+    // other two tasks. Highlighted rays are drawn green at 3x the normal thickness
+    // (MoveAsParticleTest1_v2.RAY_HIGHLIGHT_COLOR / RAY_HIGHLIGHT_WIDTH_SCALE), and turn the ray
+    // view on if it is off, since otherwise there is nothing to highlight.
+
+    // How far outside the cabinet's mesh an interaction point may sit and still count as a bounce
+    // off it. Sionna places the point on the face; this only absorbs float error and the OBJ's
+    // slightly irregular hull.
+    private const float CABINET_HIT_MARGIN = 0.15f;
+
+    // Every path that reflects off the metal cabinet in the correct option - the mirror effect this
+    // task teaches. The CSV labels every interaction just "I", so which surface was hit has to come
+    // from geometry: a path counts when one of its interaction points lands inside the cabinet.
+    public void HighlightReflectionRays_CreateReflection()
+    {
+        if (Task.name != "reflection_creation") return;
+
+        GameObject cabinet = CorrectCandidate();
+        if (cabinet == null) return;
+
+        Renderer[] renderers = cabinet.GetComponentsInChildren<Renderer>();
+        if (renderers.Length == 0)
+        {
+            Debug.LogWarning("Task1Manager: the correct cabinet has no renderers to bound.");
+            return;
+        }
+
+        Bounds bounds = renderers[0].bounds;
+        for (int i = 1; i < renderers.Length; i++) bounds.Encapsulate(renderers[i].bounds);
+        bounds.Expand(CABINET_HIT_MARGIN * 2f);   // Expand takes the total growth per axis
+
+        m.HighlightRays(path => BouncesInside(path, bounds));
+
+        if (m.HighlightedRayCount == 0)
+            Debug.LogWarning($"Task1Manager: no path bounces off the cabinet in {ConditionName(Task.name, currentSet, Task.correct[currentSet])}.");
+    }
+
+    // The line of sight from the router to the TV. In this task there is none - the router is in the
+    // other room and the wall blocks the direct path, which is exactly why the cabinet's reflection
+    // matters - so no CSV path can be highlighted. The straight router-to-TV line is drawn instead,
+    // showing the route the signal cannot take.
+    public void HighlightLoS_CreateReflection()
+    {
+        if (Task.name != "reflection_creation") return;
+
+        m.ShowDirectLine();
+    }
+
+    // Does any of the path's interactions land inside the given volume? The first and last points
+    // are the router and the TV, so only the ones in between can be a reflection.
+    private static bool BouncesInside(RayPathSet_v2 path, Bounds bounds)
+    {
+        for (int i = 1; i < path.PathPositions.Count - 1; i++)
+            if (bounds.Contains(path.PathPositions[i])) return true;
+
+        return false;
+    }
+
+    // The candidate object spawned for this set's correct option.
+    private GameObject CorrectCandidate()
+    {
+        int idx = Array.IndexOf(LETTERS, Task.correct[currentSet]);
+
+        if (idx < 0 || candidates[idx] == null)
+        {
+            Debug.LogWarning("Task1Manager: the correct option's candidate object is not spawned.");
+            return null;
+        }
+
+        return candidates[idx];
+    }
+
+    // Leave only the correct option's cabinet standing, letter badge included. Cabinet tasks only:
+    // in phone_optimization the markers are floor cubes for locations the phone could occupy, and
+    // the explanation reads better with all four still visible. Deactivated rather than destroyed,
+    // so ClearCandidates still has them to tear down when the task ends.
+    private void ShowOnlyCorrectCandidate()
+    {
+        if (!Task.hasCabinet) return;
+
+        int correctIdx = Array.IndexOf(LETTERS, Task.correct[currentSet]);
+
+        for (int i = 0; i < 4; i++)
+        {
+            bool keep = i == correctIdx;
+
+            if (candidates[i] != null) candidates[i].SetActive(keep);
+            if (candidateBadges[i] != null) candidateBadges[i].SetActive(keep);
+        }
+    }
+
+    // ------------------------------------------------------------------
     // Task / state helpers
     // ------------------------------------------------------------------
     private void SetState(State s)
     {
         state = s;
         pendingRender = true;
+    }
+
+    // Leave the task just finished: its candidate objects go, and either the next task starts or
+    // the lesson ends.
+    private void GoToNextTask()
+    {
+        ClearCandidates();
+        taskIdx++;
+
+        if (taskIdx >= TASKS.Length) SetState(State.Complete);
+        else GoToTaskStart();
     }
 
     private void GoToTaskStart()

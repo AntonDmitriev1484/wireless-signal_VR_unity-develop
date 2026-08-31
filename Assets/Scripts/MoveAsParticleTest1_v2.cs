@@ -1534,6 +1534,126 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
             ClearPathLine_MultiPaths();
         }
     }
+
+    // ------------------------------------------------------------------
+    // Ray highlighting
+    // ------------------------------------------------------------------
+    // A highlighted path is drawn RAY_HIGHLIGHT_WIDTH_SCALE times as thick as the rest, in
+    // RAY_HIGHLIGHT_COLOR, so one or two paths can be picked out of the bundle while the others
+    // stay in viz_color. The selection is kept as indices into loadedRaysPath rather than as
+    // LineRenderers, so it survives the rays being toggled off and on and being rebuilt by a
+    // dataset swap - MarkPathLine_MultiPaths re-applies it to whatever it draws.
+    private const float RAY_WIDTH = 0.01f;
+    public const float RAY_HIGHLIGHT_WIDTH_SCALE = 3f;
+    public static readonly Color RAY_HIGHLIGHT_COLOR = Color.green;
+
+    private readonly HashSet<int> highlightedRayPaths = new HashSet<int>();
+
+    // Highlight the given paths (indices into LoadedRaysPath), replacing any previous selection.
+    // Draws the static rays if they are not already up - a highlight nobody can see is no use.
+    public void HighlightRays(IEnumerable<int> pathIndices)
+    {
+        highlightedRayPaths.Clear();
+
+        if (pathIndices != null)
+            foreach (int i in pathIndices)
+                if (i >= 0 && i < loadedRaysPath.Count) highlightedRayPaths.Add(i);
+
+        if (ray_objects == null) MarkPathLine_MultiPaths();
+        else RestyleRayLines();
+    }
+
+    // Every path the predicate accepts, e.g. p => p.Total_Interactions_for_Path == 0.
+    public void HighlightRays(Func<RayPathSet_v2, bool> match)
+    {
+        List<int> hits = new List<int>();
+
+        for (int i = 0; i < loadedRaysPath.Count; i++)
+            if (match(loadedRaysPath[i])) hits.Add(i);
+
+        HighlightRays(hits);
+    }
+
+    // Back to a uniform bundle in viz_color.
+    public void ClearRayHighlights()
+    {
+        if (highlightedRayPaths.Count == 0) return;
+
+        highlightedRayPaths.Clear();
+        RestyleRayLines();
+    }
+
+    public int HighlightedRayCount => highlightedRayPaths.Count;
+
+    // A straight line from the transmitter to the receiver, drawn in the highlight style on top of
+    // the real paths. It is synthetic: in reflection_creation no path in the data runs straight from
+    // the router to the TV - the wall blocks it - so this shows the route the signal CANNOT take,
+    // which is the contrast the reflected paths are meant to be read against.
+    private LineRenderer directLine;
+
+    // Endpoints taken from the loaded data: every path starts at the Tx and ends at the Rx.
+    public void ShowDirectLine()
+    {
+        if (loadedRaysPath.Count == 0)
+        {
+            Debug.LogWarning("ShowDirectLine: no paths loaded, cannot tell where Tx and Rx are.");
+            return;
+        }
+
+        List<Vector3> points = loadedRaysPath[0].PathPositions;
+        if (points.Count < 2) return;
+
+        ShowDirectLine(points[0], points[points.Count - 1]);
+    }
+
+    public void ShowDirectLine(Vector3 from, Vector3 to)
+    {
+        if (directLine == null)
+        {
+            GameObject lineObject = new GameObject("DirectLine_LoS");
+
+            directLine = lineObject.AddComponent<LineRenderer>();
+            directLine.material = new Material(Shader.Find("Sprites/Default"));
+            directLine.useWorldSpace = true;
+            directLine.numCapVertices = 3;
+            directLine.numCornerVertices = 3;
+        }
+
+        StyleRayLine(directLine, true);
+
+        directLine.positionCount = 2;
+        directLine.SetPositions(new[] { from, to });
+    }
+
+    public void ClearDirectLine()
+    {
+        if (directLine == null) return;
+
+        Destroy(directLine.gameObject);
+        directLine = null;
+    }
+
+    private void RestyleRayLines()
+    {
+        if (ray_objects == null) return;
+
+        for (int i = 0; i < ray_objects.Length; i++)
+            StyleRayLine(ray_objects[i], highlightedRayPaths.Contains(i));
+    }
+
+    private void StyleRayLine(LineRenderer lineRenderer, bool highlighted)
+    {
+        if (lineRenderer == null) return;
+
+        float width = highlighted ? RAY_WIDTH * RAY_HIGHLIGHT_WIDTH_SCALE : RAY_WIDTH;
+        lineRenderer.startWidth = width;
+        lineRenderer.endWidth = width;
+
+        Color color = highlighted ? RAY_HIGHLIGHT_COLOR : this.viz_color;
+        lineRenderer.startColor = color;
+        lineRenderer.endColor = color;
+    }
+
     // Draw lines with multiple LineRenderers from loadedRaysPath
     void MarkPathLine_MultiPaths()
     {
@@ -1551,11 +1671,12 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
             LineRenderer lineRenderer = pathObject.AddComponent<LineRenderer>();
 
             // Set the LineRenderer properties
-            lineRenderer.startWidth = 0.01f;
-            lineRenderer.endWidth = 0.01f;
             lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
-            lineRenderer.startColor = this.viz_color;
-            lineRenderer.endColor = this.viz_color;
+
+            // Width and colour come from the highlight selection: a highlighted path is drawn
+            // thicker and green, everything else in viz_color at the normal width.
+            StyleRayLine(lineRenderer, highlightedRayPaths.Contains(i));
+
             lineRenderer.positionCount = 0; // Initialize with zero positions
             lineRenderer.useWorldSpace = true; // Use world space for the positions
             lineRenderer.numCapVertices = 3; // Set the number of cap vertices for smoother ends
@@ -1902,6 +2023,16 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     public void HideMainRays()
     {
         ClearPathLine_MultiPaths();
+    }
+
+    // The other direction: draw the main static rays if they are not up. A no-op when they already
+    // are, so a state that needs the rays visible can ask for them without disturbing a participant
+    // who turned them on themselves.
+    public void ShowMainRays()
+    {
+        if (ray_objects != null) return;
+
+        MarkPathLine_MultiPaths();
     }
     public bool RaysPaused => isRayMovementPaused;
     public string DemoCsvFile => csvFile_Demo;
@@ -2775,6 +2906,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         Debug.Log($"SetCurrentDataSet({fileName})");
 
         ClearPathLine_MultiPaths();
+        highlightedRayPaths.Clear();   // indices point into the outgoing dataset's path list
+        ClearDirectLine();
         ClearHeatmap();
         ClearMessageAnchors();  // endpoints belong to the outgoing dataset
 
