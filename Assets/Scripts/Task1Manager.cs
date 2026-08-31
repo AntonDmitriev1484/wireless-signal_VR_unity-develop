@@ -254,6 +254,7 @@ public class Task1Manager : ITaskManager
                     bool correct = chosen == Task.correct[currentSet];
                     attempt++;
                     m.LogAnswer($"Lesson1: {Task.name} set {currentSet} attempt {attempt} answer {chosen} -> {(correct ? "correct" : "incorrect")}");
+                    TrialLog.Answer(nameof(Task1Manager), Task.name, currentSet, chosen, true);
                     SetState(correct ? State.ExplainCorrect : State.ExplainWrong);
                 }
                 break;
@@ -391,6 +392,10 @@ public class Task1Manager : ITaskManager
         if (state != State.MCQ) return;
 
         selected = answerIdx;
+
+        // Logged at the press, not at Next: pressing an option previews its dataset, so this is the
+        // record of what the participant looked at. Advance() logs the one they settle on.
+        TrialLog.Answer(nameof(Task1Manager), Task.name, currentSet, LETTERS[answerIdx], false);
 
         // Drop the ring before the load: SetCurrentDataSet destroys and respawns the Rx markers,
         // and ObjectHighlighter keys its circles on those GameObjects - a stale key would leave the

@@ -641,6 +641,11 @@ public class MoveTempParticles : MonoBehaviour
         {
             completeFired = true;
             isPaused = true;
+
+            // Task 2 runs two of these side by side, so the run only closes once the last of them
+            // has arrived. isPaused above already took this one out of AnyPlaying.
+            if (!AnyPlaying) TrialLog.AnimationCompleted();
+
             OnComplete?.Invoke();
         }
     }

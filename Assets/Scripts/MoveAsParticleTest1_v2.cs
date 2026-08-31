@@ -2420,6 +2420,9 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
     void Start()
     {
+        // Start of the run, before anything can be logged against it.
+        TrialLog.BeginSession();
+
         // Antenna is the default receiver; the task managers switch to the phone where they need it.
         SetReceiverModel(ReceiverModel.Antenna);
 
@@ -2500,6 +2503,15 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         //MarkPathPositions_obj();
     }
 
+    // Safety net for a run that ends early. Task2Manager writes the files when it reaches Complete;
+    // quitting before that would otherwise lose the session, and a partial log is worth more than
+    // none. Writing twice is harmless - the file names come from the session start, so the second
+    // write replaces the first two files rather than adding more.
+    void OnApplicationQuit()
+    {
+        TrialLog.Write();
+    }
+
     // Update is called once per frame
     void Update()
     {
@@ -2510,6 +2522,17 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         // Polled rather than pushed: an animation can also stop on its own when its last particle
         // arrives, which no button press would tell us about.
         UpdatePlayPauseLabel();
+
+        // Sampled rather than hooked into the buttons: the heatmap and the ray lines are also put
+        // up and taken down by the task managers and by dataset swaps, and the log should record
+        // what was on screen however it got there. TrialLog ignores an unchanged state, so the
+        // clear-and-redraw inside SetCurrentDataSet - both halves in the same frame - logs nothing.
+        TrialLog.SetVizState("heatmap", IsHeatmapShown);
+        TrialLog.SetVizState("rays", AreRaysShown);
+
+        // Opening an animation run. Closing it is left to the completion handlers, so a pause in
+        // the middle does not split one run in two.
+        if (IsAnyAnimationPlaying) TrialLog.AnimationStarted();
     }
 
     // toggle play/pause state of entire rays movement
@@ -2857,6 +2880,10 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         if (!allRaysCompletedFired && AllRaysCompleted())
         {
             allRaysCompletedFired = true;
+
+            // Closes the animation run opened in Update.
+            TrialLog.AnimationCompleted();
+
             OnAllRaysCompleted?.Invoke();
         }
     }

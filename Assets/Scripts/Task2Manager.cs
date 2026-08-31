@@ -29,6 +29,10 @@ public class Task2Manager : ITaskManager
     private const string INTERFERENCE_PREFIX = DIR + "interference_space_";
 
     private static readonly char[] LETTERS = { 'A', 'B', 'C', 'D' };
+
+    // Identifies this lesson's single MCQ in the answers log. Lesson 2 is not counterbalanced, so
+    // its entries carry set 0.
+    private const string QUESTION_NAME = "friend_placement";
     private const char CORRECT = 'D';
 
     private const int RX_YOU = 1;       // Phone A - fixed
@@ -189,6 +193,7 @@ public class Task2Manager : ITaskManager
                     bool correct = chosen == CORRECT;
                     attempt++;
                     m.LogAnswer($"Lesson2: interference attempt {attempt} answer {chosen} -> {(correct ? "correct" : "incorrect")}");
+                    TrialLog.Answer(nameof(Task2Manager), QUESTION_NAME, 0, chosen, true);
                     SetState(correct ? State.T2_MoveHassle : State.T2_Explain);
                 }
                 break;
@@ -218,6 +223,7 @@ public class Task2Manager : ITaskManager
             case State.T2_TurnsDone:
                 Cleanup();
                 complete = true;
+                SetState(State.Complete);   // the last screen, and where the trial log is written
                 break;
 
             case State.Complete:
@@ -367,6 +373,9 @@ public class Task2Manager : ITaskManager
             case State.Complete:
                 SetText("You've finished the study!");
 
+                // End of the run: the whole session goes to <game root>/Trials.
+                TrialLog.Write();
+
                 break;
         }
     }
@@ -377,6 +386,10 @@ public class Task2Manager : ITaskManager
         if (answerIdx < 0 || answerIdx > 3) return;
 
         selected = answerIdx;
+
+        // Every press is logged: it previews that option by moving the Friend there. The press Next
+        // is pressed on is logged again from Advance, flagged as submitted.
+        TrialLog.Answer(nameof(Task2Manager), QUESTION_NAME, 0, LETTERS[answerIdx], false);
         ClearButtonHighlights();
         HighlightButton(answerIdx);
         HighlightCandidateCube(answerIdx);
