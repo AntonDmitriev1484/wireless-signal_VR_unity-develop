@@ -365,6 +365,8 @@ public class Task2Manager : ITaskManager
                 break;
 
             case State.Complete:
+                SetText("You've finished the study!");
+
                 break;
         }
     }
