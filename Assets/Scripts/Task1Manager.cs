@@ -270,14 +270,13 @@ public class Task1Manager : ITaskManager
                     break;
                 }
 
+
                 GoToNextTask();
                 break;
 
             case State.ExplainTransmission:
                 GoToNextTask();
                 break;
-
-
             case State.ExplainWrong:
                 // Retry the same MCQ. The dataset still shows the option that was just rejected, so
                 // keep it selected - the highlight must always match what is on screen.
@@ -310,6 +309,10 @@ public class Task1Manager : ITaskManager
                 break;
 
             case State.MCQ:
+                // Strips the green/thick styling if any is left over - it does NOT take the ray
+                // lines down. Hiding them belongs to GoToTaskStart, which has to do it before the
+                // dataset load or SetCurrentDataSet simply redraws them.
+                m.ClearRayHighlights();
                 m.QuestionText.text = Task.prompt;
                 ShowButtons(4);
                 SetButtonLabels(new[] { "A", "B", "C", "D" });
@@ -329,8 +332,18 @@ public class Task1Manager : ITaskManager
                 ShowOnlyCorrectCandidate();
 
                 // The explanation is about the paths, so they have to be on screen. Already-on stays on.
-                m.ShowMainRays();
-                HighlightReflectionRays_CreateReflection();
+                if (Task.name == "reflection_creation")
+                {
+
+                    m.ShowMainRays();
+                    HighlightReflectionRays_CreateReflection();
+                }
+                else if (Task.name == "los_creation")
+                {
+                    m.ShowMainRays();
+                    //HighlightLoS_CreateReflection();
+                }
+
                 break;
 
             case State.ExplainTransmission:
@@ -545,6 +558,11 @@ public class Task1Manager : ITaskManager
         // so a clear placed after this line would simply be undone. Leaving a correct/wrong
         // response with the heatmap on would otherwise carry it into the next task's question.
         m.ClearHeatmap();
+
+        // Same for the rays, and for the same reason: SetCurrentDataSet remembers that they were
+        // showing and redraws them for the incoming dataset. ExplainCorrect turns them on for the
+        // cabinet tasks, so without this they would follow the participant into the next question.
+        m.HideMainRays();
 
         m.SetCurrentDataSet(ConditionName(Task.name, currentSet, preview));
         SetState(string.IsNullOrEmpty(Task.intro) ? State.MCQ : State.Intro);
