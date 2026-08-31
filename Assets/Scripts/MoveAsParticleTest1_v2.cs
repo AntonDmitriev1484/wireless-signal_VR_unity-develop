@@ -28,7 +28,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     //demo CSVs
     [SerializeField, Tooltip("a CSV file name without .csv portion to read data from")]
     private string csvFile_Demo = "ray_path_data_Test_5cols";
-
+    [SerializeField, Tooltip("a CSV file name without .csv portion to read data from")]
+    private string csvFile_Demo_full = "ray_path_data_Test_5cols";
     //CSVs
     [SerializeField, Tooltip("a CSV file name without .csv portion to read data from")]
     private string csvFile_T12_1 = "ray_path_data_Test_5cols";
@@ -1536,6 +1537,10 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     // Draw lines with multiple LineRenderers from loadedRaysPath
     void MarkPathLine_MultiPaths()
     {
+        // Never draw on top of an existing set: those GameObjects keep their positions, and
+        // overwriting ray_objects would orphan them on screen still showing the old dataset's paths.
+        ClearPathLine_MultiPaths();
+
         ray_objects = new LineRenderer[loadedRaysPath.Count];
 
         // Iterate through each path in the loaded data
@@ -1566,16 +1571,23 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         }
     }
 
+    // Tear the static ray lines down. Each LineRenderer sits on its own GameObject, so they have to
+    // be destroyed and not merely emptied: an emptied renderer is invisible but still in the scene,
+    // and since ray_objects is dropped straight afterwards nothing can ever reach it again. Every
+    // dataset swap used to leave another set of them behind.
     void ClearPathLine_MultiPaths()
     {
         if (ray_objects == null) return;
-        // Iterate through each path in the loaded data
+
         for (int i = 0; i < ray_objects.Length; i++)
         {
             LineRenderer r = ray_objects[i];
-            r.positionCount = 0;
+            if (r == null) continue;    // already destroyed - skip rather than throw mid-teardown
 
+            r.positionCount = 0;        // Destroy is deferred to end of frame; hide it now
+            Destroy(r.gameObject);
         }
+
         ray_objects = null; // Clear the line Renderer
     }
 
@@ -2867,7 +2879,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
 
     public class DemoTaskManager : ITaskManager
     {
-        // Listed and handled in the order they run: D1 -> D2 -> ... -> D9 -> END.
+        // Listed and handled in the order they run: D1 -> D2 -> ... -> D11 -> END.
         private enum State
         {
             D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, END
@@ -2894,7 +2906,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
             m.SetReceiverModel(ReceiverModel.Antenna);
 
             // SetCurrentDataset calls InitParticle functions, that need to make the message text, so message text must be defined beforehhand
-            m.SetCurrentDataSet(m.csvFile_Demo);
+            m.SetCurrentDataSet(m.csvFile_Demo_full);
         }
 
         public void Advance()
@@ -2933,7 +2945,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                         HighlightSubstrings("" +
                         "Your WiFi router has a cable that connects it to the internet. " +
                         "It turns the video data into a signal, and sends it out into the environment." +
-                        "\n\nPress Play/Pause to see what this wave looks like.", highlights);
+                        "\n\nPress Play to see what this signal looks like.", highlights);
 
                     m.highlighter.SetHighlighted(m.tv_obj, false); // Can access these, even though they are private??
                     m.highlighter.SetHighlighted(m.tx_obj, true); // Can access these, even though they are private??
@@ -2943,6 +2955,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                     // Halt here
                     next_state = State.D3;
                     break;
+
 
                 case State.D3:
                     highlights = new List<string>
@@ -2966,40 +2979,49 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                     m.highlighter.SetHighlighted(m.tx_obj, true);
                     m.highlighter.SetHighlighted(m.rx_obj, true);
                     m.qTextObj.GetComponent<TextMeshProUGUI>().text =
-                        HighlightSubstrings("Let's look at how the tx sends a signal to the rx. " +
+                        HighlightSubstrings("Let's look at how the tx sends a message to the rx. " +
                         "\n\nWhen you press Play, the router is going to say \"Hello\" to your TV!", highlights);
                     m.SetMessage("Hello");
                     // Playback is the participant's: they start it with Play/Pause or Restart.
 
                     m.WaitPlay();
-                    next_state = State.D6;
+                    next_state = State.D5;
                     break;
-/*                case State.D5:
-
-                    highlights = new List<string> { "rx"};
-                    m.highlighter.SetHighlighted(m.tx_obj, false);
-                    m.highlighter.SetHighlighted(m.rx_obj, true);
-                    m.qTextObj.GetComponent<TextMeshProUGUI>().text =
-                        HighlightSubstrings("Play the signal using the menu and take a look at the rx."
-                        + "You can see that the message becomes clearer to read as more of the signal arrives.", highlights);
-                    next_state = State.D6;
-                    break;*/
-                case State.D6:
+                case State.D5:
                     m.qTextObj.GetComponent<TextMeshProUGUI>().text =
                        HighlightSubstrings("This is how wireless communication works!" +
                        "\n\nWiFi is a kind of wireless communication where devices can access the internet by communicating with your router.", highlights);
 
-                    next_state = State.D7;
+                    next_state = State.D6;
                     break;
-                case State.D7:
+                case State.D6:
                     m.highlighter.SetHighlighted(m.tx_obj, false);
                     m.highlighter.SetHighlighted(m.rx_obj, false);
                     m.qTextObj.GetComponent<TextMeshProUGUI>().text = "If you press 'Rays' you can see that the signal takes multiple paths through the entire room." +
                         "\n\nIf you press Re-start, you can see how each path moves on its own through the environment.";
                     m.WaitPlay(m.raysButton);
 
+                    next_state = State.D7;
+                    break;
+
+                case State.D7:
+
+                    m.qTextObj.GetComponent<TextMeshProUGUI>().text =
+                                HighlightSubstrings("" +
+                                "As you've seen, signals have a ton of paths, and interact with the entire room." +
+                                "\n\nFor this study, we only show you the strongest paths in the signal.", highlights);
+
+                    // Swapping to the trimmed dataset redraws whatever is currently on screen:
+                    // SetCurrentDataSet tears the old ray lines down and, if the participant left
+                    // "Rays" on in D6, rebuilds them from the new paths. Toggling around the swap is
+                    // not needed - it only drew the dense set a second time before it was replaced.
+                    m.SetCurrentDataSet(m.csvFile_Demo);
+
+                    m.WaitPlay();
+
                     next_state = State.D8;
                     break;
+
                 case State.D8:
 
                     highlights = new List<string> { "above the receiver" };
@@ -3024,7 +3046,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                     m.highlighter.SetHighlighted(m.tx_obj, false);
                     m.highlighter.SetHighlighted(m.rx_obj, false);
                     m.qTextObj.GetComponent<TextMeshProUGUI>().text = 
-                                                                "The signal only moves through parts of the room, so some places might get lower signal strength than others" +
+                                                                "Some paths in the signal are stronger than others, so some parts of the room get lower signal strength." +
                                                                     "\n\nPress the \'Heatmap\' button to see the signal strength in each location.";
                     m.WaitPlay(m.heatmapButton);
                     next_state = State.D11;
