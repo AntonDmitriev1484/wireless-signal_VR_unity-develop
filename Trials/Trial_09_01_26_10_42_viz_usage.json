@@ -1,0 +1,167 @@
+[
+	{
+		"viz": "session",
+		"toggle": "on",
+		"time": 1788277368.827
+	},
+	{
+		"viz": "heatmap",
+		"toggle": "off",
+		"time": 1788277370.310
+	},
+	{
+		"viz": "rays",
+		"toggle": "off",
+		"time": 1788277370.310
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788277374.382
+	},
+	{
+		"viz": "rays",
+		"toggle": "on",
+		"time": 1788277415.853
+	},
+	{
+		"viz": "rays",
+		"toggle": "off",
+		"time": 1788277433.375
+	},
+	{
+		"viz": "rays",
+		"toggle": "on",
+		"time": 1788277439.527
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788277461.462
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788277461.462
+	},
+	{
+		"viz": "heatmap",
+		"toggle": "on",
+		"time": 1788277465.319
+	},
+	{
+		"viz": "heatmap",
+		"toggle": "off",
+		"time": 1788277470.830
+	},
+	{
+		"viz": "rays",
+		"toggle": "off",
+		"time": 1788277470.830
+	},
+	{
+		"viz": "heatmap",
+		"toggle": "on",
+		"time": 1788277508.075
+	},
+	{
+		"viz": "rays",
+		"toggle": "on",
+		"time": 1788277509.439
+	},
+	{
+		"viz": "heatmap",
+		"toggle": "off",
+		"time": 1788277513.025
+	},
+	{
+		"viz": "rays",
+		"toggle": "off",
+		"time": 1788277513.025
+	},
+	{
+		"viz": "heatmap",
+		"toggle": "on",
+		"time": 1788277517.238
+	},
+	{
+		"viz": "heatmap",
+		"toggle": "off",
+		"time": 1788277518.296
+	},
+	{
+		"viz": "rays",
+		"toggle": "on",
+		"time": 1788277539.017
+	},
+	{
+		"viz": "rays",
+		"toggle": "off",
+		"time": 1788277541.781
+	},
+	{
+		"viz": "rays",
+		"toggle": "on",
+		"time": 1788277571.867
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788277644.657
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788277644.657
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788277657.255
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788277660.962
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788277665.648
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788277665.648
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788277672.656
+	},
+	{
+		"viz": "rays",
+		"toggle": "off",
+		"time": 1788277673.557
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788277696.170
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788277712.384
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788277736.100
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788277740.786
+	}
+]

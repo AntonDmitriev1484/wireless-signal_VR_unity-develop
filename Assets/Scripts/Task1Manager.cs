@@ -233,7 +233,104 @@ public class Task1Manager : ITaskManager
     // ------------------------------------------------------------------
     // ITaskManager
     // ------------------------------------------------------------------
+    // ------------------------------------------------------------------
+    // Back
+    // ------------------------------------------------------------------
+    // Everything Back has to put back. The lesson walks three tasks and two sets, so a step back can
+    // cross a task boundary - the option and the task have to travel with the state, not just the
+    // state itself.
+    private struct Snapshot
+    {
+        public State state;
+        public int taskIdx;
+        public int currentSet;
+        public int selected;
+        public int attempt;
+        public bool answerWasCorrect;
+
+        public bool Matches(Snapshot other) =>
+            state == other.state && taskIdx == other.taskIdx && currentSet == other.currentSet &&
+            selected == other.selected && attempt == other.attempt &&
+            answerWasCorrect == other.answerWasCorrect;
+    }
+
+    // Visited states, most recent last. Empty means the participant is on this lesson's first
+    // screen, which is as far back as Back goes: it never returns to the demo.
+    private readonly List<Snapshot> history = new List<Snapshot>();
+
+    private Snapshot Capture() => new Snapshot
+    {
+        state = state,
+        taskIdx = taskIdx,
+        currentSet = currentSet,
+        selected = selected,
+        attempt = attempt,
+        answerWasCorrect = answerWasCorrect,
+    };
+
     public void Advance()
+    {
+        // Recorded around the transition rather than inside SetState: GoToTaskStart moves the task
+        // and the option before it sets a state, so a snapshot taken there would already describe
+        // where the participant is going instead of where they were.
+        Snapshot before = Capture();
+
+        AdvanceInternal();
+
+        // A press that changed nothing - Next on an MCQ with no option chosen - leaves no step to
+        // undo, so it must not push one.
+        if (!before.Matches(Capture())) history.Add(before);
+    }
+
+    public void Back()
+    {
+        if (history.Count == 0) return;
+
+        Snapshot previous = history[history.Count - 1];
+        history.RemoveAt(history.Count - 1);
+
+        Restore(previous);
+    }
+
+    // Rebuilds the world for a state being returned to. The screens are not independent - they hide
+    // candidates, raise rays and swap datasets - so a step back has to undo all of that and let
+    // DoState build the state again from a clean slate.
+    private void Restore(Snapshot s)
+    {
+        taskIdx = s.taskIdx;
+        currentSet = s.currentSet;
+        selected = s.selected;
+        attempt = s.attempt;
+        answerWasCorrect = s.answerWasCorrect;
+
+        // Candidates are dropped rather than re-shown: ExplainCorrect hides all but the right one,
+        // and a later task's candidates belong to a different dataset entirely. DoState respawns
+        // them for whichever task is now current.
+        ClearCandidates();
+
+        m.ClearRayHighlights();
+        m.ClearDirectLine();
+        m.Highlighter?.ClearAllHighlights();
+
+        // Both have to go before the load, which would otherwise restore them for the new dataset.
+        m.ClearHeatmap();
+        m.HideMainRays();
+
+        // No dataset until a set has been chosen - SetSelect runs before there is one.
+        if (currentSet > 0)
+        {
+            m.SetReceiverModel(Task.phoneReceiver
+                ? MoveAsParticleTest1_v2.ReceiverModel.Phone
+                : MoveAsParticleTest1_v2.ReceiverModel.Antenna);
+
+            char option = selected >= 0 ? LETTERS[selected] : PreviewOption(Task, currentSet);
+            m.SetCurrentDataSet(ConditionName(Task.name, currentSet, option));
+        }
+
+        SetState(s.state);
+    }
+
+    private void AdvanceInternal()
     {
         switch (state)
         {
@@ -344,6 +441,11 @@ public class Task1Manager : ITaskManager
             case State.ExplainCorrect:
                 m.QuestionText.text = Task.correctText[currentSet];
                 ShowButtons(0);
+
+                // Back drops the candidates when it steps into this state, and the MCQ may never
+                // have run in this session - so spawn them here rather than assuming the question
+                // already did.
+                if (!candidatesSpawned) SpawnCandidates();
 
                 // Clear the room down to the placement being explained: the three rejected cabinets
                 // would otherwise still be standing there while the text talks about the one that works.

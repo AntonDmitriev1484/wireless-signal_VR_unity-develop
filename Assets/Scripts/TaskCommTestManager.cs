@@ -45,6 +45,9 @@ public class TaskCommTestManager : ITaskManager
         complete = true;
     }
 
+    // One screen, so there is nothing to step back to.
+    public void Back() { }
+
     public void DoState()
     {
         if (!started)

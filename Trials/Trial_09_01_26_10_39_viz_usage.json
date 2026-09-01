@@ -1,0 +1,22 @@
+[
+	{
+		"viz": "session",
+		"toggle": "on",
+		"time": 1788277173.429
+	},
+	{
+		"viz": "heatmap",
+		"toggle": "off",
+		"time": 1788277175.134
+	},
+	{
+		"viz": "rays",
+		"toggle": "off",
+		"time": 1788277175.134
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788277182.399
+	}
+]

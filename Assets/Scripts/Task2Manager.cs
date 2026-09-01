@@ -142,7 +142,100 @@ public class Task2Manager : ITaskManager
     // ------------------------------------------------------------------
     // ITaskManager
     // ------------------------------------------------------------------
+    // ------------------------------------------------------------------
+    // Back
+    // ------------------------------------------------------------------
+    private struct Snapshot
+    {
+        public State state;
+        public int selected;
+        public int attempt;
+        public bool answerWasCorrect;
+
+        public bool Matches(Snapshot other) =>
+            state == other.state && selected == other.selected &&
+            attempt == other.attempt && answerWasCorrect == other.answerWasCorrect;
+    }
+
+    // Visited states, most recent last. Empty means T1_Start, this lesson's first screen and as far
+    // back as Back goes - it never returns to Lesson 1.
+    private readonly List<Snapshot> history = new List<Snapshot>();
+
+    private Snapshot Capture() => new Snapshot
+    {
+        state = state,
+        selected = selected,
+        attempt = attempt,
+        answerWasCorrect = answerWasCorrect,
+    };
+
     public void Advance()
+    {
+        Snapshot before = Capture();
+
+        AdvanceInternal();
+
+        // Next on the MCQ with nothing chosen changes nothing, and must not leave a step to undo.
+        if (!before.Matches(Capture())) history.Add(before);
+    }
+
+    public void Back()
+    {
+        if (history.Count == 0) return;
+
+        Snapshot previous = history[history.Count - 1];
+        history.RemoveAt(history.Count - 1);
+
+        Restore(previous);
+    }
+
+    // Puts the world back for the state being returned to, then lets DoState build the screen: each
+    // case here re-runs its own setup (StartConversation, PrepareInterference, SpawnCandidateCubes),
+    // so all this has to do is undo what the abandoned state left behind and reload the right data.
+    private void Restore(Snapshot s)
+    {
+        selected = s.selected;
+        attempt = s.attempt;
+        answerWasCorrect = s.answerWasCorrect;
+        complete = false;
+
+        StopTempAnimations();
+        ClearCandidateCubes();
+        ClearButtonHighlights();
+        m.Highlighter?.ClearAllHighlights();
+        m.ClearHeatmap();
+
+        if (s.state <= State.T1_YouText)
+        {
+            // Back in the one-phone conversation: the main particle system does the animating
+            // there, and EnterInterference had parked it.
+            m.ShowAllMovingRays();
+            m.SetMessage("Hey want to hang out tonight?");
+            m.SetCurrentDataSet(COMM_SINGLE);
+        }
+        else
+        {
+            m.HideAllMovingRays();
+
+            // Returning to the question re-asks it from option A, which is what its screen forces
+            // anyway - so the Friend's phone has to stand at A too, not at the rejected answer.
+            if (s.state == State.T2_MCQ) selected = 0;
+
+            // Only the question and its response stand the Friend at a chosen option; every other
+            // interference screen uses the baseline placement.
+            bool atQuestion = s.state == State.T2_MCQ ||
+                              s.state == State.T2_PromptExplanation ||
+                              s.state == State.T2_Explain;
+
+            LoadInterference(atQuestion && selected >= 0
+                ? InterferenceCondition(LETTERS[selected])
+                : INTERFERENCE_BASELINE);
+        }
+
+        SetState(s.state);
+    }
+
+    private void AdvanceInternal()
     {
         switch (state)
         {

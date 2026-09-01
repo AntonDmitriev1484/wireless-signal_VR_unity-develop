@@ -2087,6 +2087,10 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     private UnityEngine.UI.Button heatmapButton;
     private UnityEngine.UI.Button raysButton;
 
+    // Never gated by WaitPlay: a participant must always be able to step back out of a state,
+    // including one that is waiting on Play or on Rays.
+    private UnityEngine.UI.Button backButton;
+
     // Labels on the Play/Pause button(s). Kept in sync with whether anything is actually animating,
     // so the button always reads as the action it will perform.
     private readonly List<TextMeshProUGUI> playPauseLabels = new List<TextMeshProUGUI>();
@@ -2166,6 +2170,10 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
                 {
                     raysButton = button;
                 }
+                else if (method == nameof(ButtonBack))
+                {
+                    backButton = button;
+                }
                 else if (method == nameof(ToggleHeatmap)) {
                     heatmapButton = button;
                 }
@@ -2187,7 +2195,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         if (panel == null) return gated;
 
         foreach (UnityEngine.UI.Button button in panel.GetComponentsInChildren<UnityEngine.UI.Button>(true))
-            if (!transportButtons.Contains(button) && !awaitedButtons.Contains(button))
+            if (!transportButtons.Contains(button) && !awaitedButtons.Contains(button) &&
+                !ReferenceEquals(button, backButton))
                 gated.Add(button);
 
         return gated;
@@ -3069,10 +3078,35 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
             m.SetCurrentDataSet(m.csvFile_Demo_full);
         }
 
+        // States already visited, most recent last. Only pushed when Advance actually moves, so
+        // Back never has to step over a state that did nothing.
+        private readonly List<State> history = new List<State>();
+
         public void Advance()
         {
+            if (next_state == state) return;
+
+            history.Add(state);
             state = next_state;
         }
+
+        // One state back, stopping at D1 - the demo is the first manager, so there is nothing
+        // before it to return to. DoState rebuilds the screen and picks next_state again.
+        public void Back()
+        {
+            if (history.Count == 0) return;
+
+            State previous = history[history.Count - 1];
+            history.RemoveAt(history.Count - 1);
+
+            // D7 swaps the dense path set for the trimmed one, so anything before it has to have
+            // the dense set put back. D7 itself reloads the trimmed set from DoState.
+            if (previous < State.D7) m.SetCurrentDataSet(m.csvFile_Demo_full);
+
+            state = previous;
+            next_state = previous;
+        }
+
 
         public void DoState()
         {
@@ -3233,6 +3267,31 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         ClearAllMessageText();
 
         CurrentTaskManager.OnAnswerSelected(answer);
+    }
+
+    // Wired to the Back button in PanelQA. Steps the current manager back one state and re-renders
+    // it. The manager chain is never rewound: Back stops at the first state of the lesson the
+    // participant is in, so it cannot drop them back into the demo or an earlier lesson.
+    public void ButtonBack()
+    {
+        if (CurrentTaskManager == null) return;
+
+        // A state can be left part-way through an animation, exactly as with Next.
+        ClearAllMessageText();
+
+        // Stepping back cancels whatever the state being left was waiting on - the state coming
+        // back arms its own gate from DoState if it needs one.
+        ReleaseWaitPlay();
+
+        // Strip the outgoing state's decoration before restoring: every ring the highlighter is
+        // holding, and the caption the particles were carrying. An empty message destroys the label
+        // objects and builds none. Done here rather than after Back() so a restored state that
+        // wants its own ring or message can set one from DoState.
+        highlighter?.ClearAllHighlights();
+        SetMessage("");
+
+        CurrentTaskManager.Back();
+        CurrentTaskManager.DoState();
     }
 
     public void ButtonNext()

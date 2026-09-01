@@ -8,6 +8,10 @@ public interface ITaskManager
     // Move to the state chosen by the previous DoState() call (called on Next).
     void Advance();
 
+    // Step back to the state this manager was in before the last Advance (called on Back). A
+    // manager never rewinds past its own first state - Back cannot return to an earlier lesson.
+    void Back();
+
     // Apply the current state to the UI / visualisation.
     void DoState();
 

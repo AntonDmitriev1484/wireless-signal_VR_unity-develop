@@ -1,0 +1,138 @@
+[
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 2,
+		"answer": "D",
+		"submitted": false,
+		"time": 1788277480.719
+	},
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 2,
+		"answer": "B",
+		"submitted": false,
+		"time": 1788277490.239
+	},
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 2,
+		"answer": "B",
+		"submitted": true,
+		"time": 1788277490.935
+	},
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 2,
+		"answer": "C",
+		"submitted": false,
+		"time": 1788277500.823
+	},
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 2,
+		"answer": "D",
+		"submitted": false,
+		"time": 1788277506.049
+	},
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 2,
+		"answer": "D",
+		"submitted": true,
+		"time": 1788277506.832
+	},
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 2,
+		"answer": "C",
+		"submitted": false,
+		"time": 1788277526.566
+	},
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 2,
+		"answer": "C",
+		"submitted": true,
+		"time": 1788277528.024
+	},
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 2,
+		"answer": "D",
+		"submitted": false,
+		"time": 1788277531.696
+	},
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 2,
+		"answer": "D",
+		"submitted": true,
+		"time": 1788277533.048
+	},
+	{
+		"task": "Task1Manager",
+		"name": "los_creation",
+		"set": 2,
+		"answer": "A",
+		"submitted": false,
+		"time": 1788277536.767
+	},
+	{
+		"task": "Task1Manager",
+		"name": "los_creation",
+		"set": 2,
+		"answer": "A",
+		"submitted": true,
+		"time": 1788277537.856
+	},
+	{
+		"task": "Task1Manager",
+		"name": "reflection_creation",
+		"set": 2,
+		"answer": "B",
+		"submitted": false,
+		"time": 1788277570.577
+	},
+	{
+		"task": "Task1Manager",
+		"name": "reflection_creation",
+		"set": 2,
+		"answer": "B",
+		"submitted": true,
+		"time": 1788277571.321
+	},
+	{
+		"task": "Task2Manager",
+		"name": "friend_placement",
+		"set": 0,
+		"answer": "D",
+		"submitted": false,
+		"time": 1788277723.996
+	},
+	{
+		"task": "Task2Manager",
+		"name": "friend_placement",
+		"set": 0,
+		"answer": "D",
+		"submitted": false,
+		"time": 1788277747.028
+	},
+	{
+		"task": "Task2Manager",
+		"name": "friend_placement",
+		"set": 0,
+		"answer": "D",
+		"submitted": true,
+		"time": 1788277748.260
+	}
+]
