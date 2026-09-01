@@ -65,7 +65,7 @@ public class Task2Manager : ITaskManager
     private enum State
     {
         T1_Start, T1_Antennas, T1_Texting, T1_FriendTexts, T1_YouText,
-        T2_SameRoom, T2_BothTransmit, T2_Garbled, T2_MCQ, T2_Explain,
+        T2_SameRoom, T2_BothTransmit, T2_Garbled, T2_MCQ, T2_PromptExplanation, T2_Explain,
         T2_MoveHassle, T2_TakeTurns, T2_TurnsPlaying, T2_TurnsFriend, T2_TurnsDone,
         Complete
     }
@@ -77,6 +77,10 @@ public class Task2Manager : ITaskManager
     private bool complete;
 
     private int selected = -1;
+
+    // Held across the "Can you explain your answer?" screen that now sits between the MCQ and its
+    // response, so the branch is decided on commit and acted on a state later.
+    private bool answerWasCorrect;
     private int attempt;
 
     private MoveTempParticles tempYou;
@@ -194,8 +198,15 @@ public class Task2Manager : ITaskManager
                     attempt++;
                     m.LogAnswer($"Lesson2: interference attempt {attempt} answer {chosen} -> {(correct ? "correct" : "incorrect")}");
                     TrialLog.Answer(nameof(Task2Manager), QUESTION_NAME, 0, chosen, true);
-                    SetState(correct ? State.T2_MoveHassle : State.T2_Explain);
+
+                    // Ask them to talk through it before showing whether it was right.
+                    answerWasCorrect = correct;
+                    SetState(State.T2_PromptExplanation);
                 }
+                break;
+
+            case State.T2_PromptExplanation:
+                SetState(answerWasCorrect ? State.T2_MoveHassle : State.T2_Explain);
                 break;
 
             case State.T2_Explain:
@@ -325,6 +336,13 @@ public class Task2Manager : ITaskManager
                 //HighlightCandidateCube(selected);
                 HighlightActiveReceiver();
                 if (selected >= 0) HighlightButton(selected);
+                break;
+
+            case State.T2_PromptExplanation:
+                // Asked before the answer is revealed, so what they say is their own reasoning
+                // rather than a read-back of the response.
+                SetText("Can you explain your answer?");
+                ShowButtons(0);
                 break;
 
             case State.T2_Explain:

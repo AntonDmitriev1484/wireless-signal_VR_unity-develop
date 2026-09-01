@@ -6,8 +6,8 @@
  *  Dataset per condition:  <task>_<set>_<option>.csv (+ _heatmap.csv) in Assets/Resources,
  *  loaded through MoveAsParticleTest1_v2.SetCurrentDataSet().
  *
- *  FSM:  SetSelect -> [Intro] -> MCQ -> ExplainCorrect -> next task ... -> Complete
- *                                   \-> ExplainWrong  -> same MCQ
+ *  FSM:  SetSelect -> [Intro] -> MCQ -> PromptExplanation -> ExplainCorrect -> next task ... -> Complete
+ *                                                          -> ExplainWrong  -> same MCQ
  *  Selecting an option only previews its dataset; Next commits the answer.
  */
 
@@ -128,7 +128,7 @@ public class Task1Manager : ITaskManager
     // ------------------------------------------------------------------
     // State
     // ------------------------------------------------------------------
-    private enum State { SetSelect, Intro, MCQ, ExplainCorrect, ExplainTransmission, ExplainWrong, Complete }
+    private enum State { SetSelect, Intro, MCQ, PromptExplanation, ExplainCorrect, ExplainTransmission, ExplainWrong, Complete }
 
     private State state;
     private bool pendingRender;     // DoState() only re-renders after a state change
@@ -139,6 +139,10 @@ public class Task1Manager : ITaskManager
     private int taskIdx = 0;
     private int selected = -1;      // 0..3 selected option, -1 none
     private int attempt = 0;
+
+    // Held between the MCQ and the explanation: the "Can you explain your answer?" screen sits in
+    // between, so the branch has to be decided when the answer is committed and used a state later.
+    private bool answerWasCorrect;
 
     private TaskDef Task => TASKS[taskIdx];
 
@@ -255,8 +259,15 @@ public class Task1Manager : ITaskManager
                     attempt++;
                     m.LogAnswer($"Lesson1: {Task.name} set {currentSet} attempt {attempt} answer {chosen} -> {(correct ? "correct" : "incorrect")}");
                     TrialLog.Answer(nameof(Task1Manager), Task.name, currentSet, chosen, true);
-                    SetState(correct ? State.ExplainCorrect : State.ExplainWrong);
+
+                    // Ask them to talk through it before showing whether it was right.
+                    answerWasCorrect = correct;
+                    SetState(State.PromptExplanation);
                 }
+                break;
+
+            case State.PromptExplanation:
+                SetState(answerWasCorrect ? State.ExplainCorrect : State.ExplainWrong);
                 break;
 
             case State.ExplainCorrect:
@@ -322,6 +333,14 @@ public class Task1Manager : ITaskManager
                 HighlightActiveReceiver();
 
                 break;
+
+            case State.PromptExplanation:
+                // Asked before the answer is revealed, so what they say is their own reasoning
+                // rather than a read-back of the explanation.
+                m.QuestionText.text = "Can you explain your answer?";
+                ShowButtons(0);
+                break;
+
             case State.ExplainCorrect:
                 m.QuestionText.text = Task.correctText[currentSet];
                 ShowButtons(0);
