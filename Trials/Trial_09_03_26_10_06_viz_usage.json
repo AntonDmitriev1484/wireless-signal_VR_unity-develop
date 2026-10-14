@@ -1,0 +1,137 @@
+[
+	{
+		"viz": "session",
+		"toggle": "on",
+		"time": 1788448016.845
+	},
+	{
+		"viz": "heatmap",
+		"toggle": "off",
+		"time": 1788448018.649
+	},
+	{
+		"viz": "rays",
+		"toggle": "off",
+		"time": 1788448018.649
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788448321.234
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788448340.631
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788448340.631
+	},
+	{
+		"viz": "rays",
+		"toggle": "on",
+		"time": 1788448420.067
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788448474.219
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788448474.219
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788448497.487
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788448497.487
+	},
+	{
+		"viz": "heatmap",
+		"toggle": "on",
+		"time": 1788448512.202
+	},
+	{
+		"viz": "heatmap",
+		"toggle": "off",
+		"time": 1788448564.484
+	},
+	{
+		"viz": "rays",
+		"toggle": "off",
+		"time": 1788448564.484
+	},
+	{
+		"viz": "rays",
+		"toggle": "on",
+		"time": 1788448680.101
+	},
+	{
+		"viz": "rays",
+		"toggle": "off",
+		"time": 1788448692.518
+	},
+	{
+		"viz": "rays",
+		"toggle": "on",
+		"time": 1788448722.589
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788448763.911
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788448763.911
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788448781.271
+	},
+	{
+		"viz": "rays",
+		"toggle": "off",
+		"time": 1788448786.308
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788448792.257
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788448796.943
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788448823.704
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788448828.390
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788448836.049
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788448840.727
+	}
+]

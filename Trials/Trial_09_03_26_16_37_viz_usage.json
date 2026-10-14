@@ -1,0 +1,172 @@
+[
+	{
+		"viz": "session",
+		"toggle": "on",
+		"time": 1788471436.616
+	},
+	{
+		"viz": "heatmap",
+		"toggle": "off",
+		"time": 1788471438.157
+	},
+	{
+		"viz": "rays",
+		"toggle": "off",
+		"time": 1788471438.157
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788471442.514
+	},
+	{
+		"viz": "rays",
+		"toggle": "on",
+		"time": 1788471457.824
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788471508.292
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788471508.292
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788471541.431
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788471541.431
+	},
+	{
+		"viz": "heatmap",
+		"toggle": "on",
+		"time": 1788471567.356
+	},
+	{
+		"viz": "heatmap",
+		"toggle": "off",
+		"time": 1788471606.859
+	},
+	{
+		"viz": "rays",
+		"toggle": "off",
+		"time": 1788471649.465
+	},
+	{
+		"viz": "heatmap",
+		"toggle": "on",
+		"time": 1788471670.255
+	},
+	{
+		"viz": "heatmap",
+		"toggle": "off",
+		"time": 1788471701.825
+	},
+	{
+		"viz": "rays",
+		"toggle": "on",
+		"time": 1788471779.496
+	},
+	{
+		"viz": "rays",
+		"toggle": "off",
+		"time": 1788471791.010
+	},
+	{
+		"viz": "rays",
+		"toggle": "on",
+		"time": 1788471954.597
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788472081.442
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788472081.442
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788472112.011
+	},
+	{
+		"viz": "rays",
+		"toggle": "off",
+		"time": 1788472114.330
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788472122.246
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788472126.932
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788472130.567
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788472136.925
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788472150.041
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788472154.727
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788472173.930
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788472178.615
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788472248.702
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788472253.389
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788472262.192
+	},
+	{
+		"viz": "animation",
+		"toggle": "off",
+		"time": 1788472266.870
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788472276.193
+	}
+]

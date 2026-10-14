@@ -1,0 +1,146 @@
+[
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 1,
+		"answer": "C",
+		"submitted": false,
+		"time": 1788555900.066
+	},
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 1,
+		"answer": "B",
+		"submitted": false,
+		"time": 1788555907.752
+	},
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 1,
+		"answer": "B",
+		"submitted": true,
+		"time": 1788555938.889
+	},
+	{
+		"task": "Task1Manager",
+		"name": "los_creation",
+		"set": 1,
+		"answer": "B",
+		"submitted": false,
+		"time": 1788556011.014
+	},
+	{
+		"task": "Task1Manager",
+		"name": "los_creation",
+		"set": 1,
+		"answer": "A",
+		"submitted": false,
+		"time": 1788556017.051
+	},
+	{
+		"task": "Task1Manager",
+		"name": "los_creation",
+		"set": 1,
+		"answer": "A",
+		"submitted": true,
+		"time": 1788556020.143
+	},
+	{
+		"task": "Task1Manager",
+		"name": "los_creation",
+		"set": 1,
+		"answer": "C",
+		"submitted": false,
+		"time": 1788556061.226
+	},
+	{
+		"task": "Task1Manager",
+		"name": "los_creation",
+		"set": 1,
+		"answer": "C",
+		"submitted": true,
+		"time": 1788556074.623
+	},
+	{
+		"task": "Task1Manager",
+		"name": "reflection_creation",
+		"set": 1,
+		"answer": "D",
+		"submitted": false,
+		"time": 1788556166.843
+	},
+	{
+		"task": "Task1Manager",
+		"name": "reflection_creation",
+		"set": 1,
+		"answer": "D",
+		"submitted": true,
+		"time": 1788556168.472
+	},
+	{
+		"task": "Task2Manager",
+		"name": "friend_placement",
+		"set": 0,
+		"answer": "D",
+		"submitted": false,
+		"time": 1788556317.627
+	},
+	{
+		"task": "Task2Manager",
+		"name": "friend_placement",
+		"set": 0,
+		"answer": "B",
+		"submitted": false,
+		"time": 1788556362.978
+	},
+	{
+		"task": "Task2Manager",
+		"name": "friend_placement",
+		"set": 0,
+		"answer": "B",
+		"submitted": true,
+		"time": 1788556364.074
+	},
+	{
+		"task": "Task2Manager",
+		"name": "friend_placement",
+		"set": 0,
+		"answer": "A",
+		"submitted": false,
+		"time": 1788556387.218
+	},
+	{
+		"task": "Task2Manager",
+		"name": "friend_placement",
+		"set": 0,
+		"answer": "A",
+		"submitted": false,
+		"time": 1788556387.771
+	},
+	{
+		"task": "Task2Manager",
+		"name": "friend_placement",
+		"set": 0,
+		"answer": "A",
+		"submitted": false,
+		"time": 1788556388.625
+	},
+	{
+		"task": "Task2Manager",
+		"name": "friend_placement",
+		"set": 0,
+		"answer": "D",
+		"submitted": false,
+		"time": 1788556402.575
+	},
+	{
+		"task": "Task2Manager",
+		"name": "friend_placement",
+		"set": 0,
+		"answer": "D",
+		"submitted": true,
+		"time": 1788556403.890
+	}
+]

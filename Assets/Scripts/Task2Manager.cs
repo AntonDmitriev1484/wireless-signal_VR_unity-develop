@@ -33,6 +33,9 @@ public class Task2Manager : ITaskManager
     // Identifies this lesson's single MCQ in the answers log. Lesson 2 is not counterbalanced, so
     // its entries carry set 0.
     private const string QUESTION_NAME = "friend_placement";
+
+    // How long the "explain your answer" screen keeps Next locked.
+    private const float EXPLAIN_SECONDS = 10f;
     private const char CORRECT = 'D';
 
     private const int RX_YOU = 1;       // Phone A - fixed
@@ -434,8 +437,12 @@ public class Task2Manager : ITaskManager
             case State.T2_PromptExplanation:
                 // Asked before the answer is revealed, so what they say is their own reasoning
                 // rather than a read-back of the response.
-                SetText("Can you explain your answer?");
+                SetText("Explain to the researcher why you chose your answer.");
                 ShowButtons(0);
+
+                // Next is locked for the first few seconds, so the screen cannot be clicked past
+                // before anything has been said.
+                m.WaitTimer(EXPLAIN_SECONDS);
                 break;
 
             case State.T2_Explain:

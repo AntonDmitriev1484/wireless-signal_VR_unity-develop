@@ -39,6 +39,9 @@ public class Task1Manager : ITaskManager
     // Rx_Number of the phone in phone_optimization - the receiver the options move.
     private const int PHONE_RX = 1;
 
+    // How long the "explain your answer" screen keeps Next locked.
+    private const float EXPLAIN_SECONDS = 10f;
+
     private static readonly TaskDef[] TASKS =
     {
         new TaskDef
@@ -434,8 +437,12 @@ public class Task1Manager : ITaskManager
             case State.PromptExplanation:
                 // Asked before the answer is revealed, so what they say is their own reasoning
                 // rather than a read-back of the explanation.
-                m.QuestionText.text = "Can you explain your answer?";
+                m.QuestionText.text = "Explain to the researcher why you chose your answer.";
                 ShowButtons(0);
+
+                // Next is locked for the first few seconds, so the screen cannot be clicked past
+                // before anything has been said.
+                m.WaitTimer(EXPLAIN_SECONDS);
                 break;
 
             case State.ExplainCorrect:

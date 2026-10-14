@@ -1,0 +1,42 @@
+[
+	{
+		"viz": "session",
+		"toggle": "on",
+		"time": 1788449905.255
+	},
+	{
+		"viz": "heatmap",
+		"toggle": "off",
+		"time": 1788449906.851
+	},
+	{
+		"viz": "rays",
+		"toggle": "off",
+		"time": 1788449906.851
+	},
+	{
+		"viz": "animation",
+		"toggle": "on",
+		"time": 1788449954.865
+	},
+	{
+		"viz": "rays",
+		"toggle": "on",
+		"time": 1788449958.422
+	},
+	{
+		"viz": "heatmap",
+		"toggle": "on",
+		"time": 1788449966.311
+	},
+	{
+		"viz": "heatmap",
+		"toggle": "off",
+		"time": 1788449969.163
+	},
+	{
+		"viz": "rays",
+		"toggle": "off",
+		"time": 1788449969.163
+	}
+]

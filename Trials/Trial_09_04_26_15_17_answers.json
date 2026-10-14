@@ -1,0 +1,74 @@
+[
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 2,
+		"answer": "D",
+		"submitted": false,
+		"time": 1788553383.109
+	},
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 2,
+		"answer": "D",
+		"submitted": true,
+		"time": 1788553440.924
+	},
+	{
+		"task": "Task1Manager",
+		"name": "los_creation",
+		"set": 2,
+		"answer": "A",
+		"submitted": false,
+		"time": 1788553478.004
+	},
+	{
+		"task": "Task1Manager",
+		"name": "los_creation",
+		"set": 2,
+		"answer": "A",
+		"submitted": true,
+		"time": 1788553520.685
+	},
+	{
+		"task": "Task1Manager",
+		"name": "reflection_creation",
+		"set": 2,
+		"answer": "B",
+		"submitted": false,
+		"time": 1788553590.218
+	},
+	{
+		"task": "Task1Manager",
+		"name": "reflection_creation",
+		"set": 2,
+		"answer": "B",
+		"submitted": true,
+		"time": 1788553608.059
+	},
+	{
+		"task": "Task2Manager",
+		"name": "friend_placement",
+		"set": 0,
+		"answer": "D",
+		"submitted": false,
+		"time": 1788553749.388
+	},
+	{
+		"task": "Task2Manager",
+		"name": "friend_placement",
+		"set": 0,
+		"answer": "D",
+		"submitted": false,
+		"time": 1788553768.817
+	},
+	{
+		"task": "Task2Manager",
+		"name": "friend_placement",
+		"set": 0,
+		"answer": "D",
+		"submitted": true,
+		"time": 1788553771.098
+	}
+]

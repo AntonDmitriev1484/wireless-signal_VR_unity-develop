@@ -1,0 +1,106 @@
+[
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 1,
+		"answer": "A",
+		"submitted": false,
+		"time": 1788448583.912
+	},
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 1,
+		"answer": "A",
+		"submitted": false,
+		"time": 1788448586.224
+	},
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 1,
+		"answer": "B",
+		"submitted": false,
+		"time": 1788448588.943
+	},
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 1,
+		"answer": "A",
+		"submitted": false,
+		"time": 1788448591.351
+	},
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 1,
+		"answer": "A",
+		"submitted": true,
+		"time": 1788448603.517
+	},
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 1,
+		"answer": "B",
+		"submitted": false,
+		"time": 1788448624.414
+	},
+	{
+		"task": "Task1Manager",
+		"name": "phone_optimization",
+		"set": 1,
+		"answer": "B",
+		"submitted": true,
+		"time": 1788448625.325
+	},
+	{
+		"task": "Task1Manager",
+		"name": "los_creation",
+		"set": 1,
+		"answer": "C",
+		"submitted": false,
+		"time": 1788448678.301
+	},
+	{
+		"task": "Task1Manager",
+		"name": "los_creation",
+		"set": 1,
+		"answer": "C",
+		"submitted": true,
+		"time": 1788448679.540
+	},
+	{
+		"task": "Task1Manager",
+		"name": "reflection_creation",
+		"set": 1,
+		"answer": "D",
+		"submitted": false,
+		"time": 1788448721.003
+	},
+	{
+		"task": "Task1Manager",
+		"name": "reflection_creation",
+		"set": 1,
+		"answer": "D",
+		"submitted": true,
+		"time": 1788448722.156
+	},
+	{
+		"task": "Task2Manager",
+		"name": "friend_placement",
+		"set": 0,
+		"answer": "D",
+		"submitted": false,
+		"time": 1788448815.433
+	},
+	{
+		"task": "Task2Manager",
+		"name": "friend_placement",
+		"set": 0,
+		"answer": "D",
+		"submitted": true,
+		"time": 1788448816.536
+	}
+]

@@ -2345,6 +2345,48 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
             button.interactable = true;
     }
 
+    // ------------------------------------------------------------------
+    // Timed gate
+    // ------------------------------------------------------------------
+    // The same lock WaitPlay applies to the QA panel, opened by the clock instead of by a button
+    // press. Used by the "explain your answer" screens, where the participant should have said
+    // something before Next becomes available. Back stays clickable throughout, as it does under
+    // WaitPlay - GatedQAButtons exempts it.
+    //
+    // No highlight: there is no button to point at, and the gate opens on its own.
+    private float waitTimerDeadline = -1f;
+
+    public void WaitTimer(float seconds)
+    {
+        if (transportButtons.Count == 0) FindAllButtons();
+
+        waitTimerDeadline = Time.time + Mathf.Max(0f, seconds);
+
+        qaLocked = true;
+
+        foreach (UnityEngine.UI.Button button in GatedQAButtons())
+            button.interactable = false;
+    }
+
+    // Drops a pending timer without waiting it out. Stepping back out of the state that set one
+    // must not leave the panel locked on a clock nobody is watching any more.
+    public void CancelWaitTimer()
+    {
+        if (waitTimerDeadline < 0f) return;
+
+        waitTimerDeadline = -1f;
+        ReleaseQAButtons();
+    }
+
+    // Polled from Update, in keeping with the rest of the gate handling.
+    private void UpdateWaitTimer()
+    {
+        if (waitTimerDeadline < 0f || Time.time < waitTimerDeadline) return;
+
+        waitTimerDeadline = -1f;
+        ReleaseQAButtons();
+    }
+
     // Re-applied every frame while waiting: MenuManager's look-to-hover handling drives the Button's
     // own colour transitions, which would otherwise wipe the highlight as soon as one is glanced at.
     private void ApplyAwaitedHighlight()
@@ -2527,6 +2569,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         UpdateParticles();
 
         if (highlightingAwaited) ApplyAwaitedHighlight();
+
+        UpdateWaitTimer();
 
         // Polled rather than pushed: an animation can also stop on its own when its last particle
         // arrives, which no button press would tell us about.
@@ -3282,6 +3326,7 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         // Stepping back cancels whatever the state being left was waiting on - the state coming
         // back arms its own gate from DoState if it needs one.
         ReleaseWaitPlay();
+        CancelWaitTimer();
 
         // Strip the outgoing state's decoration before restoring: every ring the highlighter is
         // holding, and the caption the particles were carrying. An empty message destroys the label
