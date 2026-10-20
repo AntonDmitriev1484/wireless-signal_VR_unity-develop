@@ -6,8 +6,11 @@ using UnityEngine;
 using System.Collections.Generic;
 using System;
 
+// Plain data, not a MonoBehaviour: the CSV loaders create one per row with `new`, and Unity logs a
+// warning (with a full stack trace) for every MonoBehaviour made that way - 27,000 of them for the
+// demo heatmap, which stalled the D6 -> D7 dataset swap for ~4 seconds.
 [System.Serializable]
-public class RayPathSet_v2: MonoBehaviour
+public class RayPathSet_v2
 {
     [HideInInspector] public int RxNum;
     [HideInInspector] public float PowerNum;

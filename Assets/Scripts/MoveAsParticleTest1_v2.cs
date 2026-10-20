@@ -1400,9 +1400,11 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
               position_to_color[pos] = rxColor;
           }
 
-          foreach (KeyValuePair<Vector3, Color> kvp in position_to_color)
+          // No heatmap CSV for this dataset (e.g. paths_dense_unity in the early demo screens).
+          if (position_to_color.Count == 0)
           {
-              Debug.Log($"Rx position: {kvp.Key}");
+              Debug.LogWarning("MakeHeatmap: the current dataset has no heatmap data.");
+              return;
           }
 
 

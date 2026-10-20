@@ -6,6 +6,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float mouseSensitivity = 0.1f;
 
+    // Set by MenuManager while the menu is open: no walking or looking, the mouse drives the UI.
+    public static bool InputLocked;
+
     private CharacterController controller;
     private Transform cameraTransform;
 
@@ -31,7 +34,7 @@ public class PlayerController : MonoBehaviour
     {
         Vector2 input = Vector2.zero;
 
-        if (Keyboard.current != null)
+        if (Keyboard.current != null && !InputLocked)
         {
             input = new Vector2(
                 (Keyboard.current.dKey.isPressed ? 1f : 0f) -
@@ -65,7 +68,7 @@ public class PlayerController : MonoBehaviour
 
     private void Look()
     {
-        if (Mouse.current == null)
+        if (Mouse.current == null || InputLocked)
             return;
 
         Vector2 mouseDelta = Mouse.current.delta.ReadValue();
