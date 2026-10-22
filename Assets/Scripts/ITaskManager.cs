@@ -9,8 +9,21 @@ public interface ITaskManager
     void Advance();
 
     // Step back to the state this manager was in before the last Advance (called on Back). A
-    // manager never rewinds past its own first state - Back cannot return to an earlier lesson.
+    // manager never rewinds past its own first state; crossing into the previous manager is done
+    // by the host with ExitBackward / ReEnterFromNext.
     void Back();
+
+    // False on this manager's first screen, where Back has to hand over to the previous manager.
+    bool CanGoBack { get; }
+
+    // Back was pressed on this manager's first screen: remove everything it put in the scene
+    // (candidates, answer buttons, temporary animations, highlights) before the previous manager
+    // takes over.
+    void ExitBackward();
+
+    // The next manager was just left backwards: return to this manager's last screen and rebuild
+    // the world for it (dataset, receiver model, scene objects). DoState is called afterwards.
+    void ReEnterFromNext();
 
     // Apply the current state to the UI / visualisation.
     void DoState();

@@ -285,6 +285,27 @@ public class Task1Manager : ITaskManager
         if (!before.Matches(Capture())) history.Add(before);
     }
 
+    public bool CanGoBack => history.Count > 0;
+
+    // Back from SetSelect into the demo: take down everything this lesson puts in the room, so the
+    // demo screen it returns to starts clean.
+    public void ExitBackward()
+    {
+        ClearCandidates();
+        m.ClearRayHighlights();
+        m.ClearDirectLine();
+        m.Highlighter?.ClearAllHighlights();
+        m.ClearHeatmap();
+        m.HideMainRays();
+
+        ClearButtonHighlights();
+        ShowButtons(0);
+    }
+
+    // Coming back from Lesson 2. The lesson's last Advance went ExplainTransmission -> Complete, so
+    // that is the snapshot on top of the history; Restore rebuilds its dataset and receiver.
+    public void ReEnterFromNext() => Back();
+
     public void Back()
     {
         if (history.Count == 0) return;
@@ -483,6 +504,12 @@ public class Task1Manager : ITaskManager
                     );
 
                 ShowButtons(0);
+
+                // Normally the cabinet and rays are still up from ExplainCorrect, but Back from
+                // Lesson 2 lands here directly after Restore has cleared them, so rebuild them.
+                if (!candidatesSpawned) SpawnCandidates();
+                ShowOnlyCorrectCandidate();
+                m.ShowMainRays();
 
                 // Drop the cabinet reflections ExplainCorrect highlighted, so the only thing picked
                 // out here is the straight router-to-TV line: the route the signal cannot take.

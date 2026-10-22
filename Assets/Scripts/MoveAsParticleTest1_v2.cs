@@ -2006,6 +2006,9 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     // The task manager currently driving the Q&A panel (demo first, then Lesson 1, ...).
     private ITaskManager CurrentTaskManager;
 
+    // Finished managers, oldest first. Back on the current manager's first screen pops the last one.
+    private readonly List<ITaskManager> previousTaskManagers = new List<ITaskManager>();
+
     // ---- Accessors used by task managers living outside this class (e.g. Task1Manager) ----
     public TextMeshProUGUI QuestionText => qTextObj.GetComponent<TextMeshProUGUI>();
     public GameObject[] AnswerButtons => new[] { a1TextObj, a2TextObj, a3TextObj, a4TextObj };
@@ -3136,6 +3139,24 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
             state = next_state;
         }
 
+        public bool CanGoBack => history.Count > 0;
+
+        // The demo is the first manager, so it is never left backwards; nothing of its own to clear.
+        public void ExitBackward() { }
+
+        // Coming back from Lesson 1: step off END onto D11 and put the demo's world back - the
+        // lesson swapped the receiver model and the dataset.
+        public void ReEnterFromNext()
+        {
+            m.SetReceiverModel(ReceiverModel.Antenna);
+
+            Back();
+
+            // Back() only reloads for states before D7 (the dense set), and D7 loads the trimmed set
+            // from its own DoState. D8..D11 assume the trimmed set is already there.
+            if (state > State.D7) m.SetCurrentDataSet(m.csvFile_Demo);
+        }
+
         // One state back, stopping at D1 - the demo is the first manager, so there is nothing
         // before it to return to. DoState rebuilds the screen and picks next_state again.
         public void Back()
@@ -3316,8 +3337,8 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
     }
 
     // Wired to the Back button in PanelQA. Steps the current manager back one state and re-renders
-    // it. The manager chain is never rewound: Back stops at the first state of the lesson the
-    // participant is in, so it cannot drop them back into the demo or an earlier lesson.
+    // it. On a manager's first screen, Back crosses into the previous manager instead and lands on
+    // its last screen (e.g. Lesson 1's set selection -> demo D11); only the demo's D1 is a dead end.
     public void ButtonBack()
     {
         if (CurrentTaskManager == null) return;
@@ -3337,7 +3358,22 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         highlighter?.ClearAllHighlights();
         SetMessage("");
 
-        CurrentTaskManager.Back();
+        if (CurrentTaskManager.CanGoBack)
+        {
+            CurrentTaskManager.Back();
+        }
+        else if (previousTaskManagers.Count > 0)
+        {
+            // The manager being left is discarded: Next from the restored screen builds a fresh one,
+            // the same way it did the first time through.
+            CurrentTaskManager.ExitBackward();
+
+            CurrentTaskManager = previousTaskManagers[previousTaskManagers.Count - 1];
+            previousTaskManagers.RemoveAt(previousTaskManagers.Count - 1);
+
+            CurrentTaskManager.ReEnterFromNext();
+        }
+
         CurrentTaskManager.DoState();
     }
 
@@ -3355,6 +3391,9 @@ public class MoveAsParticleTest1_v2 : MonoBehaviour
         // Task1Manager is last, so its completion matches neither case and it simply stays.
         if (CurrentTaskManager.IsComplete)
         {
+            // Kept so Back on the next manager's first screen can return to it.
+            previousTaskManagers.Add(CurrentTaskManager);
+
             // Can manually change ordering for debugging.
             /*            if (CurrentTaskManager is Task2Manager)
                             CurrentTaskManager = new Task1Manager(this);
