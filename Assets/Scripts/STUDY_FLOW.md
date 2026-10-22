@@ -79,8 +79,19 @@ highlights and receiver rings dropped, heatmap and rays taken down, and the data
 task/option reloaded. `ButtonBack()` additionally clears all `ObjectHighlighter` rings and sets the
 particle message to `""`.
 
-**Back never crosses a manager boundary.** It stops at the first screen of the lesson the
-participant is in; it cannot return to the demo or to an earlier lesson.
+**Back crosses manager boundaries.** On a manager's first screen (`CanGoBack` is false), Back
+calls `ExitBackward()` on it, which removes everything it put in the scene, and discards it. Then
+it returns to the previous manager via `ReEnterFromNext()`, which steps back onto its last screen
+and rebuilds that screen's world:
+
+| From | Back lands on |
+|---|---|
+| Lesson 1 `SetSelect` | Demo `D11` (trimmed `demo_lit` set reloaded, antenna receiver) |
+| Lesson 2 `T1_Start` | Lesson 1 `ExplainTransmission` of `reflection_creation` (correct cabinet, rays and router-to-TV line rebuilt) |
+
+The host keeps finished managers on a stack (`previousTaskManagers`) for this. Pressing Next from
+the restored screen builds a *fresh* next manager, exactly as the first time through. Only the
+demo's `D1` is a dead end.
 
 ### 1.5 Data format
 

@@ -182,6 +182,19 @@ public class Task2Manager : ITaskManager
         if (!before.Matches(Capture())) history.Add(before);
     }
 
+    public bool CanGoBack => history.Count > 0;
+
+    // Back from T1_Start into Lesson 1: stop the temporary animations, drop the cubes and answer
+    // buttons, and hand the main particles back visible and paused, as at the end of the lesson.
+    public void ExitBackward()
+    {
+        Cleanup();
+        m.ClearHeatmap();
+    }
+
+    // Lesson 2 is the last manager, so nothing comes after it to return from. Kept for symmetry.
+    public void ReEnterFromNext() => Back();
+
     public void Back()
     {
         if (history.Count == 0) return;

@@ -48,6 +48,11 @@ public class TaskCommTestManager : ITaskManager
     // One screen, so there is nothing to step back to.
     public void Back() { }
 
+    // Debug manager with no history; it is never part of the Back chain.
+    public bool CanGoBack => false;
+    public void ExitBackward() => Cleanup();
+    public void ReEnterFromNext() { }
+
     public void DoState()
     {
         if (!started)
